@@ -9,5 +9,23 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (() => {
+        let theme = "dark";
+
+        try {
+          const saved = JSON.parse(
+            localStorage.getItem("groovyPreferences") || "null",
+          );
+
+          if (saved?.state?.theme === "light") {
+            theme = "light";
+          }
+        } catch {}
+
+        document.documentElement.classList.toggle("dark", theme === "dark");
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
   </body>
 </html>
