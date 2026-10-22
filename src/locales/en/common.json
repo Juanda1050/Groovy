@@ -1,0 +1,21 @@
+{
+  "navigation": {
+    "label": "Main navigation",
+    "discover": "Discover",
+    "library": "My library",
+    "community": "Community",
+    "profile": "Profile"
+  },
+  "appearance": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "retry": "Try again"
+  },
+  "status": {
+    "loading": "Loading…"
+  }
+}

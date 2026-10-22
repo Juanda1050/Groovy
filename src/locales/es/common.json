@@ -1,0 +1,21 @@
+{
+  "navigation": {
+    "label": "Navegación principal",
+    "discover": "Descubrir",
+    "library": "Mi biblioteca",
+    "community": "Comunidad",
+    "profile": "Perfil"
+  },
+  "appearance": {
+    "switchToLight": "Activar modo claro",
+    "switchToDark": "Activar modo oscuro"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "retry": "Reintentar"
+  },
+  "status": {
+    "loading": "Cargando…"
+  }
+}

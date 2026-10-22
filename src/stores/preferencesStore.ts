@@ -1,11 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { PreferencesState, Theme } from "@/models/preferences";
 
-export type Theme = "dark" | "light";
+function readPersistedTheme(value: unknown): Theme {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "theme" in value &&
+    value.theme === "light"
+  ) {
+    return "light";
+  }
 
-interface PreferencesState {
-  theme: Theme;
-  toggleTheme: () => void;
+  return "dark";
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -20,14 +27,10 @@ export const usePreferencesStore = create<PreferencesState>()(
     {
       name: "groovyPreferences",
       partialize: (state) => ({ theme: state.theme }),
-      merge: (persisted, current) => {
-        const saved = persisted as { theme?: unknown } | undefined;
-
-        return {
-          ...current,
-          theme: saved?.theme === "light" ? "light" : "dark",
-        };
-      },
+      merge: (persisted: unknown, current) => ({
+        ...current,
+        theme: readPersistedTheme(persisted),
+      }),
     },
   ),
 );
