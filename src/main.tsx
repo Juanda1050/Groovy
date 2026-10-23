@@ -1,23 +1,26 @@
-import { StrictMode, Suspense } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./app/App";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "react-router-dom";
 import { i18nReady } from "./app/i18n";
+import { queryClient } from "./app/queryClient";
+import { router } from "./app/router";
 import "./index.css";
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   await i18nReady;
 
-  createRoot(document.getElementById("root")!).render(
+  const rootElement = document.getElementById("root");
+
+  if (!rootElement) {
+    throw new Error("Application root element is missing.");
+  }
+
+  createRoot(rootElement).render(
     <StrictMode>
-      <Suspense
-        fallback={
-          <div role="status" className="p-6">
-            Groovy…
-          </div>
-        }
-      >
-        <App />
-      </Suspense>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </StrictMode>,
   );
 }

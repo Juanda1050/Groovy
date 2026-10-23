@@ -16,3 +16,9 @@ export interface AppShellProps {
   actions: ReactNode;
   navigation?: ReactNode;
 }
+
+export interface PageIntroProps {
+  title: string;
+  description: string;
+  eyebrow?: string;
+}
