@@ -1,3 +1,5 @@
+import type { Database } from "./database";
+
 export type AlbumRating =
   | 1
   | 1.5
@@ -38,5 +40,13 @@ export interface ListenedAlbumInput {
   favoriteTrackIds: readonly string[];
   leastFavoriteTrackIds: readonly string[];
 }
+
+export type UserAlbumRow = Database["public"]["Tables"]["user_albums"]["Row"];
+
+export type UserTrackPickRow =
+  Database["public"]["Tables"]["user_track_picks"]["Row"];
+
+export type SaveUserAlbumArgs =
+  Database["public"]["Functions"]["save_user_album"]["Args"];
 
 export type SaveAlbumInput = PendingAlbumInput | ListenedAlbumInput;

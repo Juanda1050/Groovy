@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
+import ProtectedLayout from "@/pages/ProtectedLayout";
 
 export const router = createBrowserRouter([
   {
@@ -8,35 +9,38 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        lazy: async () => {
-          const { default: Component } = await import("@/pages/DiscoverPage");
-
-          return { Component };
-        },
+        lazy: async () => ({
+          Component: (await import("@/pages/DiscoverPage")).default,
+        }),
       },
       {
-        path: "library",
-        lazy: async () => {
-          const { default: Component } = await import("@/pages/LibraryPage");
-
-          return { Component };
-        },
+        path: "auth",
+        lazy: async () => ({
+          Component: (await import("@/pages/AuthPage")).default,
+        }),
       },
       {
-        path: "community",
-        lazy: async () => {
-          const { default: Component } = await import("@/pages/CommunityPage");
-
-          return { Component };
-        },
-      },
-      {
-        path: "profile",
-        lazy: async () => {
-          const { default: Component } = await import("@/pages/ProfilePage");
-
-          return { Component };
-        },
+        element: <ProtectedLayout />,
+        children: [
+          {
+            path: "library",
+            lazy: async () => ({
+              Component: (await import("@/pages/LibraryPage")).default,
+            }),
+          },
+          {
+            path: "community",
+            lazy: async () => ({
+              Component: (await import("@/pages/CommunityPage")).default,
+            }),
+          },
+          {
+            path: "profile",
+            lazy: async () => ({
+              Component: (await import("@/pages/ProfilePage")).default,
+            }),
+          },
+        ],
       },
       {
         path: "*",

@@ -93,3 +93,40 @@ body {
     backdrop-filter: none;
   }
 }
+
+@layer base {
+  /*
+   * Superficies táctiles de al menos 44px.
+   * No depende de que cada pantalla recuerde aplicarlas.
+   */
+  [data-slot="button"] {
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+
+  [data-slot="button"]:disabled {
+    cursor: not-allowed;
+  }
+
+  [data-slot="input"] {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+
+  [data-slot="label"] {
+    line-height: 1.5;
+  }
+
+  @media (min-width: 48rem) {
+    [data-slot="input"] {
+      min-height: 2.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-slot="button"],
+    [data-slot="input"] {
+      transition: none;
+    }
+  }
+}
