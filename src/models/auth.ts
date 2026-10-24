@@ -73,3 +73,9 @@ export interface ProtectedRouteProps {
 }
 
 export type AuthObserver = (user: AuthUser | null) => void;
+
+export interface AuthArtworkProps {
+  eyebrow: string
+  title: string
+  description: string
+}

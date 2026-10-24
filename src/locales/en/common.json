@@ -4,7 +4,8 @@
     "discover": "Discover",
     "library": "My library",
     "community": "Community",
-    "profile": "Profile"
+    "profile": "Profile",
+    "skip": "Skip to content"
   },
   "appearance": {
     "switchToLight": "Switch to light mode",

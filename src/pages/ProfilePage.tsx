@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PageIntro } from "@/components/PageIntro";
 import { SignOutButton } from "@/components/SignOutButton";
 import { useSignOut } from "@/hooks/useSignOut";
-import { PreferencesSection } from "./PreferenceSection";
+import { PreferencesSection } from "./PreferencesSection";
 
 export default function ProfilePage() {
   const { t } = useTranslation("profile");

@@ -12,6 +12,7 @@ export interface ThemeToggleProps {
 }
 
 export interface AppShellProps {
+  skipLabel: string;
   children: ReactNode;
   actions: ReactNode;
   navigation?: ReactNode;

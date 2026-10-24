@@ -2,15 +2,9 @@ import i18n, { type ReadCallback } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
-type TranslationResource = Record<string, unknown>;
-type TranslationModule = {
-  default: TranslationResource;
-};
+import type { TranslationModule } from '@/models/translations'
 
-const translationFiles = import.meta.glob("../locales/*/*.json") as Record<
-  string,
-  () => Promise<TranslationModule>
->;
+const translationFiles = import.meta.glob<TranslationModule>('../locales/*/*.json')
 
 i18n
   .use(LanguageDetector)

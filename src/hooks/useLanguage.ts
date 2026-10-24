@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { updateLanguage } from "@/services/settingsService";
@@ -25,20 +25,6 @@ export function useLanguage() {
   const [saving, setSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
   const changing = useRef(false);
-
-  const savedLocale = settings.data?.locale;
-
-  useEffect(() => {
-    if (!savedLocale) return;
-
-    const language = normalizeLanguage(savedLocale);
-
-    if (normalizeLanguage(i18n.resolvedLanguage ?? "en") !== language) {
-      void i18n.changeLanguage(language).catch(() => {
-        setHasError(true);
-      });
-    }
-  }, [savedLocale, i18n]);
 
   async function onChange(language: SupportedLanguage): Promise<void> {
     if (changing.current) return;

@@ -1,42 +1,24 @@
-import { Disc3 } from "lucide-react";
-import { Link } from "react-router-dom";
-import type { AppShellProps } from "@/models/layout";
-import { GlassPanel } from "./GlassPanel";
+import { Link } from 'react-router-dom'
+import type { AppShellProps } from '@/models/layout'
+import { BrandMark } from './BrandMark'
 
-export function AppShell({ children, actions, navigation }: AppShellProps) {
+export function AppShell({ children, actions, navigation, skipLabel }: AppShellProps) {
   return (
-    <div className="mx-auto min-h-dvh max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-      <GlassPanel
-        blur
-        className="flex items-center justify-between gap-3 px-4 py-3"
-      >
-        <Link
-          to="/"
-          aria-label="Groovy"
-          className="
-            flex shrink-0 items-center gap-2 rounded-lg
-            focus-visible:outline-none focus-visible:ring-2
-            focus-visible:ring-ring
-          "
-        >
-          <Disc3 className="text-primary" aria-hidden="true" />
-          <span className="text-xl font-bold tracking-tight">Groovy</span>
+    <div className="mx-auto min-h-dvh w-full max-w-7xl px-4 sm:px-6 lg:px-10">
+      <a href="#mainContent" className="fixed left-4 top-3 z-50 -translate-y-24 rounded-lg bg-primary px-4 py-3 text-primary-foreground focus:translate-y-0">
+        {skipLabel}
+      </a>
+      <header className="flex min-h-24 items-center justify-between gap-3 border-b border-border/40 sm:min-h-28">
+        <Link to="/" aria-label="Groovy" className="flex shrink-0 items-center gap-3 rounded-lg">
+          <BrandMark />
+          <span className="text-2xl font-bold tracking-[-0.06em] sm:text-3xl">Groovy</span>
         </Link>
-
         {navigation}
-
         <div className="flex shrink-0 items-center gap-2">{actions}</div>
-      </GlassPanel>
-
-      <main
-        id="mainContent"
-        className="
-          py-10 pb-[calc(7rem+env(safe-area-inset-bottom))]
-          sm:pt-14 md:pb-12
-        "
-      >
+      </header>
+      <main id="mainContent" tabIndex={-1} className="py-9 pb-[calc(7rem+env(safe-area-inset-bottom))] outline-none sm:pt-12 md:pb-12">
         {children}
       </main>
     </div>
-  );
+  )
 }

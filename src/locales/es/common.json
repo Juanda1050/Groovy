@@ -4,7 +4,8 @@
     "discover": "Descubrir",
     "library": "Mi biblioteca",
     "community": "Comunidad",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "skip": "Ir al contenido"
   },
   "appearance": {
     "switchToLight": "Activar modo claro",

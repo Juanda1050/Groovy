@@ -63,21 +63,21 @@ export function AuthForm({
                 onChange={(event) => {
                   onChange(field.name, event.target.value);
                 }}
-                className="rounded-xl bg-background"
+                className="rounded-xl"
               />
             </div>
           ))}
 
           {feedback && (
             <Alert role="status" className="rounded-xl bg-background/70">
-              <AlertDescription className="wrap-break-word">
+              <AlertDescription className="[overflow-wrap:anywhere]">
                 {feedback}
               </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2 pt-1">
-            <Button type="submit" disabled={busy} className="w-full rounded-xl">
+            <Button type="submit" disabled={busy} size="lg" className="w-full rounded-xl">
               {busy && (
                 <LoaderCircle
                   className="size-4 motion-safe:animate-spin"

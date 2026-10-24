@@ -1,132 +1,133 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--primary);
+  --radius-sm: .5rem;
+  --radius-md: .75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
 
 :root {
-  --background: #f1f6ff;
-  --foreground: #13233d;
+  color-scheme: light;
+  --background: #eff6fc;
+  --foreground: #10263f;
   --card: #ffffff;
-  --card-foreground: #13233d;
-  --popover: #ffffff;
-  --popover-foreground: #13233d;
-
-  --primary: #1d4ed8;
+  --primary: #12649e;
+  --primary-hover: #0d5286;
   --primary-foreground: #ffffff;
-  --secondary: #e0ebff;
-  --secondary-foreground: #183969;
-  --muted: #e8effa;
-  --muted-foreground: #52637b;
-  --accent: #dbeafe;
-  --accent-foreground: #173565;
-
-  --destructive: #b91c1c;
-  --border: #c6d5ed;
-  --input: #bdcee8;
-  --ring: #2563eb;
-
-  --glass: rgb(255 255 255 / 82%);
-  --glass-border: rgb(100 137 191 / 25%);
-  --ambient: rgb(59 130 246 / 12%);
+  --secondary: #e0eef9;
+  --muted: #e7f0f8;
+  --muted-foreground: #4b647e;
+  --accent: #d8ebfa;
+  --border: #cadbea;
+  --input: #9eb8ce;
+  --destructive: #a5283d;
+  --destructive-foreground: #ffffff;
+  --glass: rgb(255 255 255 / 86%);
+  --glass-border: rgb(67 99 129 / 20%);
+  --surface-start: #ffffff;
+  --surface-end: #f5faff;
+  --ambient: rgb(87 182 255 / 16%);
 }
 
 .dark {
-  --background: #080f1e;
-  --foreground: #edf4ff;
-  --card: #101d33;
-  --card-foreground: #edf4ff;
-  --popover: #101d33;
-  --popover-foreground: #edf4ff;
-
-  --primary: #93c5fd;
-  --primary-foreground: #081426;
-  --secondary: #172a46;
-  --secondary-foreground: #e0edff;
-  --muted: #13223a;
-  --muted-foreground: #a4b6cf;
-  --accent: #1a3559;
-  --accent-foreground: #edf4ff;
-
-  --destructive: #fca5a5;
-  --border: #2a405f;
-  --input: #354f72;
-  --ring: #93c5fd;
-
-  --glass: rgb(16 29 51 / 86%);
-  --glass-border: rgb(147 197 253 / 16%);
-  --ambient: rgb(37 99 235 / 15%);
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100dvh;
-  background-color: var(--background);
-  background-image: radial-gradient(
-    ellipse at top left,
-    var(--ambient),
-    transparent 55%
-  );
-  color: var(--foreground);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-}
-
-.glassPanel {
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-}
-
-@supports (backdrop-filter: blur(12px)) {
-  .glassBlur {
-    backdrop-filter: blur(12px);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .glassPanel {
-    background: var(--card);
-  }
-
-  .glassBlur {
-    backdrop-filter: none;
-  }
+  color-scheme: dark;
+  --background: #071426;
+  --foreground: #f0f7ff;
+  --card: #10263f;
+  --primary: #57b6ff;
+  --primary-hover: #77c4ff;
+  --primary-foreground: #06182b;
+  --secondary: #193b5b;
+  --muted: #122c48;
+  --muted-foreground: #c0d2e6;
+  --accent: #234b70;
+  --border: #436381;
+  --input: #527594;
+  --destructive: #ffb0bb;
+  --destructive-foreground: #39111b;
+  --glass: rgb(18 44 72 / 85%);
+  --glass-border: rgb(119 196 255 / 23%);
+  --surface-start: #1c4060;
+  --surface-end: #10263f;
+  --ambient: rgb(18 61 104 / 65%);
 }
 
 @layer base {
-  /*
-   * Superficies táctiles de al menos 44px.
-   * No depende de que cada pantalla recuerde aplicarlas.
-   */
-  [data-slot="button"] {
-    min-height: 2.75rem;
-    cursor: pointer;
+  * { @apply border-border; }
+  html { min-width: 320px; background: var(--background); }
+  body {
+    @apply m-0 font-sans text-foreground antialiased;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at 5% 0%, var(--ambient), transparent 55%), var(--background);
   }
+  button, input { font: inherit; }
+  button:not(:disabled) { cursor: pointer; }
+  ::selection { background: var(--primary); color: var(--primary-foreground); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+}
 
-  [data-slot="button"]:disabled {
-    cursor: not-allowed;
+@layer components {
+  .glassPanel {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
   }
+  .glassBlur { backdrop-filter: blur(12px); }
+  .surfacePanel {
+    border: 1px solid var(--glass-border);
+    background: linear-gradient(135deg, var(--surface-start), var(--surface-end));
+    box-shadow: 0 16px 48px rgb(0 12 30 / 8%);
+  }
+  .brandBars { display: inline-flex; align-items: center; gap: 4px; height: 28px; }
+  .brandBars span { width: 4px; border-radius: 4px; background: #57b6ff; height: 11px; }
+  .brandBars span:nth-child(2), .brandBars span:nth-child(4) { height: 20px; background: #77c4ff; }
+  .brandBars span:nth-child(3) { height: 28px; background: #b0e0ff; }
+  .authArtwork { background: radial-gradient(ellipse at center, rgb(87 182 255 / 15%), transparent 65%); }
+  .recordDisc {
+    width: min(72vw, 260px); aspect-ratio: 1; border-radius: 50%;
+    background: repeating-radial-gradient(circle, #10263f 0 3px, #193b5b 4px 5px, #0b1d33 6px 8px);
+    border: 1px solid #436381; box-shadow: 0 20px 60px rgb(0 12 30 / 25%);
+    display: grid; place-items: center; transform: rotate(-18deg);
+  }
+  .recordLabel {
+    width: 34%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(135deg, #b0e0ff, #57b6ff); color: #06182b;
+    font-size: 12px; font-weight: 800; letter-spacing: -.5px;
+  }
+}
 
-  [data-slot="input"] {
-    min-height: 3rem;
-    font-size: 1rem;
-  }
-
-  [data-slot="label"] {
-    line-height: 1.5;
-  }
-
-  @media (min-width: 48rem) {
-    [data-slot="input"] {
-      min-height: 2.75rem;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    [data-slot="button"],
-    [data-slot="input"] {
-      transition: none;
-    }
-  }
+@media (min-width: 768px) {
+  .appNavigation { background: transparent; border: 0; backdrop-filter: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glassPanel { background: var(--card); }
+  .glassBlur { backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
