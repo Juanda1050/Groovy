@@ -1,51 +1,66 @@
-import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export function PreferencesSection() {
-  const { t } = useTranslation("common");
-  const { error, canRetry, retryLabel, onRetry, ...selectorProps } =
-    useLanguage();
+  const {
+    options,
+    value,
+    onChange,
+    label,
+    disabled,
+    busy,
+    message,
+    error,
+    canRetry,
+    retrying,
+    retryLabel,
+    onRetry,
+  } = useLanguage();
 
   return (
-    <Card className="surfacePanel w-full max-w-lg rounded-2xl">
-      <CardHeader>
-        <CardTitle>
-          <h2>{t("preferences.title")}</h2>
-        </CardTitle>
+    <div className="relative inline-flex" aria-busy={busy}>
+      <LanguageSelector
+        options={options}
+        value={value}
+        onChange={onChange}
+        label={label}
+        disabled={disabled}
+      />
 
-        <CardDescription>{t("preferences.description")}</CardDescription>
-      </CardHeader>
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {message}
+      </span>
 
-      <CardContent className="space-y-4">
-        <LanguageSelector {...selectorProps} />
+      {error && (
+        <Alert
+          variant="destructive"
+          className="
+            absolute right-0 top-full z-50 mt-2
+            w-64 max-w-[80vw] bg-popover shadow-lg
+          "
+        >
+          <AlertDescription>{error}</AlertDescription>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {canRetry && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onRetry}
-            className="w-full rounded-xl sm:w-auto"
-          >
-            {retryLabel}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+          {canRetry && (
+            <Button
+              type="button"
+              variant="link"
+              disabled={retrying}
+              onClick={onRetry}
+              className="mt-1 px-0"
+            >
+              {retryLabel}
+            </Button>
+          )}
+        </Alert>
+      )}
+    </div>
   );
 }

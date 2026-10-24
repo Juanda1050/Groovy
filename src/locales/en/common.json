@@ -21,10 +21,16 @@
   },
   "language": {
     "label": "Application language",
-    "error": "Unable to load or save your language preference."
+    "loading": "Loading your preference…",
+    "saving": "Saving your preference…",
+    "savedAccount": "Language saved to your account.",
+    "savedDevice": "Language saved in this browser.",
+    "accountHint": "Changes are saved automatically to your account.",
+    "deviceHint": "Your choice is saved in this browser. Sign in to sync it with your account.",
+    "error": "We couldn't load or save your preference. Check your connection and try again."
   },
   "preferences": {
-    "title": "Preferences",
-    "description": "Choose the language you want to use in Groovy."
+    "title": "Make Groovy yours",
+    "description": "Choose your language. Your music stays the same."
   }
 }

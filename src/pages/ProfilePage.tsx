@@ -1,9 +1,8 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageIntro } from "@/components/PageIntro";
 import { SignOutButton } from "@/components/SignOutButton";
 import { useSignOut } from "@/hooks/useSignOut";
-import { PreferencesSection } from "./PreferencesSection";
 
 export default function ProfilePage() {
   const { t } = useTranslation("profile");
@@ -12,12 +11,11 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8">
       <PageIntro title={t("title")} description={t("description")} />
-      <PreferencesSection />
 
       <SignOutButton {...signOutProps} />
 
       {error && (
-        <Alert variant="destructive" className="max-w-lg rounded-xl">
+        <Alert variant="destructive" className="max-w-lg">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

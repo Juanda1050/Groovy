@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import { updateLanguage } from "@/services/settingsService";
 import { useAuthStore } from "@/stores/authStore";
 import { useUserSettings } from "./useUserSettings";
-import type { LanguageOption } from "@/models/language";
+import type { LanguageOption, LanguageSaveState } from "@/models/language";
 import type { SupportedLanguage } from "@/models/preferences";
+import type { UserSettings } from "@/models/profile";
 
 const options: readonly LanguageOption[] = [
   { value: "en", label: "English" },
@@ -22,16 +23,29 @@ export function useLanguage() {
   const status = useAuthStore((state) => state.status);
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const settings = useUserSettings();
-  const [saving, setSaving] = useState(false);
-  const [hasError, setHasError] = useState(false);
+
+  const [saveState, setSaveState] = useState<LanguageSaveState>("idle");
+
   const changing = useRef(false);
 
+  const value = normalizeLanguage(i18n.resolvedLanguage ?? "en");
+  const loading =
+    status === "loading" || (userId !== null && settings.isPending);
+
+  const saving = saveState === "saving";
+
   async function onChange(language: SupportedLanguage): Promise<void> {
-    if (changing.current) return;
+    if (
+      changing.current ||
+      loading ||
+      (userId !== null && !settings.isSuccess) ||
+      language === normalizeLanguage(i18n.resolvedLanguage ?? "en")
+    ) {
+      return;
+    }
 
     changing.current = true;
-    setSaving(true);
-    setHasError(false);
+    setSaveState("saving");
 
     const requestedUserId = userId;
 
@@ -45,36 +59,60 @@ export function useLanguage() {
 
       const currentUserId = useAuthStore.getState().user?.id ?? null;
 
-      // No aplicar una respuesta de una cuenta anterior.
-      if (currentUserId !== requestedUserId) return;
+      if (currentUserId !== requestedUserId) {
+        setSaveState("idle");
+        return;
+      }
 
       if (requestedUserId) {
-        queryClient.setQueryData(["userSettings", requestedUserId], {
-          user_id: requestedUserId,
-          locale: language,
-        });
+        queryClient.setQueryData<UserSettings>(
+          ["userSettings", requestedUserId],
+          {
+            user_id: requestedUserId,
+            locale: language,
+          },
+        );
       }
 
       await i18n.changeLanguage(language);
+
+      if ((useAuthStore.getState().user?.id ?? null) === requestedUserId) {
+        setSaveState(requestedUserId ? "savedAccount" : "savedDevice");
+      } else {
+        setSaveState("idle");
+      }
     } catch {
-      setHasError(true);
+      setSaveState("error");
     } finally {
       changing.current = false;
-      setSaving(false);
     }
   }
 
+  const error =
+    settings.isError || saveState === "error" ? t("language.error") : null;
+
+  const message = loading
+    ? t("language.loading")
+    : saving
+      ? t("language.saving")
+      : saveState === "savedAccount"
+        ? t("language.savedAccount")
+        : saveState === "savedDevice"
+          ? t("language.savedDevice")
+          : t(userId ? "language.accountHint" : "language.deviceHint");
+
   return {
     options,
+    value,
     onChange,
-    value: normalizeLanguage(i18n.resolvedLanguage ?? "en"),
     label: t("language.label"),
-    disabled:
-      saving ||
-      status === "loading" ||
-      (userId !== null && !settings.isSuccess),
-    error: hasError || settings.isError ? t("language.error") : null,
+    disabled: loading || saving || (userId !== null && !settings.isSuccess),
+    busy: loading || saving,
+    saved: saveState === "savedAccount" || saveState === "savedDevice",
+    message,
+    error,
     canRetry: settings.isError,
+    retrying: settings.isFetching,
     retryLabel: t("actions.retry"),
     onRetry: () => {
       void settings.refetch();
