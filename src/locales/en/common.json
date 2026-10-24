@@ -17,5 +17,13 @@
   },
   "status": {
     "loading": "Loading…"
+  },
+  "language": {
+    "label": "Application language",
+    "error": "Unable to load or save your language preference."
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "Choose the language you want to use in Groovy."
   }
 }

@@ -9,9 +9,11 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { usePageStatus } from "@/hooks/usePageStatus";
 import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
 import { useTheme } from "@/hooks/useTheme";
+import { useAccountLanguage } from "@/hooks/useAccountLanguage";
 
 export default function App() {
   useAppearance();
+  useAccountLanguage()
   useAuthBootstrap();
 
   const { items, label: navigationLabel } = useAppNavigation();

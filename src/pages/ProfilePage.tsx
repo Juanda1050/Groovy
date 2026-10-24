@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PageIntro } from "@/components/PageIntro";
 import { SignOutButton } from "@/components/SignOutButton";
 import { useSignOut } from "@/hooks/useSignOut";
+import { PreferencesSection } from "./PreferenceSection";
 
 export default function ProfilePage() {
   const { t } = useTranslation("profile");
@@ -11,6 +12,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8">
       <PageIntro title={t("title")} description={t("description")} />
+      <PreferencesSection />
 
       <SignOutButton {...signOutProps} />
 
