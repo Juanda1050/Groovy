@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AuthForm } from "@/components/AuthForm";
 import { AuthArtwork } from "@/components/AuthArtwork";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { AuthLoading } from "@/components/AuthLoading";
 import { Card } from "@/components/ui/card";
 import { useAuthForm } from "@/hooks/useAuthForm";
 import { isLocalAuthBypassEnabled } from "@/lib/localDevelopment";
@@ -18,7 +18,7 @@ export default function AuthPage() {
   }
 
   if (status === "loading") {
-    return <PageSkeleton />;
+    return <AuthLoading label={t("loadingSession")} />;
   }
 
   if (status === "authenticated") {

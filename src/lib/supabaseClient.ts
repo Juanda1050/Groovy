@@ -1,6 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/models/database";
-import { env } from "./env";
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/models/database'
+import { env } from './env'
 
 export const supabase = createClient<Database>(
   env.supabaseUrl,
@@ -10,7 +10,7 @@ export const supabase = createClient<Database>(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      flowType: "pkce",
+      flowType: 'pkce',
     },
   },
-);
+)

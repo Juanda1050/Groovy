@@ -2,15 +2,53 @@ export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 export type AuthMode = "signIn" | "signUp" | "verify";
 
-export type AuthFieldName = "email" | "password" | "code";
+export type AuthFieldName = "email" | "password" | "confirmPassword" | "code";
 
 export type AuthFeedback =
   | "invalidInput"
   | "invalidCredentials"
   | "invalidCode"
+  | "emailNotConfirmed"
+  | "weakPassword"
   | "rateLimited"
+  | "network"
   | "requestFailed"
   | "checkEmail";
+
+export type AuthFieldErrors = Partial<Record<AuthFieldName, string>>;
+
+export type PasswordStatus = "empty" | "invalid" | "partial" | "valid";
+
+export type PasswordRuleId =
+  | "length"
+  | "lowercase"
+  | "uppercase"
+  | "number"
+  | "special";
+
+export interface PasswordCheck {
+  id: PasswordRuleId;
+  passed: boolean;
+}
+
+export interface PasswordRuleView extends PasswordCheck {
+  label: string;
+}
+
+export interface PasswordRulesProps {
+  checks: readonly PasswordRuleView[];
+  status: PasswordStatus;
+  label: string;
+  heading: string;
+}
+
+export interface RecordLoaderProps {
+  size?: "sm" | "lg";
+}
+
+export interface AuthLoadingProps {
+  label: string;
+}
 
 export interface AuthUser {
   id: string;
@@ -36,6 +74,7 @@ export interface EmailVerification {
 export interface AuthValues {
   email: string;
   password: string;
+  confirmPassword: string;
   code: string;
 }
 
@@ -46,6 +85,9 @@ export interface AuthField {
   autoComplete: string;
   minLength?: number;
   maxLength: number;
+  inputMode?: "email" | "numeric" | "text";
+  visibilityLabel?: string;
+  onToggleVisibility?: () => void;
 }
 
 export interface AuthFormProps {
@@ -53,8 +95,12 @@ export interface AuthFormProps {
   description: string;
   fields: readonly AuthField[];
   values: AuthValues;
+  fieldErrors: AuthFieldErrors;
+  passwordRules: PasswordRulesProps | null;
   feedback: string | null;
+  feedbackTone: "error" | "info";
   busy: boolean;
+  canSubmit: boolean;
   submitLabel: string;
   switchLabel: string;
   onChange: (name: AuthFieldName, value: string) => void;
@@ -72,10 +118,10 @@ export interface ProtectedRouteProps {
   status: AuthStatus;
 }
 
-export type AuthObserver = (user: AuthUser | null) => void;
-
 export interface AuthArtworkProps {
-  eyebrow: string
-  title: string
-  description: string
+  eyebrow: string;
+  title: string;
+  description: string;
 }
+
+export type AuthObserver = (user: AuthUser | null) => void;

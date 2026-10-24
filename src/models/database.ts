@@ -192,6 +192,23 @@ export type Database = {
         }[]
       }
       delete_user_album: { Args: { p_user_album_id: string }; Returns: boolean }
+      save_profile: {
+        Args: { p_bio?: string; p_display_name: string; p_username: string }
+        Returns: {
+          avatar_url: string | null
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       save_user_album: {
         Args: {
           p_favorite_track_ids?: string[]
@@ -220,6 +237,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      touch_groovy_session: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

@@ -32,5 +32,9 @@
   "preferences": {
     "title": "Make Groovy yours",
     "description": "Choose your language. Your music stays the same."
+  },
+  "session": {
+    "loading": "Getting your space ready…",
+    "connectionError": "We couldn't check your session. Check your connection and try again."
   }
 }

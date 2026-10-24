@@ -1,7 +1,19 @@
-import { useMatch } from 'react-router-dom'
+import { useMatch } from "react-router-dom";
+import { isLocalAuthBypassEnabled } from "@/lib/localDevelopment";
+import { useAuthStore } from "@/stores/authStore";
 
 export function useAppLayout() {
-  const authRoute = useMatch('/auth/*')
+  const status = useAuthStore((state) => state.status);
+  const authRoute = useMatch("/auth/*");
+  const onboardingRoute = useMatch("/onboarding/*");
 
-  return { showNavigation: authRoute === null }
+  const canAccessApp = isLocalAuthBypassEnabled || status === "authenticated";
+
+  return {
+    requiresLogin:
+      !isLocalAuthBypassEnabled && status === "anonymous" && authRoute === null,
+
+    showNavigation:
+      canAccessApp && authRoute === null && onboardingRoute === null,
+  };
 }

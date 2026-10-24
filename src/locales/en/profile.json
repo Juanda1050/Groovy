@@ -1,4 +1,29 @@
 {
-  "title": "Your musical identity.",
-  "description": "Your reviews, favorite albums and listening journey."
+  "title": "Your profile.",
+  "description": "Choose how other listeners see you on Groovy.",
+  "onboarding": {
+    "title": "Make yourself at home.",
+    "description": "Before your first album, tell us a little about yourself."
+  },
+  "fields": {
+    "displayName": "Display name",
+    "username": "Username",
+    "usernameHint": "3–30 characters. Lowercase letters, numbers and underscores.",
+    "bio": "Bio · optional"
+  },
+  "actions": {
+    "continue": "Complete profile",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "retry": "Try again"
+  },
+  "feedback": {
+    "invalidInput": "Check your name, username and bio.",
+    "usernameTaken": "That username is already taken.",
+    "rateLimited": "Too many updates. Wait a moment before trying again.",
+    "failed": "Unable to save your profile. Please try again.",
+    "loadFailed": "Unable to load your profile.",
+    "saved": "Your profile has been saved.",
+    "signInRequired": "Sign in with a real account to save your profile."
+  }
 }

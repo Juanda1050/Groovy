@@ -19,13 +19,37 @@ function mapUser(user: User | null): AuthUser | null {
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const { data, error } = await supabase.auth.getSession();
 
-  if (error) throw error;
+  if (error) {
+    if (error.status === 400 || error.status === 401 || error.status === 403) {
+      await signOut();
+      return null;
+    }
 
-  return mapUser(data.session?.user ?? null);
+    throw error;
+  }
+
+  if (!data.session) return null;
+
+  const { data: active, error: activityError } = await supabase.rpc(
+    "touch_groovy_session",
+  );
+
+  if (activityError) throw activityError;
+
+  if (active !== true) {
+    await signOut();
+    return null;
+  }
+
+  return mapUser(data.session.user);
 }
 
 export function observeAuth(observer: AuthObserver): () => void {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+      return;
+    }
+
     observer(mapUser(session?.user ?? null));
   });
 

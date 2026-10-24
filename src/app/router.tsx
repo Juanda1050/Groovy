@@ -8,12 +8,6 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        index: true,
-        lazy: async () => ({
-          Component: (await import("@/pages/DiscoverPage")).default,
-        }),
-      },
-      {
         path: "auth",
         lazy: async () => ({
           Component: (await import("@/pages/AuthPage")).default,
@@ -22,6 +16,18 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import("@/pages/DiscoverPage")).default,
+            }),
+          },
+          {
+            path: "onboarding",
+            lazy: async () => ({
+              Component: (await import("@/pages/OnboardingPage")).default,
+            }),
+          },
           {
             path: "library",
             lazy: async () => ({

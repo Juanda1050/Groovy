@@ -32,5 +32,9 @@
   "preferences": {
     "title": "Haz Groovy tuyo",
     "description": "Elige tu idioma. Tu música sigue siendo la misma."
+  },
+  "session": {
+    "loading": "Preparando tu espacio…",
+    "connectionError": "No pudimos comprobar tu sesión. Revisa tu conexión e inténtalo de nuevo."
   }
 }

@@ -1,4 +1,29 @@
 {
-  "title": "Tu identidad musical.",
-  "description": "Tus reseñas, álbumes favoritos y recorrido musical."
+  "title": "Tu perfil.",
+  "description": "Elige cómo te ven otras personas en Groovy.",
+  "onboarding": {
+    "title": "Este es tu espacio.",
+    "description": "Antes de tu primer álbum, cuéntanos un poco sobre ti."
+  },
+  "fields": {
+    "displayName": "Nombre público",
+    "username": "Nombre de usuario",
+    "usernameHint": "Entre 3 y 30 caracteres. Minúsculas, números y guion bajo.",
+    "bio": "Biografía · opcional"
+  },
+  "actions": {
+    "continue": "Completar perfil",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "retry": "Reintentar"
+  },
+  "feedback": {
+    "invalidInput": "Revisa tu nombre, nombre de usuario y biografía.",
+    "usernameTaken": "Ese nombre de usuario ya está ocupado.",
+    "rateLimited": "Demasiadas actualizaciones. Espera antes de volver a intentarlo.",
+    "failed": "No se pudo guardar tu perfil. Inténtalo de nuevo.",
+    "loadFailed": "No se pudo cargar tu perfil.",
+    "saved": "Tu perfil se guardó correctamente.",
+    "signInRequired": "Inicia sesión con una cuenta real para guardar tu perfil."
+  }
 }
