@@ -4,13 +4,22 @@ import type { CatalogAlbum } from "./models/spotify.ts";
 export const requestSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("search"),
-    query: z.string().trim().min(3).max(120),
+    query: z.string().trim().min(1).max(120),
     offset: z.number().int().min(0).max(990).default(0),
   }),
   z.object({
     action: z.literal("save"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
     status: z.enum(["pending", "listened"]),
+  }),
+  z.object({
+    action: z.literal("detail"),
+    albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  }),
+  z.object({
+    action: z.literal("tracks"),
+    albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
+    offset: z.number().int().min(0).max(100_000),
   }),
 ]);
 

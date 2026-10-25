@@ -1,0 +1,37 @@
+{
+  "eyebrow": "Album",
+  "library": "My library",
+  "backToSearch": "Back to search",
+  "loading": "Getting your album ready…",
+  "loadingTracks": "Loading the remaining tracks…",
+  "waiting": "Temporary request limit. Retrying in {{count}} s.",
+  "retryAvailable": "You can retry in {{count}} s.",
+  "unavailableTitle": "We couldn't load the album",
+  "error": "We couldn't load this album.",
+  "invalid": "This album link is invalid.",
+  "retry": "Try again",
+  "retryTracks": "Load remaining tracks",
+  "partialTracks": "The track list is still incomplete.",
+  "released": "Released: {{date}}",
+  "trackCount_one": "{{count}} track",
+  "trackCount_other": "{{count}} tracks",
+  "openSpotify": "Open in Spotify",
+  "tracks": "Tracks",
+  "explicit": "Explicit content",
+  "recovery": {
+    "title": "Let's find another reference",
+    "description": "Search for another edition of the album or related titles.",
+    "searchArtist": "Search by artist",
+    "searchAgain": "Review search",
+    "openDiscover": "Explore albums"
+  },
+  "errors": {
+    "UNAUTHORIZED": "Your session ended. Please sign in again.",
+    "INVALID_REQUEST": "We couldn't process this album request.",
+    "RATE_LIMITED": "We've temporarily reached the request limit.",
+    "SPOTIFY_QUOTA": "Spotify has temporarily limited requests from this application.",
+    "SPOTIFY_UNAVAILABLE": "Spotify isn't responding right now.",
+    "ALBUM_NOT_FOUND": "Spotify couldn't find this album. Try another edition or explore the artist.",
+    "SERVER_ERROR": "Something went wrong while loading this information."
+  }
+}

@@ -1,23 +1,25 @@
 {
-  "eyebrow": "Tu vida en álbumes",
-  "title": "Encuentra tu próxima obsesión.",
-  "description": "Busca álbumes y empieza tu colección musical.",
-  "searchLabel": "Buscar álbumes",
+  "eyebrow": "Descubre música",
+  "title": "Tu próximo álbum favorito.",
+  "description": "Encuentra ese disco que tienes en mente y guárdalo para escucharlo después.",
   "searchPlaceholder": "Busca un álbum o artista",
-  "searchHint": "Escribe al menos 3 caracteres.",
-  "signInRequired": "Inicia sesión para buscar y guardar álbumes.",
-  "loading": "Buscando álbumes…",
-  "empty": "No encontramos álbumes. Prueba con otro nombre.",
+  "results": "Álbumes",
+  "initial": {
+    "title": "Todo empieza con un álbum",
+    "description": "Busca por título o artista y empieza a construir tu colección."
+  },
   "actions": {
-    "save": "Guardar",
-    "saveListened": "Guardar como escuchado",
-    "saving": "Guardando…"
+    "save": "Guardar como pendiente",
+    "saveListened": "Marcar como escuchado",
+    "saving": "Guardando…",
+    "clear": "Limpiar búsqueda"
   },
   "saved": {
-    "pending": "En tus pendientes",
-    "listened": "En tus escuchados"
+    "pending": "Pendiente",
+    "listened": "Escuchado"
   },
   "pagination": {
+    "label": "Páginas de resultados",
     "page": "Página {{count}}",
     "previous": "Anterior",
     "next": "Siguiente"

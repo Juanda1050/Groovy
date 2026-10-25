@@ -7,6 +7,7 @@ import {
   requestSchema,
   searchSchema,
 } from "./validation.ts";
+import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
 import type { Database } from "./models/database.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -31,6 +32,8 @@ const market = Deno.env.get("SPOTIFY_MARKET") ?? "MX";
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
+  let userRateLimited = false;
+
   const headers = new Headers({
     "Content-Type": "application/json",
     "Cache-Control": "no-store",
@@ -44,6 +47,10 @@ Deno.serve(async (request) => {
       "authorization, apikey, content-type, x-client-info",
     );
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set(
+      "Access-Control-Expose-Headers",
+      "Retry-After, X-Groovy-Rate-Limit",
+    );
   }
 
   function reply(body: unknown, status = 200): Response {
@@ -70,17 +77,17 @@ Deno.serve(async (request) => {
     }
 
     const userClient = createClient<Database>(url, publicKey, {
-      global: { headers: { Authorization: authorization } },
+      global: {
+        headers: { Authorization: authorization },
+      },
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       },
     });
 
-    const jwt = authorization.slice(7);
-
     const { data: identity, error: identityError } =
-      await userClient.auth.getClaims(jwt);
+      await userClient.auth.getClaims(authorization.slice(7));
 
     if (
       identityError ||
@@ -114,7 +121,35 @@ Deno.serve(async (request) => {
     }
 
     if (!budget.allowed) {
+      userRateLimited = true;
+
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
+    }
+
+    if (input.action === "detail") {
+      const parameters = new URLSearchParams({ market });
+
+      const raw = await getSpotifyJson(
+        `albums/${input.albumId}?${parameters}`,
+        admin,
+      );
+
+      return reply(normalizeAlbumDetail(raw));
+    }
+
+    if (input.action === "tracks") {
+      const parameters = new URLSearchParams({
+        market,
+        limit: "50",
+        offset: String(input.offset),
+      });
+
+      const raw = await getSpotifyJson(
+        `albums/${input.albumId}/tracks?${parameters}`,
+        admin,
+      );
+
+      return reply(normalizeTracksPage(raw));
     }
 
     if (input.action === "search") {
@@ -146,17 +181,15 @@ Deno.serve(async (request) => {
 
       if (error) throw new ApiError(503, "SERVER_ERROR");
 
-      return reply({
-        items: albums.map((album) => {
-          const existing = saved?.find(
-            (item) => item.spotify_album_id === album.id,
-          );
+      const statuses = new Map(
+        saved?.map((item) => [item.spotify_album_id, item.status]) ?? [],
+      );
 
-          return {
-            ...album,
-            libraryStatus: existing?.status ?? null,
-          };
-        }),
+      return reply({
+        items: albums.map((album) => ({
+          ...album,
+          libraryStatus: statuses.get(album.id) ?? null,
+        })),
         nextOffset:
           raw.albums.next && input.offset + 10 <= 990
             ? input.offset + 10
@@ -171,7 +204,9 @@ Deno.serve(async (request) => {
       .eq("spotify_album_id", input.albumId)
       .maybeSingle();
 
-    if (existingError) throw new ApiError(503, "SERVER_ERROR");
+    if (existingError) {
+      throw new ApiError(503, "SERVER_ERROR");
+    }
 
     if (existing) {
       return reply({
@@ -245,6 +280,7 @@ Deno.serve(async (request) => {
     }
 
     if (saveError?.message === "RATE_LIMITED") {
+      userRateLimited = true;
       throw new ApiError(429, "RATE_LIMITED", 60);
     }
 
@@ -265,10 +301,22 @@ Deno.serve(async (request) => {
       headers.set("Retry-After", String(failure.retryAfter));
     }
 
+    const rateLimitScope =
+      failure.status === 429
+        ? userRateLimited
+          ? "user"
+          : "shared"
+        : undefined;
+
+    if (rateLimitScope) {
+      headers.set("X-Groovy-Rate-Limit", rateLimitScope);
+    }
+
     return reply(
       {
         error: failure.code,
         retryAfter: failure.retryAfter,
+        rateLimitScope,
       },
       failure.status,
     );

@@ -20,7 +20,9 @@ export interface SaveCatalogAlbumInput {
 
 export type CatalogRequest =
   | { action: "search"; query: string; offset: number }
-  | { action: "save"; albumId: string; status: ListeningStatus };
+  | { action: "save"; albumId: string; status: ListeningStatus }
+  | { action: "detail"; albumId: string }
+  | { action: "tracks"; albumId: string; offset: number };
 
 export interface SearchAlbumCardLabels {
   save: string;

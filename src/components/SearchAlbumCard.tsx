@@ -1,9 +1,10 @@
-import { Check, Music2 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { LoadingButton } from './LoadingButton'
-import { RecordLoader } from './RecordLoader'
-import type { SearchAlbumCardProps } from '@/models/catalog'
+import { Check, Clock3, ExternalLink, Music2, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { RecordLoader } from "@/components/RecordLoader";
+import { useAlbumReturn } from "@/hooks/useAlbumReturn";
+import { useAlbumPrefetch } from "@/hooks/useAlbumPrefetch";
+import type { SearchAlbumCardProps } from "@/models/catalog";
 
 export function SearchAlbumCard({
   album,
@@ -12,97 +13,173 @@ export function SearchAlbumCard({
   pendingStatus,
   onSave,
 }: SearchAlbumCardProps) {
+  const { detailNavigationState } = useAlbumReturn();
+
+  const { elementRef, onPointerEnter, onPointerLeave, onFocus, onTouchStart } =
+    useAlbumPrefetch(album.id);
+
   return (
-    <Card className="gap-0 overflow-hidden rounded-2xl py-0">
-      <div className="aspect-square bg-muted">
-        {album.coverUrl ? (
-          <img
-            src={album.coverUrl}
-            alt=""
-            width={300}
-            height={300}
-            loading="lazy"
-            decoding="async"
-            className="size-full object-contain"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center">
-            <Music2
-              aria-hidden="true"
-              className="size-10 text-muted-foreground/50"
+    <article
+      ref={elementRef}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      onFocus={onFocus}
+      onTouchStart={onTouchStart}
+      className="group min-w-0"
+    >
+      <div className="relative">
+        <Link
+          to={`/albums/${album.id}`}
+          state={detailNavigationState}
+          aria-label={album.name}
+          className="
+            block aspect-square overflow-hidden rounded-xl
+            bg-muted shadow-sm ring-1 ring-black/5
+            dark:ring-white/10
+            focus-visible:outline-none focus-visible:ring-2
+            focus-visible:ring-primary focus-visible:ring-offset-2
+            focus-visible:ring-offset-background
+          "
+        >
+          {album.coverUrl ? (
+            <img
+              src={album.coverUrl}
+              alt=""
+              width={300}
+              height={300}
+              loading="lazy"
+              decoding="async"
+              className="
+                size-full object-cover transition-transform duration-300
+                motion-safe:group-hover:scale-[1.03]
+                motion-reduce:transition-none
+              "
             />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <Music2
+                aria-hidden="true"
+                className="size-12 text-muted-foreground/50"
+              />
+            </div>
+          )}
+        </Link>
 
-      <CardContent className="space-y-3 p-3 sm:p-4">
-        <div className="min-w-0">
-          <h2
-            title={album.name}
-            className="truncate text-sm font-semibold"
-          >
-            {album.name}
-          </h2>
+        <a
+          href={album.spotifyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Spotify: ${album.name}`}
+          title={`Spotify: ${album.name}`}
+          className="
+            absolute right-2 top-2 flex size-9 items-center
+            justify-center rounded-full border border-white/15
+            bg-black/60 text-white backdrop-blur-md
+            hover:bg-black/80 focus-visible:outline-none
+            focus-visible:ring-2 focus-visible:ring-primary
+          "
+        >
+          <ExternalLink aria-hidden="true" className="size-3.5" />
+        </a>
 
-          <p className="mt-1 truncate text-xs text-muted-foreground">
-            {album.artists.map((artist) => artist.name).join(', ')}
-          </p>
-
-          <a
-            href={album.spotifyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              mt-2 inline-flex min-h-9 items-center
-              text-xs text-primary hover:underline
-            "
-          >
-            Spotify ↗
-          </a>
-        </div>
-
-        {album.libraryStatus ? (
-          <p
-            role="status"
-            className="flex min-h-11 items-center gap-2 text-xs text-primary"
-          >
-            <Check aria-hidden="true" className="size-4 shrink-0" />
-
-            {album.libraryStatus === 'pending'
-              ? labels.savedPending
-              : labels.savedListened}
-          </p>
-        ) : (
-          <div className="flex items-center gap-1">
-            <LoadingButton
+        {!album.libraryStatus && (
+          <div className="absolute bottom-2 right-2 flex gap-1.5">
+            <Button
               type="button"
-              size="sm"
-              loading={pendingStatus === 'pending'}
-              loadingLabel={labels.saving}
+              variant="ghost"
+              size="icon"
               disabled={disabled}
-              onClick={() => onSave(album.id, 'pending')}
-              className="min-w-0 flex-1 px-2 text-xs"
+              aria-label={`${labels.save}: ${album.name}`}
+              title={labels.save}
+              aria-busy={pendingStatus === "pending"}
+              onClick={() => onSave(album.id, "pending")}
+              className="
+                size-10 rounded-full border-white/15
+                bg-black/65 text-white backdrop-blur-md
+                hover:bg-primary hover:text-primary-foreground
+              "
             >
-              {labels.save}
-            </LoadingButton>
+              {pendingStatus === "pending" ? (
+                <RecordLoader size="sm" />
+              ) : (
+                <Plus aria-hidden="true" />
+              )}
+            </Button>
 
             <Button
               type="button"
               variant="ghost"
               size="icon"
               disabled={disabled}
-              aria-label={labels.saveListened}
+              aria-label={`${labels.saveListened}: ${album.name}`}
               title={labels.saveListened}
-              aria-busy={pendingStatus === 'listened'}
-              onClick={() => onSave(album.id, 'listened')}
+              aria-busy={pendingStatus === "listened"}
+              onClick={() => onSave(album.id, "listened")}
+              className="
+                size-10 rounded-full border-white/15
+                bg-black/65 text-white backdrop-blur-md
+                hover:bg-primary hover:text-primary-foreground
+              "
             >
-              {pendingStatus === 'listened'
-                ? <RecordLoader />
-                : <Check aria-hidden="true" className="size-4" />}
+              {pendingStatus === "listened" ? (
+                <RecordLoader size="sm" />
+              ) : (
+                <Check aria-hidden="true" />
+              )}
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
-  )
+      </div>
+
+      <div className="min-w-0 pt-3">
+        <h3
+          title={album.name}
+          className="truncate text-sm font-semibold leading-5"
+        >
+          <Link
+            to={`/albums/${album.id}`}
+            state={detailNavigationState}
+            className="
+              rounded-sm hover:text-primary
+              focus-visible:outline-none focus-visible:ring-2
+              focus-visible:ring-ring
+            "
+          >
+            {album.name}
+          </Link>
+        </h3>
+
+        <p
+          title={album.artists.map((artist) => artist.name).join(", ")}
+          className="mt-1 truncate text-xs leading-5 text-muted-foreground"
+        >
+          {album.artists.map((artist) => artist.name).join(", ")}
+        </p>
+
+        {album.libraryStatus && (
+          <p
+            role="status"
+            className={`
+              mt-2 flex items-center gap-1.5 text-xs font-medium
+              ${
+                album.libraryStatus === "pending"
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-sky-700 dark:text-sky-300"
+              }
+            `}
+          >
+            {album.libraryStatus === "pending" ? (
+              <Clock3 aria-hidden="true" className="size-3.5" />
+            ) : (
+              <Check aria-hidden="true" className="size-3.5" />
+            )}
+
+            {album.libraryStatus === "pending"
+              ? labels.savedPending
+              : labels.savedListened}
+          </p>
+        )}
+      </div>
+    </article>
+  );
 }

@@ -35,6 +35,12 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            path: "albums/:albumId",
+            lazy: async () => ({
+              Component: (await import("@/pages/AlbumDetailPage")).default,
+            }),
+          },
+          {
             path: "community",
             lazy: async () => ({
               Component: (await import("@/pages/CommunityPage")).default,

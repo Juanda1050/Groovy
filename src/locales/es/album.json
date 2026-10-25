@@ -1,0 +1,37 @@
+{
+  "eyebrow": "Álbum",
+  "library": "Mi biblioteca",
+  "backToSearch": "Volver a la búsqueda",
+  "loading": "Preparando tu álbum…",
+  "loadingTracks": "Completando la lista de canciones…",
+  "waiting": "Límite temporal de consultas. Reintentaremos en {{count}} s.",
+  "retryAvailable": "Puedes reintentar en {{count}} s.",
+  "unavailableTitle": "No pudimos cargar el álbum",
+  "error": "No pudimos cargar este álbum.",
+  "invalid": "El enlace del álbum no es válido.",
+  "retry": "Reintentar",
+  "retryTracks": "Completar canciones",
+  "partialTracks": "La lista de canciones todavía está incompleta.",
+  "released": "Lanzamiento: {{date}}",
+  "trackCount_one": "{{count}} canción",
+  "trackCount_other": "{{count}} canciones",
+  "openSpotify": "Abrir en Spotify",
+  "tracks": "Canciones",
+  "explicit": "Contenido explícito",
+  "recovery": {
+    "title": "Podemos buscar otra referencia",
+    "description": "Busca otra edición del álbum o títulos relacionados.",
+    "searchArtist": "Buscar por artista",
+    "searchAgain": "Revisar búsqueda",
+    "openDiscover": "Explorar álbumes"
+  },
+  "errors": {
+    "UNAUTHORIZED": "Tu sesión terminó. Inicia sesión nuevamente.",
+    "INVALID_REQUEST": "No pudimos procesar la consulta de este álbum.",
+    "RATE_LIMITED": "Alcanzamos temporalmente el límite de consultas.",
+    "SPOTIFY_QUOTA": "Spotify ha limitado temporalmente las consultas de la aplicación.",
+    "SPOTIFY_UNAVAILABLE": "Spotify no está respondiendo en este momento.",
+    "ALBUM_NOT_FOUND": "Spotify no encontró este álbum. Puedes buscar otra edición o explorar su artista.",
+    "SERVER_ERROR": "Ocurrió un problema al cargar la información."
+  }
+}

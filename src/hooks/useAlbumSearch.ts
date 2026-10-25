@@ -1,118 +1,142 @@
-import { useState } from 'react'
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
-import { CatalogError } from '@/lib/catalogError'
-import {
-  saveCatalogAlbum,
-  searchAlbums,
-} from '@/services/spotifyService'
-import { useAuthStore } from '@/stores/authStore'
-import { useDebouncedValue } from './useDebouncedValue'
-import type {
-  CatalogPage,
-  ListeningStatus,
-} from '@/models/catalog'
+import { useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CatalogError } from "@/lib/catalogError";
+import { saveCatalogAlbum, searchAlbums } from "@/services/spotifyService";
+import { useAuthStore } from "@/stores/authStore";
+import { useDebouncedValue } from "./useDebouncedValue";
+import type { CatalogPage, ListeningStatus } from "@/models/catalog";
 
 export function useAlbumSearch() {
-  const userId = useAuthStore((state) => state.user?.id ?? null)
-  const queryClient = useQueryClient()
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const saveLock = useRef(false);
 
-  const [query, setQuery] = useState('')
-  const [offset, setOffset] = useState(0)
+  const query = (searchParams.get("q") ?? "").slice(0, 120);
+  const requestedOffset = Number(searchParams.get("offset") ?? 0);
 
-  const normalized = query.trim().replace(/\s+/g, ' ')
-  const debounced = useDebouncedValue(normalized, 400)
-  const isDebouncing = normalized !== debounced
-  const canSearch = normalized.length >= 3
+  const offset =
+    Number.isInteger(requestedOffset) &&
+    requestedOffset >= 0 &&
+    requestedOffset <= 990 &&
+    requestedOffset % 10 === 0
+      ? requestedOffset
+      : 0;
+
+  const normalized = query.trim().replace(/\s+/g, " ");
+  const debounced = useDebouncedValue(normalized, 400);
+  const isDebouncing = normalized !== debounced;
+  const canSearch = normalized.length >= 1;
+  const enabled = userId !== null && canSearch && !isDebouncing;
 
   const search = useQuery({
-    queryKey: ['albumSearch', userId, debounced, offset],
-    enabled: userId !== null && canSearch && !isDebouncing,
+    queryKey: ["albumSearch", userId, debounced, offset],
+    enabled,
     staleTime: 2 * 60_000,
-    gcTime: 2 * 60_000,
+    gcTime: 5 * 60_000,
     retry: false,
-    queryFn: ({ signal }) =>
-      searchAlbums(debounced, offset, signal),
-  })
+    refetchOnWindowFocus: false,
+    queryFn: ({ signal }) => searchAlbums(debounced, offset, signal),
+  });
 
   const save = useMutation({
     mutationFn: saveCatalogAlbum,
     retry: false,
     onSuccess: (saved) => {
-      if (useAuthStore.getState().user?.id !== userId) return
+      if (useAuthStore.getState().user?.id !== userId) return;
 
       queryClient.setQueriesData<CatalogPage>(
-        { queryKey: ['albumSearch', userId] },
-        (previous) => previous
-          ? {
-              ...previous,
-              items: previous.items.map((album) =>
-                album.id === saved.spotifyAlbumId
-                  ? { ...album, libraryStatus: saved.status }
-                  : album,
-              ),
-            }
-          : previous,
-      )
+        { queryKey: ["albumSearch", userId] },
+        (previous) =>
+          previous
+            ? {
+                ...previous,
+                items: previous.items.map((album) =>
+                  album.id === saved.spotifyAlbumId
+                    ? { ...album, libraryStatus: saved.status }
+                    : album,
+                ),
+              }
+            : previous,
+      );
 
       void queryClient.invalidateQueries({
-        queryKey: ['library', userId],
-        refetchType: 'none',
-      })
+        queryKey: ["library", userId],
+        refetchType: "none",
+      });
     },
-  })
+    onSettled: () => {
+      saveLock.current = false;
+    },
+  });
+
+  function updateSearch(value: string, nextOffset: number): void {
+    const params = new URLSearchParams();
+
+    if (value.trim()) {
+      params.set("q", value.slice(0, 120));
+
+      if (nextOffset > 0) {
+        params.set("offset", String(nextOffset));
+      }
+    }
+
+    setSearchParams(params, { replace: true });
+  }
 
   function onQueryChange(value: string): void {
-    setQuery(value)
-    setOffset(0)
+    updateSearch(value, 0);
+
+    if (!saveLock.current) {
+      save.reset();
+    }
   }
 
-  function onSave(
-    albumId: string,
-    status: ListeningStatus,
-  ): void {
-    if (!userId || save.isPending) return
+  function onSave(albumId: string, status: ListeningStatus): void {
+    if (!userId || saveLock.current) return;
 
-    save.mutate({ albumId, status })
+    saveLock.current = true;
+    save.mutate({ albumId, status });
   }
 
-  const failure = save.error ?? search.error
+  const loading =
+    userId !== null && canSearch && (isDebouncing || search.isFetching);
+
+  const visibleData = enabled ? search.data : undefined;
+  const failure = save.error ?? (enabled ? search.error : null);
 
   return {
     query,
     onQueryChange,
     onSave,
-    items: search.data?.items ?? [],
+    items: visibleData?.items ?? [],
     needsSignIn: userId === null,
     canSearch,
     isDebouncing,
-    loading: canSearch && (isDebouncing || search.isFetching),
+    loading,
     saving: save.isPending,
     savingAlbumId: save.isPending ? save.variables.albumId : null,
     savingStatus: save.isPending ? save.variables.status : null,
     errorCode: failure
       ? failure instanceof CatalogError
         ? failure.code
-        : 'SERVER_ERROR'
+        : "SERVER_ERROR"
       : null,
     pageNumber: Math.floor(offset / 10) + 1,
     hasPrevious: offset > 0,
-    hasNext: search.data?.nextOffset !== null &&
-      search.data?.nextOffset !== undefined,
+    hasNext: visibleData?.nextOffset != null,
     onPrevious: () => {
-      if (!search.isFetching) {
-        setOffset((current) => Math.max(0, current - 10))
+      if (!loading && offset > 0) {
+        updateSearch(query, Math.max(0, offset - 10));
       }
     },
     onNext: () => {
-      const next = search.data?.nextOffset
+      const next = visibleData?.nextOffset;
 
-      if (!search.isFetching && next !== null && next !== undefined) {
-        setOffset(next)
+      if (!loading && next != null) {
+        updateSearch(query, next);
       }
     },
-  }
+  };
 }
