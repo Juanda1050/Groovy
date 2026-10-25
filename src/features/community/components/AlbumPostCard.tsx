@@ -1,22 +1,30 @@
 import {
-BookmarkCheck,
-BookmarkPlus,
-Disc3,
-Heart,
-MessageCircle,
+  BookmarkCheck,
+  BookmarkPlus,
+  Disc3,
+  Headphones,
+  Heart,
+  MessageCircle,
 } from "lucide-react";
-import { useId,useState } from "react";
+
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { AlbumPostComments } from "@/features/community/components/AlbumPostComments";
+import { AlbumPostReactionsDialog } from "@/features/community/components/AlbumPostReactionsDialog";
 import { AlbumRatingBadge } from "@/features/library/components/AlbumRatingBadge";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
+
 import { Button } from "@/shared/components/ui/button";
 
 import type { AlbumFeedCardProps } from "@/models/library";
 
+const postActionHover =
+  "hover:bg-transparent hover:text-primary active:bg-transparent";
+
 export function AlbumPostCard({
+  variant = "card",
   item,
   social,
   viewerId,
@@ -27,9 +35,11 @@ export function AlbumPostCard({
   onSaveAlbum,
 }: AlbumFeedCardProps) {
   const { t, i18n } = useTranslation("community");
+
+  const [reactionsOpen, setReactionsOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentsMounted, setCommentsMounted] = useState(false);
   const [failedCover, setFailedCover] = useState<string | null>(null);
+
   const commentsId = useId();
 
   const name =
@@ -54,93 +64,105 @@ export function AlbumPostCard({
     maximumFractionDigits: 1,
   }).format(social?.reaction_count ?? 0);
 
+  const profileLayout = variant === "profile";
   const saved = Boolean(social?.library_status);
-  const canFollow = Boolean(viewerId && viewerId !== item.user_id);
+
+  const canFollow =
+    !profileLayout && Boolean(viewerId && viewerId !== item.user_id);
+
   const review = item.review?.trim();
 
-  return (
-    <article
-      className="
-        min-w-0 rounded-2xl border border-border/60
-        bg-card px-5 pb-3 pt-4 text-card-foreground
-        shadow-sm shadow-black/2.5 sm:px-6 sm:pt-5
-      "
-    >
-      <header className="flex min-w-0 items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onProfile}
-          aria-label={t("social.openProfile", { name })}
-          className="
-            shrink-0 rounded-full focus-visible:outline-none
-            focus-visible:ring-2 focus-visible:ring-ring
-          "
-        >
-          <UserAvatar name={name} src={item.author?.avatar_url ?? null} />
-        </button>
+  const containerClassName = profileLayout
+    ? "min-w-0 rounded-2xl border border-border/80 bg-card px-4 pb-3 pt-4 text-card-foreground shadow-[0_2px_8px_-2px_rgb(0_0_0/0.12),0_10px_24px_-18px_rgb(0_0_0/0.24)] sm:px-5 sm:pt-5"
+    : "min-w-0 rounded-2xl border border-border/60 bg-card px-5 pb-3 pt-4 text-card-foreground shadow-sm shadow-black/2.5 sm:px-6 sm:pt-5";
 
-        <div className="min-w-0 flex-1">
+  return (
+    <article className={containerClassName}>
+      {profileLayout ? (
+        <header className="mb-3 flex min-w-0 items-center justify-between gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <Headphones
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-primary/70"
+            />
+
+            <span className="truncate">{t("post.listened")}</span>
+          </span>
+
+          <time
+            dateTime={item.updated_at}
+            title={fullDate}
+            className="shrink-0 tabular-nums"
+          >
+            {shortDate}
+          </time>
+        </header>
+      ) : (
+        <header className="flex min-w-0 items-center gap-2.5">
           <button
             type="button"
             onClick={onProfile}
-            className="
-              block max-w-full truncate rounded-sm text-left
-              text-sm font-semibold leading-5 hover:underline
-              focus-visible:outline-none focus-visible:ring-2
-              focus-visible:ring-ring
-            "
+            aria-label={t("social.openProfile", { name })}
+            className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {name}
+            <UserAvatar name={name} src={item.author?.avatar_url ?? null} />
           </button>
 
-          <div
-            className="
-              flex min-w-0 items-center gap-2
-              text-[11px] leading-4 text-muted-foreground
-            "
-          >
-            {item.author?.username && (
-              <span className="max-w-28 truncate sm:max-w-48">
-                @{item.author.username}
-              </span>
-            )}
-
-            <time
-              dateTime={item.updated_at}
-              title={fullDate}
-              className="shrink-0"
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={onProfile}
+              className="block max-w-full truncate rounded-sm text-left text-sm font-semibold leading-5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {shortDate}
-            </time>
-          </div>
-        </div>
+              {name}
+            </button>
 
-        {canFollow && (
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={busy || !social}
-            onClick={onFollow}
-            aria-label={t(
-              social?.following_author ? "social.unfollow" : "social.follow",
-            )}
-            title={t(
-              social?.following_author ? "social.unfollow" : "social.follow",
-            )}
-            className={`
-              -mr-2 min-h-11 shrink-0 rounded-lg px-2
-              text-xs hover:bg-primary/5
-              ${
-                social?.following_author
-                  ? "text-muted-foreground"
-                  : "text-primary"
-              }
-            `}
-          >
-            {t(social?.following_author ? "social.following" : "social.follow")}
-          </Button>
-        )}
-      </header>
+            <div className="flex min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+              {item.author?.username && (
+                <span className="max-w-28 truncate sm:max-w-48">
+                  @{item.author.username}
+                </span>
+              )}
+
+              <time
+                dateTime={item.updated_at}
+                title={fullDate}
+                className="shrink-0"
+              >
+                {shortDate}
+              </time>
+            </div>
+          </div>
+
+          {canFollow && (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy || !social}
+              onClick={onFollow}
+              aria-label={t(
+                social?.following_author ? "social.unfollow" : "social.follow",
+              )}
+              title={t(
+                social?.following_author ? "social.unfollow" : "social.follow",
+              )}
+              className={`
+                -mr-2 min-h-11 shrink-0 rounded-lg px-2
+                text-xs hover:bg-primary/5
+                ${
+                  social?.following_author
+                    ? "text-muted-foreground"
+                    : "text-primary"
+                }
+              `}
+            >
+              {t(
+                social?.following_author ? "social.following" : "social.follow",
+              )}
+            </Button>
+          )}
+        </header>
+      )}
 
       <Link
         to={`/albums/${item.spotify_album_id}`}
@@ -148,17 +170,18 @@ export function AlbumPostCard({
         aria-label={t("post.openAlbum", {
           album: item.album?.name ?? t("post.album"),
         })}
-        className="
-          group mt-3 flex min-w-0 items-center gap-3 rounded-lg
-          focus-visible:outline-none focus-visible:ring-2
-          focus-visible:ring-ring sm:gap-4
-        "
+        className={
+          profileLayout
+            ? "group flex min-w-0 items-start gap-3.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
+            : "group mt-3 flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
+        }
       >
         <div
-          className="
-            flex size-24 shrink-0 items-center justify-center
-            overflow-hidden rounded-lg bg-muted sm:size-32
-          "
+          className={
+            profileLayout
+              ? "flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border/50 sm:size-24"
+              : "flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted sm:size-32"
+          }
         >
           {cover && failedCover !== cover ? (
             <img
@@ -168,10 +191,7 @@ export function AlbumPostCard({
               height={128}
               loading="lazy"
               decoding="async"
-              className="
-                size-full object-cover transition-opacity
-                group-hover:opacity-90
-              "
+              className="size-full object-cover transition-opacity group-hover:opacity-90"
               onError={() => setFailedCover(cover)}
             />
           ) : (
@@ -184,11 +204,11 @@ export function AlbumPostCard({
 
         <div className="min-w-0 flex-1 space-y-1">
           <h2
-            className="
-              line-clamp-2 wrap-break-word text-[15px]
-              font-semibold leading-5 transition-colors
-              group-hover:text-primary sm:text-base
-            "
+            className={
+              profileLayout
+                ? "line-clamp-2 wrap-break-word text-base font-semibold leading-6 tracking-tight transition-colors group-hover:text-primary sm:text-lg"
+                : "line-clamp-2 wrap-break-word text-[15px] font-semibold leading-5 transition-colors group-hover:text-primary sm:text-base"
+            }
           >
             {item.album?.name ?? t("post.album")}
           </h2>
@@ -204,7 +224,8 @@ export function AlbumPostCard({
               <AlbumRatingBadge rating={item.rating} />
             </div>
           ) : (
-            !review && (
+            !review &&
+            !profileLayout && (
               <p className="text-xs leading-5 text-muted-foreground">
                 {t("post.listened")}
               </p>
@@ -215,57 +236,82 @@ export function AlbumPostCard({
 
       {review && (
         <p
-          className="
-            mt-3 whitespace-pre-wrap wrap-break-word
-            text-[15px] leading-6 text-foreground/90
-          "
+          className={
+            profileLayout
+              ? "mt-3.5 whitespace-pre-wrap wrap-break-word text-[15px] leading-7 text-foreground/90"
+              : "mt-3 whitespace-pre-wrap wrap-break-word text-[15px] leading-6 text-foreground/90"
+          }
         >
           {review}
         </p>
       )}
 
       <footer
-        className="
-          mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)]
-          items-center gap-1 border-t border-border/45 pt-1.5
-        "
+        className={
+          profileLayout
+            ? "mt-2.5 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-1"
+            : "mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-1 border-t border-border/45 pt-1.5"
+        }
       >
-        <Button
-          type="button"
-          variant="ghost"
-          aria-pressed={social?.reacted ?? false}
-          aria-label={t(social?.reacted ? "social.unreact" : "social.react")}
-          disabled={busy || !social}
-          onClick={onReaction}
-          className="
-            -ml-2 min-h-11 gap-1.5 rounded-lg px-2
-            text-muted-foreground hover:bg-primary/5
-            hover:text-primary aria-pressed:text-primary
-          "
-        >
-          <Heart
-            aria-hidden="true"
-            className={`size-4 ${social?.reacted ? "fill-current" : ""}`}
-          />
-          {social && <span className="text-xs tabular-nums">{count}</span>}
-        </Button>
+        <div className="-ml-2 inline-flex items-center gap-0">
+          <Button
+            type="button"
+            variant="ghost"
+            aria-pressed={social?.reacted ?? false}
+            aria-label={t(social?.reacted ? "social.unreact" : "social.react")}
+            title={t(social?.reacted ? "social.unreact" : "social.react")}
+            disabled={busy || !social}
+            onClick={onReaction}
+            className={`
+              h-11 w-9 justify-end rounded-md p-0 pr-1
+              text-muted-foreground aria-pressed:text-primary
+              ${postActionHover}
+            `}
+          >
+            <Heart
+              aria-hidden="true"
+              className={`size-4 ${social?.reacted ? "fill-current" : ""}`}
+            />
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={!viewerId || !social}
+            aria-label={t("reactions.open")}
+            title={t("reactions.open")}
+            aria-haspopup="dialog"
+            onClick={() => setReactionsOpen(true)}
+            className={`
+              min-h-11 min-w-6 justify-start rounded-md
+              p-0 pr-2 text-xs font-medium tabular-nums
+              text-muted-foreground
+              ${postActionHover}
+            `}
+          >
+            {count}
+          </Button>
+        </div>
 
         <Button
           type="button"
           variant="ghost"
-          aria-label={t("comments.title")}
-          title={t("comments.title")}
+          aria-label={t(
+            commentsOpen ? "comments.closeComposer" : "comments.openComposer",
+          )}
+          title={t(
+            commentsOpen ? "comments.closeComposer" : "comments.openComposer",
+          )}
           aria-expanded={commentsOpen}
-          aria-controls={commentsMounted ? commentsId : undefined}
+          aria-controls={commentsId}
           onClick={() => {
-            setCommentsMounted(true);
             setCommentsOpen((current) => !current);
           }}
-          className="
+          className={`
             min-h-11 rounded-lg px-2 text-muted-foreground
-            hover:bg-primary/5 hover:text-primary
             aria-expanded:text-primary
-          "
+            ${postActionHover}
+          `}
         >
           <MessageCircle aria-hidden="true" className="size-4" />
         </Button>
@@ -273,12 +319,10 @@ export function AlbumPostCard({
         {saved ? (
           <span
             title={t("social.inLibrary")}
-            className="
-              inline-flex min-h-11 min-w-0 items-center gap-1.5
-              justify-self-end px-2 text-xs text-primary
-            "
+            className="inline-flex min-h-11 min-w-0 items-center gap-1.5 justify-self-end px-2 text-xs text-primary"
           >
             <BookmarkCheck aria-hidden="true" className="size-4 shrink-0" />
+
             <span className="truncate">{t("social.savedShort")}</span>
           </span>
         ) : (
@@ -289,23 +333,27 @@ export function AlbumPostCard({
             onClick={onSaveAlbum}
             aria-label={t("social.saveAlbum")}
             title={t("social.saveAlbum")}
-            className="
-              min-h-11 min-w-0 gap-1.5 justify-self-end
-              rounded-lg px-2 text-xs text-muted-foreground
-              hover:bg-primary/5 hover:text-primary
-            "
+            className="min-h-11 min-w-0 gap-1.5 justify-self-end rounded-lg px-2 text-xs text-muted-foreground hover:bg-primary/5 hover:text-primary"
           >
             <BookmarkPlus aria-hidden="true" className="size-4 shrink-0" />
+
             <span className="truncate">{t("social.saveShort")}</span>
           </Button>
         )}
       </footer>
 
-      {commentsMounted && (
-        <div id={commentsId}>
-          <AlbumPostComments postId={item.id} open={commentsOpen} />
-        </div>
+      {reactionsOpen && (
+        <AlbumPostReactionsDialog
+          postId={item.id}
+          count={social?.reaction_count ?? 0}
+          open={reactionsOpen}
+          onOpenChange={setReactionsOpen}
+        />
       )}
+
+      <div id={commentsId}>
+        <AlbumPostComments postId={item.id} open={commentsOpen} />
+      </div>
     </article>
   );
 }

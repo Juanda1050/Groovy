@@ -102,8 +102,8 @@
     "confirmDelete": "Delete",
     "length": "{{count}} / {{max}}",
     "tooLong": "Comments can contain up to {{max}} characters.",
-    "offline": "Live updates are unavailable. You can refresh manually.",
-    "updates": "New comments · Refresh",
+    "offline": "Live updates are unavailable. They will resume when the connection returns.",
+    "updates": "Show new comments",
     "more": "See older comments",
     "remaining": "You can post again in {{count}} s.",
     "edit": "Edit comment",
@@ -113,6 +113,19 @@
     "edited": "edited",
     "editConflict": "This comment changed in another session. Review the current version before saving.",
     "keepChanges": "Keep my changes",
-    "currentVersion": "Current version"
+    "currentVersion": "Current version",
+    "options": "Comment options",
+    "openComposer": "Write a comment and see more",
+    "closeComposer": "Close the comment box"
+  },
+  "reactions": {
+    "title": "Likes",
+    "description": "People who liked this post.",
+    "open": "See who liked this post",
+    "loading": "Loading likes…",
+    "empty": "No likes yet.",
+    "error": "We couldn't load the likes.",
+    "more": "See more",
+    "refresh": "Refresh likes"
   }
 }

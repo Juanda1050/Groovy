@@ -8,7 +8,9 @@
     "label": "Library content",
     "albums": "Albums",
     "likes": "Liked",
-    "dislikes": "Disliked"
+    "dislikes": "Disliked",
+    "tracks": "Tracks",
+    "trackPreferences": "Track preference"
   },
   "tracks": {
     "loading": "Loading track information…",

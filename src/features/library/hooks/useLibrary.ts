@@ -1,19 +1,16 @@
-import { useAuthStore } from "@/features/auth/stores/authStore";
-import { getLibrary } from "@/features/library/services/libraryService";
-import type { LibraryFilter,LibraryPageSize } from "@/models/libraryView";
-import {
-useQuery
-} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-export function isPageSize(value: number): value is LibraryPageSize {
-  return value === 10 || value === 20 || value === 50;
-}
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { getLibrary } from "@/features/library/services/libraryService";
+
+import type { LibraryFilter } from "@/models/libraryView";
 
 export function useLibrary(active = true) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const [filter, setFilter] = useState<LibraryFilter>("all");
-  const [pageSize, setPageSize] = useState<LibraryPageSize>(10);
+  const pageSize = 10;
 
   const [navigation, setNavigation] = useState({
     userId,
@@ -30,7 +27,9 @@ export function useLibrary(active = true) {
     gcTime: 5 * 60_000,
 
     queryFn: ({ signal }) => {
-      if (!userId) throw new Error("AUTH_REQUIRED");
+      if (!userId) {
+        throw new Error("AUTH_REQUIRED");
+      }
 
       return getLibrary({
         userId,
@@ -56,23 +55,21 @@ export function useLibrary(active = true) {
     (query.data?.items.length ?? 0) > 0;
 
   function onFilterChange(next: LibraryFilter): void {
-    if (next === filter || query.isFetching) return;
-
-    setFilter(next);
-    setNavigation({ userId, page: 1 });
-  }
-
-  function onPageSizeChange(next: number): void {
-    if (!isPageSize(next) || next === pageSize || query.isFetching) {
+    if (next === filter || query.isFetching) {
       return;
     }
 
-    setPageSize(next);
-    setNavigation({ userId, page: 1 });
+    setFilter(next);
+    setNavigation({
+      userId,
+      page: 1,
+    });
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) return;
+    if (query.isFetching || !hasPrevious) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -81,7 +78,9 @@ export function useLibrary(active = true) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) return;
+    if (query.isFetching || !hasNext) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -106,12 +105,14 @@ export function useLibrary(active = true) {
     hasNext,
 
     onFilterChange,
-    onPageSizeChange,
     onPrevious,
     onNext,
 
     onFirst: () => {
-      setNavigation({ userId, page: 1 });
+      setNavigation({
+        userId,
+        page: 1,
+      });
     },
 
     onRetry: () => {

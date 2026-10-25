@@ -438,6 +438,21 @@ export type Database = {
           username: string
         }[]
       }
+      get_album_post_reactions: {
+        Args: {
+          p_before_created_at?: string
+          p_before_user_id?: string
+          p_limit?: number
+          p_post_id: string
+        }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
       get_community_social: {
         Args: { p_post_ids: string[] }
         Returns: {
@@ -531,6 +546,10 @@ export type Database = {
           id: string
           username: string
         }[]
+      }
+      get_username_login_email: {
+        Args: { p_username: string }
+        Returns: string
       }
       reserve_spotify_request: {
         Args: never

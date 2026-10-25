@@ -1,18 +1,31 @@
-import { useAuthStore } from "@/features/auth/stores/authStore";
-import { albumDetailOptions,albumGcTime,albumStaleTime } from "@/features/catalog/lib/albumQueries";
-import { getAlbumTracks } from "@/features/catalog/services/spotifyService";
-import { isPageSize } from "@/features/library/hooks/useLibrary";
-import { getLibraryTracks } from "@/features/library/services/trackPicksService";
-import type { AlbumTracksPage } from "@/models/albumDetail";
-import type { LibraryPageSize } from "@/models/libraryView";
-import type { LibraryTrack,LibraryTrackMetadata,LibraryTrackView,TrackPreference } from "@/models/trackPicks";
 import {
-useQuery,
-useQueryClient,
-type InfiniteData,
-type QueryClient
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
 } from "@tanstack/react-query";
+
 import { useState } from "react";
+
+import { useAuthStore } from "@/features/auth/stores/authStore";
+
+import {
+  albumDetailOptions,
+  albumGcTime,
+  albumStaleTime,
+} from "@/features/catalog/lib/albumQueries";
+
+import { getAlbumTracks } from "@/features/catalog/services/spotifyService";
+import { getLibraryTracks } from "@/features/library/services/trackPicksService";
+
+import type { AlbumTracksPage } from "@/models/albumDetail";
+
+import type {
+  LibraryTrack,
+  LibraryTrackMetadata,
+  LibraryTrackView,
+  TrackPreference,
+} from "@/models/trackPicks";
 
 async function loadTrackMetadata(
   client: QueryClient,
@@ -25,6 +38,7 @@ async function loadTrackMetadata(
 
   for (const row of rows) {
     const ids = groups.get(row.albumId) ?? new Set<string>();
+
     ids.add(row.trackId);
     groups.set(row.albumId, ids);
   }
@@ -138,8 +152,9 @@ async function loadTrackMetadata(
 
 export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const client = useQueryClient();
-  const [pageSize, setPageSize] = useState<LibraryPageSize>(10);
+  const pageSize = 10;
 
   const [navigation, setNavigation] = useState({
     userId,
@@ -160,7 +175,9 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     gcTime: 5 * 60_000,
 
     queryFn: ({ signal }) => {
-      if (!userId) throw new Error("AUTH_REQUIRED");
+      if (!userId) {
+        throw new Error("AUTH_REQUIRED");
+      }
 
       return getLibraryTracks({
         userId,
@@ -180,12 +197,15 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     queryKey: ["libraryTrackMetadata", userId, identifiers],
 
     enabled: active && userId !== null && rows.length > 0,
+
     staleTime: albumStaleTime,
     gcTime: albumGcTime,
     retry: false,
 
     queryFn: ({ signal }) => {
-      if (!userId) throw new Error("AUTH_REQUIRED");
+      if (!userId) {
+        throw new Error("AUTH_REQUIRED");
+      }
 
       return loadTrackMetadata(client, userId, rows, signal);
     },
@@ -199,7 +219,6 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const items: readonly LibraryTrackView[] = rows.map((row) => ({
     ...row,
-
     metadata: metadata.data?.[`${row.albumId}:${row.trackId}`] ?? null,
   }));
 
@@ -207,21 +226,10 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const hasNext = pageNumber > 0 && pageNumber < pageCount && rows.length > 0;
 
-  function onPageSizeChange(next: number): void {
-    if (!isPageSize(next) || next === pageSize || query.isFetching) {
+  function onPrevious(): void {
+    if (query.isFetching || !hasPrevious) {
       return;
     }
-
-    setPageSize(next);
-    setNavigation({
-      userId,
-      preference,
-      page: 1,
-    });
-  }
-
-  function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) return;
 
     setNavigation({
       userId,
@@ -231,7 +239,9 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) return;
+    if (query.isFetching || !hasNext) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -248,6 +258,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     pageNumber,
 
     metadataLoading: rows.length > 0 && metadata.isFetching,
+
     metadataError: metadata.isError,
 
     isPending: query.isPending,
@@ -257,7 +268,6 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     hasPrevious,
     hasNext,
 
-    onPageSizeChange,
     onPrevious,
     onNext,
 

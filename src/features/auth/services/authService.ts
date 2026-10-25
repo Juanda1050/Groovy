@@ -1,6 +1,18 @@
-import type { AuthCredentials,AuthFeedback,AuthObserver,AuthUser } from "@/models/auth";
+import {
+  AuthError,
+  FunctionsHttpError,
+  type User,
+} from "@supabase/supabase-js";
+import { z } from "zod";
+
+import type {
+  AuthCredentials,
+  AuthFeedback,
+  AuthObserver,
+  AuthUser,
+} from "@/models/auth";
+
 import { supabase } from "@/shared/lib/supabaseClient";
-import { AuthError,type User } from "@supabase/supabase-js";
 
 function mapUser(user: User | null): AuthUser | null {
   if (!user) return null;
@@ -80,10 +92,60 @@ export function observeAuth(observer: AuthObserver): () => void {
   return () => data.subscription.unsubscribe();
 }
 
-export async function signIn(credentials: AuthCredentials): Promise<void> {
-  const { error } = await supabase.auth.signInWithPassword(credentials);
+const sessionSchema = z.object({
+  access_token: z.string().min(1),
+  refresh_token: z.string().min(1),
+});
 
-  if (error) throw error;
+export async function signIn(credentials: AuthCredentials): Promise<void> {
+  const identifier = credentials.email.trim();
+
+  if (identifier.includes("@") && !identifier.startsWith("@")) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: identifier,
+      password: credentials.password,
+    });
+
+    if (error) throw error;
+    return;
+  }
+
+  const { data, error } = await supabase.functions.invoke<unknown>(
+    "usernameLogin",
+    {
+      body: {
+        username: identifier.replace(/^@/, "").toLowerCase(),
+        password: credentials.password,
+      },
+      signal: AbortSignal.timeout(15_000),
+    },
+  );
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const status = error.context.status;
+
+      if (status === 401 || status === 400) {
+        throw new AuthError("Invalid credentials", 400, "invalid_credentials");
+      }
+
+      if (status === 429) {
+        throw new AuthError(
+          "Too many requests",
+          429,
+          "over_request_rate_limit",
+        );
+      }
+    }
+
+    throw error;
+  }
+
+  const session = sessionSchema.parse(data);
+
+  const { error: sessionError } = await supabase.auth.setSession(session);
+
+  if (sessionError) throw sessionError;
 }
 
 export async function signUp(credentials: AuthCredentials): Promise<void> {

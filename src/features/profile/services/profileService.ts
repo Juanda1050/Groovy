@@ -1,5 +1,5 @@
 import type { UpdateLanguageInput } from "@/models/language";
-import type { Profile,ProfileInput,UserSettings } from "@/models/profile";
+import type { Profile, ProfileInput, UserSettings } from "@/models/profile";
 import { supabase } from "@/shared/lib/supabaseClient";
 
 export function createSignal(): AbortSignal {
@@ -8,7 +8,9 @@ export function createSignal(): AbortSignal {
 
 export async function requireUser(userId: string): Promise<void> {
   const { data, error } = await supabase.auth.getSession();
+
   if (error) throw error;
+
   if (data.session?.user.id !== userId) {
     throw new Error("AUTH_REQUIRED");
   }
@@ -26,6 +28,7 @@ export async function getProfile(
     .single();
 
   if (error) throw error;
+
   return data;
 }
 
@@ -39,6 +42,7 @@ export async function saveProfile(input: ProfileInput): Promise<Profile> {
     .abortSignal(createSignal());
 
   if (error) throw error;
+
   return data;
 }
 
@@ -54,6 +58,7 @@ export async function getUserSettings(
     .single();
 
   if (error) throw error;
+
   return data;
 }
 
@@ -70,4 +75,33 @@ export async function updateLanguage({
 
   if (error) throw error;
   if (!data) throw new Error("Settings update failed.");
+}
+
+export async function checkUsernameAvailability(
+  userId: string,
+  username: string,
+  signal: AbortSignal,
+): Promise<boolean> {
+  await requireUser(userId);
+
+  const { data, error } = await supabase.functions.invoke<unknown>(
+    "usernameAvailability",
+    {
+      body: { username },
+      signal: AbortSignal.any([signal, createSignal()]),
+    },
+  );
+
+  if (error) throw error;
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("available" in data) ||
+    typeof data.available !== "boolean"
+  ) {
+    throw new Error("INVALID_RESPONSE");
+  }
+
+  return data.available;
 }

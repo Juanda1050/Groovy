@@ -78,10 +78,7 @@ export function ProfileForm({
             <div className="relative">
               <span
                 aria-hidden="true"
-                className="
-                  pointer-events-none absolute left-3 top-1/2
-                  -translate-y-1/2 text-sm text-muted-foreground
-                "
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
               >
                 @
               </span>
@@ -105,6 +102,8 @@ export function ProfileForm({
 
             <p
               id={`${id}UsernameHint`}
+              aria-live="polite"
+              aria-atomic="true"
               className={`text-xs ${
                 fieldErrors.username
                   ? "text-destructive"

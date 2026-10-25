@@ -1,149 +1,42 @@
 import {
-ChevronLeft,
-ChevronRight,
-Heart,
-Library,
-Music2,
-ThumbsDown,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Library,
+  Music2,
+  ThumbsDown,
 } from "lucide-react";
-import { useId,useState } from "react";
+
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { AlbumConfirmation } from "@/features/library/components/AlbumConfirmation";
 import { LibraryCard } from "@/features/library/components/LibraryCard";
 import { LibraryFilters } from "@/features/library/components/LibraryFilters";
+import { TrackRow } from "@/features/library/components/TrackRow";
+
 import { useAlbumRemoval } from "@/features/library/hooks/useAlbumStatus";
 import { useLibrary } from "@/features/library/hooks/useLibrary";
 import { useLibraryTracks } from "@/features/library/hooks/useLibraryTracks";
+
 import { RecordLoader } from "@/shared/components/RecordLoader";
 import { Button } from "@/shared/components/ui/button";
-import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/shared/components/ui/select";
-import { Skeleton } from "@/shared/components/ui/skeleton";
 
-import type { LibraryCardLabels,LibraryFilterOption,LibraryItem,LibrarySection } from "@/models/libraryView";
-import type { LibraryTrackView } from "@/models/trackPicks";
-
-function TrackRow({
-  item,
-  loading,
-}: {
-  item: LibraryTrackView;
-  loading: boolean;
-}) {
-  const { t } = useTranslation("library");
-  const [failedCover, setFailedCover] = useState<string | null>(null);
-
-  const metadata = item.metadata;
-  const track = metadata?.track;
-  const cover = metadata?.coverUrl ?? null;
-  const waiting = loading && !metadata;
-
-  return (
-    <li
-      className="
-        group grid min-w-0
-        grid-cols-[3.5rem_minmax(0,1fr)_auto]
-        items-center gap-3 py-3
-        sm:grid-cols-[4rem_minmax(0,1fr)_auto]
-        sm:gap-4 sm:py-4
-      "
-    >
-      <Link
-        to={`/albums/${item.albumId}`}
-        aria-label={t("tracks.openAlbum")}
-        className="
-          relative flex size-14 shrink-0 items-center
-          justify-center overflow-hidden rounded-xl
-          bg-muted ring-1 ring-border/50 transition-shadow
-          hover:ring-primary/40
-          focus-visible:outline-none focus-visible:ring-2
-          focus-visible:ring-ring sm:size-16
-        "
-      >
-        {cover && failedCover !== cover ? (
-          <img
-            src={cover}
-            alt=""
-            width={64}
-            height={64}
-            loading="lazy"
-            decoding="async"
-            className="size-full object-cover"
-            onError={() => setFailedCover(cover)}
-          />
-        ) : waiting ? (
-          <Skeleton className="size-full rounded-none" />
-        ) : (
-          <Music2 aria-hidden="true" className="size-5 text-muted-foreground" />
-        )}
-      </Link>
-
-      <div className="min-w-0 space-y-1">
-        {waiting ? (
-          <>
-            <Skeleton className="h-4 w-3/4 max-w-64" />
-            <Skeleton className="h-3 w-1/2 max-w-40" />
-            <Skeleton className="h-3 w-2/3 max-w-48" />
-          </>
-        ) : (
-          <>
-            <a
-              href={`https://open.spotify.com/track/${item.trackId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
-                block truncate rounded-sm text-sm
-                font-semibold leading-5 transition-colors
-                hover:text-primary
-                focus-visible:outline-none focus-visible:ring-2
-                focus-visible:ring-ring
-              "
-            >
-              {track?.name ?? t("tracks.unavailable")}
-            </a>
-
-            {track && (
-              <p className="truncate text-xs leading-5 text-foreground/75">
-                {track.artists.join(", ")}
-              </p>
-            )}
-
-            <Link
-              to={`/albums/${item.albumId}`}
-              className="
-                block truncate rounded-sm text-[11px]
-                leading-5 text-muted-foreground transition-colors
-                hover:text-primary
-                focus-visible:outline-none focus-visible:ring-2
-                focus-visible:ring-ring
-              "
-            >
-              {metadata?.albumName ?? t("tracks.openAlbum")}
-            </Link>
-          </>
-        )}
-      </div>
-
-      {track && (
-        <span
-          className="
-            self-center pl-1 text-[11px] tabular-nums
-            text-muted-foreground sm:text-xs
-          "
-        >
-          {track.durationLabel}
-        </span>
-      )}
-    </li>
-  );
-}
+import type {
+  LibraryCardLabels,
+  LibraryFilterOption,
+  LibraryItem,
+  LibrarySection,
+} from "@/models/libraryView";
 
 export default function LibraryPage() {
   const { t, i18n } = useTranslation("library");
-  const pageSizeId = useId();
 
   const [section, setSection] = useState<LibrarySection>("albums");
+
+  const [trackSection, setTrackSection] =
+    useState<Exclude<LibrarySection, "albums">>("likes");
 
   const [albumToRemove, setAlbumToRemove] = useState<LibraryItem | null>(null);
 
@@ -151,6 +44,7 @@ export default function LibraryPage() {
 
   const showingTracks = section !== "albums";
   const library = useLibrary(!showingTracks);
+
   const tracks = useLibraryTracks(
     section === "dislikes" ? "least_favorite" : "favorite",
     showingTracks,
@@ -180,6 +74,19 @@ export default function LibraryPage() {
     maximumFractionDigits: 1,
   });
 
+  function onSectionChange(next: LibrarySection): void {
+    if (next === section) return;
+
+    library.onFirst();
+    tracks.onFirst();
+
+    if (next !== "albums") {
+      setTrackSection(next);
+    }
+
+    setSection(next);
+  }
+
   function onRequestRemove(item: LibraryItem) {
     if (removal.saving) return;
 
@@ -205,12 +112,7 @@ export default function LibraryPage() {
 
   return (
     <section className="min-w-0 space-y-5 pb-6">
-      <header
-        className="
-          flex items-start justify-between gap-4
-          border-b border-border/50 pb-5
-        "
-      >
+      <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-border/50 pb-5">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {t("title")}
@@ -223,16 +125,7 @@ export default function LibraryPage() {
 
         <Link
           to="/"
-          className="
-            inline-flex min-h-11 shrink-0 items-center
-            justify-center rounded-xl border border-primary/30
-            bg-primary/5 px-4 text-xs font-medium text-primary
-            transition-colors hover:border-primary/50
-            hover:bg-primary/10
-            focus-visible:outline-none focus-visible:ring-2
-            focus-visible:ring-ring focus-visible:ring-offset-2
-            focus-visible:ring-offset-background
-          "
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 px-4 text-xs font-medium text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {t("actions.discover")}
         </Link>
@@ -241,55 +134,68 @@ export default function LibraryPage() {
       <div
         role="group"
         aria-label={t("sections.label")}
-        className="flex flex-wrap items-center gap-1"
+        className="grid min-w-0 grid-cols-2 gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 sm:inline-flex"
       >
-        {(["albums", "likes", "dislikes"] as const).map((value) => {
-          const Icon =
-            value === "albums"
-              ? Library
-              : value === "likes"
-                ? Heart
-                : ThumbsDown;
+        {(["albums", "tracks"] as const).map((value) => {
+          const Icon = value === "albums" ? Library : Music2;
 
-          const colors =
-            value === "likes"
-              ? "aria-pressed:bg-like/10 aria-pressed:text-like"
-              : value === "dislikes"
-                ? "aria-pressed:bg-dislike/10 aria-pressed:text-dislike"
-                : "aria-pressed:bg-primary/10 aria-pressed:text-primary";
+          const selected = value === "albums" ? !showingTracks : showingTracks;
 
           return (
             <Button
               key={value}
               type="button"
               variant="ghost"
-              aria-pressed={section === value}
-              onClick={() => {
-                if (value === section) return;
-
-                library.onFirst();
-                tracks.onFirst();
-                setSection(value);
-              }}
-              className={`
-                  min-h-11 gap-2 rounded-xl px-3
-                  text-xs sm:text-sm ${colors}
-                `}
+              aria-pressed={selected}
+              onClick={() =>
+                onSectionChange(value === "albums" ? "albums" : trackSection)
+              }
+              className="min-h-12 min-w-0 gap-2 rounded-lg px-3 text-sm font-medium aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm sm:min-h-11 sm:min-w-28"
             >
-              <Icon
-                aria-hidden="true"
-                className={`
-                    size-4
-                    ${value === "likes" ? "text-like" : ""}
-                    ${value === "dislikes" ? "text-dislike" : ""}
-                  `}
-              />
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
 
-              {t(`sections.${value}`)}
+              <span className="truncate">{t(`sections.${value}`)}</span>
             </Button>
           );
         })}
       </div>
+
+      {showingTracks && (
+        <div
+          role="group"
+          aria-label={t("sections.trackPreferences")}
+          className="grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+        >
+          {(["likes", "dislikes"] as const).map((value) => {
+            const Icon = value === "likes" ? Heart : ThumbsDown;
+
+            const colors =
+              value === "likes"
+                ? "aria-pressed:border-like/30 aria-pressed:bg-like/10 aria-pressed:text-like"
+                : "aria-pressed:border-dislike/30 aria-pressed:bg-dislike/10 aria-pressed:text-dislike";
+
+            return (
+              <Button
+                key={value}
+                type="button"
+                variant="ghost"
+                aria-pressed={section === value}
+                onClick={() => onSectionChange(value)}
+                className={`min-h-11 min-w-0 gap-2 rounded-lg border border-border/60 px-3 text-xs font-medium sm:text-sm ${colors}`}
+              >
+                <Icon
+                  aria-hidden="true"
+                  className={`size-4 shrink-0 ${
+                    value === "likes" ? "text-like" : "text-dislike"
+                  }`}
+                />
+
+                <span className="truncate">{t(`sections.${value}`)}</span>
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
       {!showingTracks && (
         <LibraryFilters
@@ -306,10 +212,7 @@ export default function LibraryPage() {
       ) : current.isPending ? (
         <div
           role="status"
-          className="
-            flex items-center justify-center gap-3
-            py-12 text-sm text-muted-foreground
-          "
+          className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground"
         >
           <RecordLoader size="sm" />
           {t("loading")}
@@ -367,11 +270,7 @@ export default function LibraryPage() {
       ) : (
         <div
           aria-busy={library.isFetching}
-          className="
-            grid min-w-0 grid-cols-2 gap-x-3 gap-y-5
-            sm:grid-cols-3 sm:gap-5
-            lg:grid-cols-4 xl:grid-cols-5
-          "
+          className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5"
         >
           {library.items.map((item) => (
             <LibraryCard
@@ -391,8 +290,8 @@ export default function LibraryPage() {
         <nav
           aria-label={t("pagination.label")}
           className={`
-              flex flex-wrap items-center justify-center
-              gap-x-4 gap-y-2 pt-3
+              flex min-w-0 items-center justify-center
+              gap-2 pt-3
               ${showingTracks ? "" : "border-t border-border/40"}
             `}
         >
@@ -404,10 +303,7 @@ export default function LibraryPage() {
               aria-label={t("pagination.previous")}
               disabled={!current.hasPrevious || current.isFetching}
               onClick={current.onPrevious}
-              className="
-                  size-11 rounded-xl p-0
-                  text-muted-foreground
-                "
+              className="size-11 rounded-xl p-0 text-muted-foreground"
             >
               <ChevronLeft aria-hidden="true" className="size-4" />
             </Button>
@@ -416,10 +312,7 @@ export default function LibraryPage() {
               role="status"
               aria-live="polite"
               aria-atomic="true"
-              className="
-                  min-w-16 text-center text-xs
-                  tabular-nums text-muted-foreground
-                "
+              className="min-w-16 text-center text-xs tabular-nums text-muted-foreground"
             >
               {t("pagination.position", {
                 page: current.pageNumber,
@@ -434,45 +327,10 @@ export default function LibraryPage() {
               aria-label={t("pagination.next")}
               disabled={!current.hasNext || current.isFetching}
               onClick={current.onNext}
-              className="
-                  size-11 rounded-xl p-0
-                  text-muted-foreground
-                "
+              className="size-11 rounded-xl p-0 text-muted-foreground"
             >
               <ChevronRight aria-hidden="true" className="size-4" />
             </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span id={pageSizeId} className="text-xs text-muted-foreground">
-              {t("pagination.perPage")}
-            </span>
-
-            <Select
-              value={String(current.pageSize)}
-              onValueChange={(value) => {
-                if (value === "10" || value === "20" || value === "50") {
-                  current.onPageSizeChange(Number(value));
-                }
-              }}
-            >
-              <SelectTrigger
-                aria-labelledby={pageSizeId}
-                disabled={current.isFetching}
-                className="
-                    min-h-11 w-18 rounded-xl
-                    border-border/60 px-2.5 text-xs
-                  "
-              >
-                <SelectValue>{current.pageSize}</SelectValue>
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </nav>
       )}

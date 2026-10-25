@@ -102,8 +102,8 @@
     "confirmDelete": "Eliminar",
     "length": "{{count}} / {{max}}",
     "tooLong": "El comentario puede tener hasta {{max}} caracteres.",
-    "offline": "Sin actualizaciones en vivo. Puedes actualizar manualmente.",
-    "updates": "Hay comentarios nuevos · Actualizar",
+    "offline": "Sin actualizaciones en vivo. Se reanudarán al recuperar la conexión.",
+    "updates": "Mostrar comentarios nuevos",
     "more": "Ver comentarios anteriores",
     "remaining": "Podrás publicar en {{count}} s.",
     "edit": "Editar comentario",
@@ -113,6 +113,19 @@
     "edited": "editado",
     "editConflict": "El comentario cambió en otra sesión. Revisa la versión actual antes de guardar.",
     "keepChanges": "Conservar mis cambios",
-    "currentVersion": "Versión actual"
+    "currentVersion": "Versión actual",
+    "options": "Opciones del comentario",
+    "openComposer": "Escribir un comentario y ver más",
+    "closeComposer": "Cerrar el cuadro de comentario"
+  },
+  "reactions": {
+    "title": "Me gusta",
+    "description": "Personas a las que les gustó esta publicación.",
+    "open": "Ver quién dio Me gusta",
+    "loading": "Cargando Me gusta…",
+    "empty": "Todavía no hay Me gusta.",
+    "error": "No pudimos cargar los Me gusta.",
+    "more": "Ver más",
+    "refresh": "Actualizar Me gusta"
   }
 }

@@ -1,14 +1,29 @@
 import { useAuthStore } from "@/features/auth/stores/authStore";
-import { profileKey,profileWriteKey,useProfile } from "@/features/profile/hooks/useProfile";
-import { profileSchema } from "@/features/profile/lib/profileValidation";
-import { saveProfile } from "@/features/profile/services/profileService";
-import type { ProfileDraft,ProfileEditorMode,ProfileFieldErrors,ProfileFormProps,ProfileInput,ProfileTouchedFields } from "@/models/profile";
 import {
-useIsMutating,
-useMutation,
-useQueryClient,
+  profileKey,
+  profileWriteKey,
+  useProfile,
+} from "@/features/profile/hooks/useProfile";
+import { profileSchema } from "@/features/profile/lib/profileValidation";
+import {
+  checkUsernameAvailability,
+  saveProfile,
+} from "@/features/profile/services/profileService";
+import type {
+  ProfileDraft,
+  ProfileEditorMode,
+  ProfileFieldErrors,
+  ProfileFormProps,
+  ProfileInput,
+  ProfileTouchedFields,
+} from "@/models/profile";
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
-import { useRef,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +38,12 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
   const [touched, setTouched] = useState<ProfileTouchedFields>({});
   const [feedbackKey, setFeedbackKey] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const [settledUsername, setSettledUsername] = useState<{
+    userId: string | null;
+    username: string;
+  } | null>(null);
+
   const submitting = useRef(false);
 
   const writes = useIsMutating({
@@ -44,19 +65,69 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
   };
 
   const values = draft?.userId === userId ? draft.values : initial;
-
   const parsed = profileSchema.safeParse(values);
+
+  const username = values.username.trim().toLowerCase();
+  const initialUsername = initial.username.trim().toLowerCase();
+
+  const validUsername =
+    profileSchema.shape.username.safeParse(username).success;
+
+  const usernameChanged = username !== initialUsername;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSettledUsername({ userId, username });
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [userId, username]);
+
+  const availabilityKey = ["usernameAvailability", userId, username] as const;
+
+  const availability = useQuery({
+    queryKey: availabilityKey,
+    enabled:
+      Boolean(userId && profile) &&
+      validUsername &&
+      usernameChanged &&
+      settledUsername?.userId === userId &&
+      settledUsername.username === username,
+    queryFn: ({ signal }) => {
+      if (!userId) throw new Error("AUTH_REQUIRED");
+
+      return checkUsernameAvailability(userId, username, signal);
+    },
+    staleTime: 30_000,
+    gcTime: 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const usernameTaken = usernameChanged && availability.data === false;
+
+  const usernameChecked =
+    !usernameChanged || (availability.data === true && !availability.isError);
+
+  const checkingUsername =
+    validUsername &&
+    usernameChanged &&
+    (availability.isFetching ||
+      (!availability.isError && availability.data === undefined));
 
   const dirty =
     values.displayName.trim() !== initial.displayName.trim() ||
-    values.username.trim().toLowerCase() !==
-      initial.username.trim().toLowerCase() ||
+    username !== initialUsername ||
     values.bio.trim() !== initial.bio.trim();
 
   const disabled = writes > 0 || !userId || !profile;
 
   const canSubmit =
-    !disabled && parsed.success && (mode === "onboarding" || dirty);
+    !disabled &&
+    parsed.success &&
+    usernameChecked &&
+    !availability.isFetching &&
+    (mode === "onboarding" || dirty);
 
   const fieldErrors: ProfileFieldErrors = {};
 
@@ -72,6 +143,12 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
         fieldErrors[field] = t(`validation.${issue.message}`);
       }
     }
+  }
+
+  if (validUsername && usernameTaken) {
+    fieldErrors.username = t("feedback.usernameTaken");
+  } else if (validUsername && usernameChanged && availability.isError) {
+    fieldErrors.username = t("feedback.usernameCheckFailed");
   }
 
   function onChange(field: keyof ProfileInput, value: string): void {
@@ -91,6 +168,14 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
 
   function onBlur(field: keyof ProfileInput): void {
     setTouched((current) => ({ ...current, [field]: true }));
+
+    if (field === "username" && userId && validUsername && usernameChanged) {
+      setSettledUsername({ userId, username });
+
+      if (availability.isError) {
+        void availability.refetch();
+      }
+    }
   }
 
   async function onSubmit(): Promise<void> {
@@ -110,6 +195,7 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
     if (!result.success) return;
 
     const requestedUserId = userId;
+
     submitting.current = true;
     setFeedbackKey(null);
     setSaved(false);
@@ -138,6 +224,7 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
         "code" in error &&
         error.code === "23505"
       ) {
+        queryClient.setQueryData(availabilityKey, false);
         setFeedbackKey("feedback.usernameTaken");
       } else if (
         typeof error === "object" &&
@@ -184,7 +271,11 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
     labels: {
       displayName: t("fields.displayName"),
       username: t("fields.username"),
-      usernameHint: t("fields.usernameHint"),
+      usernameHint: checkingUsername
+        ? t("feedback.usernameChecking")
+        : usernameChanged && availability.data === true
+          ? t("feedback.usernameAvailable")
+          : t("fields.usernameHint"),
       bio: t("fields.bio"),
       submit: busy
         ? t("actions.saving")

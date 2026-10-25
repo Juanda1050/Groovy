@@ -108,9 +108,15 @@ export type AlbumRatingRecord = Pick<LibraryAlbum, "rating" | "status">;
 export type AlbumReviewRecord = Pick<LibraryAlbum, "review" | "status">;
 
 export type AlbumWriteRequest =
-  | (AlbumStatusRequest & { action: "status" })
-  | (SaveAlbumRatingInput & { action: "rating" })
-  | (SaveAlbumReviewInput & { action: "review" });
+  | (AlbumStatusRequest & {
+      action: "status";
+    })
+  | (SaveAlbumRatingInput & {
+      action: "rating";
+    })
+  | (SaveAlbumReviewInput & {
+      action: "review";
+    });
 
 export interface AlbumFeedCursor {
   createdAt: string;
@@ -168,6 +174,7 @@ export interface PublicProfile {
 }
 
 export interface AlbumFeedCardProps {
+  variant?: "card" | "profile";
   item: AlbumFeedItem;
   social: CommunityPostState | null;
   viewerId: string | null;
@@ -207,17 +214,24 @@ export type AlbumPostCommentWrite = {
   postId: string;
   commentId: string;
 } & (
-  | { action: "save"; body: string }
+  | {
+      action: "save";
+      body: string;
+    }
   | {
       action: "update";
       body: string;
       expectedRevision: number;
     }
-  | { action: "delete" }
+  | {
+      action: "delete";
+    }
 );
 
 export type AlbumPostCommentEvent =
-  | { kind: "connected" | "offline" }
+  | {
+      kind: "connected" | "offline";
+    }
   | {
       kind: "new" | "changed" | "removed";
       revision: number;

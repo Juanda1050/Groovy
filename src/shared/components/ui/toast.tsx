@@ -1,17 +1,20 @@
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
+
 import {
-CircleCheckIcon,
-InfoIcon,
-Loader2Icon,
-OctagonXIcon,
-TriangleAlertIcon,
-XIcon,
+  CircleCheckIcon,
+  InfoIcon,
+  Loader2Icon,
+  OctagonXIcon,
+  TriangleAlertIcon,
+  XIcon,
 } from "lucide-react";
+
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 
 import { toast } from "@/app/queryClient";
 import { useAuthStore } from "@/features/auth/stores/authStore";
+
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -31,10 +34,10 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
       data-slot="toast-viewport"
       aria-label={t("notifications.label")}
       className={cn(
-        "pointer-events-none fixed inset-x-4 z-50 mx-auto",
-        "bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)]",
-        "w-auto max-w-sm outline-none",
-        "sm:left-auto sm:right-6 sm:mx-0 sm:w-full",
+        "pointer-events-none fixed inset-x-3 z-80 mx-auto",
+        "bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)]",
+        "w-auto max-w-80 outline-none",
+        "md:bottom-5 md:left-auto md:right-5 md:mx-0 md:w-80",
         className,
       )}
       {...props}
@@ -49,20 +52,25 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
       className={cn(
         "group/toast pointer-events-auto absolute bottom-0 right-0",
         "z-[calc(1000-var(--toast-index))] w-full origin-bottom",
-        "rounded-2xl border border-border bg-popover",
-        "text-popover-foreground shadow-lg outline-none",
+        "rounded-xl border border-border/70 bg-popover/95",
+        "bg-linear-to-br from-popover to-primary/5 backdrop-blur-xl",
+        "data-[type=success]:border-like/25 data-[type=success]:to-like/5",
+        "data-[type=error]:border-destructive/25 data-[type=error]:to-destructive/5",
+        "data-[type=warning]:border-rating/25 data-[type=warning]:to-rating/5",
+        "text-popover-foreground outline-none",
+        "shadow-[0_12px_36px_-12px_rgb(0_0_0/30%),0_2px_6px_rgb(0_0_0/8%)]",
         "select-none will-change-transform",
         "focus-visible:border-ring focus-visible:ring-[3px]",
         "focus-visible:ring-ring/50",
-        "[--gap:0.75rem]",
+        "[--gap:0.625rem]",
         "[--height:var(--toast-frontmost-height,var(--toast-height))]",
         "[--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))]",
-        "[--peek:0.75rem]",
-        "[--scale:calc(max(0,1-(var(--toast-index)*0.1)))]",
+        "[--peek:0.5rem]",
+        "[--scale:calc(max(0,1-(var(--toast-index)*0.04)))]",
         "[--shrink:calc(1-var(--scale))]",
         "h-(--height)",
         "transform-[translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))]",
-        "[transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
+        "[transition:transform_280ms_cubic-bezier(0.22,1,0.36,1),opacity_180ms,height_180ms]",
         "after:absolute after:left-0 after:top-full",
         "after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
         "data-expanded:h-(--toast-height)",
@@ -87,7 +95,7 @@ function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
     <ToastPrimitive.Content
       data-slot="toast-content"
       className={cn(
-        "flex h-full items-center gap-3 overflow-hidden p-4",
+        "flex h-full items-center gap-2.5 overflow-hidden px-3 py-2.5",
         "transition-opacity duration-250",
         "ease-[cubic-bezier(0.22,1,0.36,1)]",
         "data-behind:opacity-0 data-expanded:opacity-100",
@@ -103,7 +111,10 @@ function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
   return (
     <ToastPrimitive.Title
       data-slot="toast-title"
-      className={cn("wrap-break-word text-sm font-medium leading-5", className)}
+      className={cn(
+        "wrap-break-word text-[13px] font-semibold leading-5",
+        className,
+      )}
       {...props}
     />
   );
@@ -117,7 +128,7 @@ function ToastDescription({
     <ToastPrimitive.Description
       data-slot="toast-description"
       className={cn(
-        "wrap-break-word text-xs leading-5 text-muted-foreground",
+        "wrap-break-word text-xs leading-4 text-muted-foreground",
         className,
       )}
       {...props}
@@ -127,7 +138,7 @@ function ToastDescription({
 
 function ToastAction({
   className,
-  render = <Button variant="outline" size="sm" />,
+  render = <Button variant="outline" size="xs" />,
   ...props
 }: ToastPrimitive.Action.Props) {
   return (
@@ -143,7 +154,7 @@ function ToastAction({
 function ToastClose({
   className,
   children,
-  render = <Button variant="ghost" size="icon" />,
+  render = <Button variant="ghost" size="icon-xs" />,
   ...props
 }: ToastPrimitive.Close.Props) {
   const { t } = useTranslation("common");
@@ -154,8 +165,8 @@ function ToastClose({
       aria-label={t("notifications.close")}
       render={render}
       className={cn(
-        "relative size-8 shrink-0 rounded-lg",
-        "text-muted-foreground hover:text-foreground",
+        "relative size-7 shrink-0 rounded-md",
+        "text-muted-foreground/70 hover:bg-muted/70 hover:text-foreground",
         "after:absolute after:-inset-1.5 after:content-['']",
         className,
       )}
@@ -170,33 +181,36 @@ function ToastIcon({ type }: { type: string | undefined }) {
   const Icon =
     type === "success"
       ? CircleCheckIcon
-      : type === "info"
-        ? InfoIcon
-        : type === "warning"
-          ? TriangleAlertIcon
-          : type === "error"
-            ? OctagonXIcon
-            : type === "loading"
-              ? Loader2Icon
-              : null;
+      : type === "warning"
+        ? TriangleAlertIcon
+        : type === "error"
+          ? OctagonXIcon
+          : type === "loading"
+            ? Loader2Icon
+            : InfoIcon;
 
-  if (!Icon) return null;
+  const tone =
+    type === "success"
+      ? "bg-like/10 text-like ring-like/15"
+      : type === "error"
+        ? "bg-destructive/10 text-destructive ring-destructive/15"
+        : type === "warning"
+          ? "bg-rating/10 text-rating ring-rating/15"
+          : "bg-primary/10 text-primary ring-primary/15";
 
   return (
     <span
       data-slot="toast-icon"
       className={cn(
-        "shrink-0",
-        type === "error" || type === "warning"
-          ? "text-destructive"
-          : "text-primary",
+        "inline-flex size-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset",
+        tone,
       )}
     >
       <Icon
         aria-hidden="true"
         className={cn(
           "size-4",
-          type === "loading" && "animate-spin motion-reduce:animate-none",
+          type === "loading" && "motion-safe:animate-spin",
         )}
       />
     </span>
@@ -211,7 +225,7 @@ function ToastList() {
       <ToastContent>
         <ToastIcon type={item.type} />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           {item.title && <ToastTitle />}
           {item.description && <ToastDescription />}
         </div>
@@ -256,12 +270,14 @@ function Toaster({
 }
 
 export {
-Toast,
-ToastAction,
-ToastClose,
-ToastContent,
-ToastDescription,Toaster,ToastPortal,
-ToastProvider,
-ToastTitle,
-ToastViewport
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastContent,
+  ToastDescription,
+  Toaster,
+  ToastPortal,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
 };

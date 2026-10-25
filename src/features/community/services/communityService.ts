@@ -1,5 +1,16 @@
-import { createSignal,requireUser } from "@/features/profile/services/profileService";
-import type { CommunityAction,CommunityPostState,LibraryAlbum,PublicProfile } from "@/models/library";
+import {
+  createSignal,
+  requireUser,
+} from "@/features/profile/services/profileService";
+
+import type {
+  AlbumFeedCursor,
+  CommunityAction,
+  CommunityPostState,
+  LibraryAlbum,
+  PublicProfile,
+} from "@/models/library";
+
 import type { ProfileSearchPage } from "@/models/profile";
 import { supabase } from "@/shared/lib/supabaseClient";
 
@@ -11,7 +22,9 @@ export async function getCommunitySocial(
   await requireUser(userId);
 
   const { data, error } = await supabase
-    .rpc("get_community_social", { p_post_ids: postIds })
+    .rpc("get_community_social", {
+      p_post_ids: postIds,
+    })
     .abortSignal(AbortSignal.any([signal, createSignal()]));
 
   if (error) throw error;
@@ -25,7 +38,10 @@ export async function getCommunitySocial(
       throw new Error("INVALID_RESPONSE");
     }
 
-    return { ...row, library_status: row.library_status };
+    return {
+      ...row,
+      library_status: row.library_status,
+    };
   });
 }
 
@@ -37,11 +53,14 @@ export async function getPublicProfile(
   await requireUser(userId);
 
   const { data, error } = await supabase
-    .rpc("get_public_profile", { p_profile_id: profileId })
+    .rpc("get_public_profile", {
+      p_profile_id: profileId,
+    })
     .abortSignal(AbortSignal.any([signal, createSignal()]))
     .single();
 
   if (error) throw error;
+
   if (!data || data.id !== profileId) {
     throw new Error("PROFILE_NOT_FOUND");
   }
@@ -73,7 +92,10 @@ export async function setCommunityAction(
     throw new Error("INVALID_RESPONSE");
   }
 
-  return { ...data, status: data.status };
+  return {
+    ...data,
+    status: data.status,
+  };
 }
 
 export async function searchPublicProfiles(
@@ -95,5 +117,44 @@ export async function searchPublicProfiles(
   return {
     items: (data ?? []).slice(0, 12),
     hasMore: (data?.length ?? 0) > 12,
+  };
+}
+
+export async function getAlbumPostReactions(
+  userId: string,
+  postId: string,
+  cursor: AlbumFeedCursor | null,
+  signal: AbortSignal,
+) {
+  await requireUser(userId);
+
+  const { data, error } = await supabase
+    .rpc("get_album_post_reactions", {
+      p_post_id: postId,
+      p_limit: 20,
+      ...(cursor
+        ? {
+            p_before_created_at: cursor.createdAt,
+            p_before_user_id: cursor.id,
+          }
+        : {}),
+    })
+    .abortSignal(AbortSignal.any([signal, createSignal()]));
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const items = rows.slice(0, 20);
+  const last = items.at(-1);
+
+  return {
+    items,
+    nextCursor:
+      rows.length > 20 && last
+        ? {
+            createdAt: last.created_at,
+            id: last.id,
+          }
+        : null,
   };
 }

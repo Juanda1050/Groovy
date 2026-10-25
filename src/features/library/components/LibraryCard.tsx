@@ -1,4 +1,4 @@
-import { MessageSquare,Music2,Trash2 } from "lucide-react";
+import { Music2, Trash2 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -86,27 +86,13 @@ export function LibraryCard({ item, labels, onRemove }: LibraryCardProps) {
         <div
           className="
             pointer-events-none absolute inset-x-2 bottom-2
-            flex items-center justify-between gap-2
+            flex items-center gap-2
           "
         >
           <AlbumStatusBadge
             status={item.status}
             label={item.status === "pending" ? labels.pending : labels.listened}
           />
-
-          {item.hasReview && (
-            <span
-              aria-label={labels.review}
-              title={labels.review}
-              className="
-                flex size-8 shrink-0 items-center justify-center
-                rounded-lg border border-white/15 bg-black/55
-                text-white backdrop-blur-md
-              "
-            >
-              <MessageSquare aria-hidden="true" className="size-3.5" />
-            </span>
-          )}
         </div>
       </div>
 

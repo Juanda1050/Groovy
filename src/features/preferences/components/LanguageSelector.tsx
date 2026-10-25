@@ -1,12 +1,16 @@
 import type { LanguageSelectorProps } from "@/models/language";
 import type { SupportedLanguage } from "@/models/preferences";
-import { Select,SelectContent,SelectItem } from "@/shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+} from "@/shared/components/ui/select";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
 
 const flags = {
   en: "🇺🇸",
-  es: "🇪🇸",
+  es: "🇲🇽",
 } as const;
 
 export function LanguageSelector({

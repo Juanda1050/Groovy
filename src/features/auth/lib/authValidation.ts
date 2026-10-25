@@ -1,5 +1,13 @@
-import type { AuthFieldErrors,AuthFieldName,AuthMode,AuthValues,PasswordCheck,PasswordStatus } from "@/models/auth";
 import { z } from "zod";
+
+import type {
+  AuthFieldErrors,
+  AuthFieldName,
+  AuthMode,
+  AuthValues,
+  PasswordCheck,
+  PasswordStatus,
+} from "@/models/auth";
 
 export const passwordMinLength = 12;
 export const passwordMaxBytes = 72;
@@ -53,13 +61,19 @@ export function getPasswordStatus(
   return "invalid";
 }
 
-const emailSchema = z.email({ error: "email" }).max(254, {
-  error: "email",
-});
+const emailSchema = z
+  .email({
+    error: "email",
+  })
+  .max(254, {
+    error: "email",
+  });
 
 const newPasswordSchema = z
   .string()
-  .min(passwordMinLength, { error: "passwordRequirements" })
+  .min(passwordMinLength, {
+    error: "passwordRequirements",
+  })
   .refine(isPasswordLengthAllowed, {
     message: "passwordTooLong",
   })
@@ -71,18 +85,34 @@ const newPasswordSchema = z
   );
 
 export const signInSchema = z.object({
-  email: emailSchema,
+  email: z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        emailSchema.safeParse(value).success ||
+        /^@?[a-zA-Z0-9_]{3,30}$/.test(value),
+      {
+        message: "identifier",
+      },
+    ),
   password: z
     .string()
-    .min(1, { error: "required" })
-    .max(signInPasswordMaxLength, { error: "passwordTooLong" }),
+    .min(1, {
+      error: "required",
+    })
+    .max(signInPasswordMaxLength, {
+      error: "passwordTooLong",
+    }),
 });
 
 export const signUpSchema = z
   .object({
     email: emailSchema,
     password: newPasswordSchema,
-    confirmPassword: z.string().min(1, { error: "required" }),
+    confirmPassword: z.string().min(1, {
+      error: "required",
+    }),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ["confirmPassword"],

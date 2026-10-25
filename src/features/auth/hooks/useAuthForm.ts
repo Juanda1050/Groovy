@@ -1,13 +1,36 @@
-import { getPasswordChecks,getPasswordStatus,passwordMaxBytes,signInPasswordMaxLength,validateAuthValues } from "@/features/auth/lib/authValidation";
-import { getAuthFeedback,signIn,signUp } from "@/features/auth/services/authService";
-import type { AuthFeedback,AuthField,AuthFieldErrors,AuthFieldName,AuthFormProps,AuthMode,AuthValues,PasswordRulesProps } from "@/models/auth";
-import { useRef,useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+import {
+  getPasswordChecks,
+  getPasswordStatus,
+  passwordMaxBytes,
+  signInPasswordMaxLength,
+  validateAuthValues,
+} from "@/features/auth/lib/authValidation";
+
+import {
+  getAuthFeedback,
+  signIn,
+  signUp,
+} from "@/features/auth/services/authService";
+
+import type {
+  AuthFeedback,
+  AuthField,
+  AuthFieldErrors,
+  AuthFieldName,
+  AuthFormProps,
+  AuthMode,
+  AuthValues,
+  PasswordRulesProps,
+} from "@/models/auth";
 
 export function useAuthForm(): AuthFormProps {
   const { t } = useTranslation("auth");
 
   const [mode, setMode] = useState<AuthMode>("signIn");
+
   const [values, setValues] = useState<AuthValues>({
     email: "",
     password: "",
@@ -18,6 +41,7 @@ export function useAuthForm(): AuthFormProps {
   const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
   const [busy, setBusy] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
   const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const submitting = useRef(false);
@@ -40,10 +64,10 @@ export function useAuthForm(): AuthFormProps {
   const fields: AuthField[] = [
     {
       name: "email",
-      label: t("fields.email"),
-      type: "email",
-      autoComplete: "email",
-      inputMode: "email",
+      label: t(mode === "signIn" ? "fields.identifier" : "fields.email"),
+      type: mode === "signIn" ? "text" : "email",
+      autoComplete: mode === "signIn" ? "username" : "email",
+      inputMode: mode === "signIn" ? "text" : "email",
       maxLength: 254,
     },
     {
@@ -90,7 +114,11 @@ export function useAuthForm(): AuthFormProps {
   function onChange(name: AuthFieldName, value: string): void {
     if (submitting.current) return;
 
-    setValues((current) => ({ ...current, [name]: value }));
+    setValues((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
     setFeedback(null);
   }
 

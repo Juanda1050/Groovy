@@ -8,7 +8,9 @@
     "label": "Contenido de tu biblioteca",
     "albums": "Álbumes",
     "likes": "Me gusta",
-    "dislikes": "No me gusta"
+    "dislikes": "No me gusta",
+    "tracks": "Canciones",
+    "trackPreferences": "Preferencia de canciones"
   },
   "tracks": {
     "loading": "Cargando información de las canciones…",

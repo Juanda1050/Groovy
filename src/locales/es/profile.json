@@ -39,7 +39,10 @@
     "loadFailed": "No pudimos cargar tu perfil.",
     "saved": "Cambios guardados.",
     "signInRequired": "Inicia sesión para guardar.",
-    "noChanges": "Sin cambios."
+    "noChanges": "Sin cambios.",
+    "usernameChecking": "Comprobando disponibilidad…",
+    "usernameAvailable": "Este usuario está disponible.",
+    "usernameCheckFailed": "No pudimos comprobar el usuario. Vuelve a entrar y salir del campo para reintentar."
   },
   "menu": {
     "open": "Abrir tu cuenta",

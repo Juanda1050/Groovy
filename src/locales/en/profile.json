@@ -39,7 +39,10 @@
     "loadFailed": "We couldn't load your profile.",
     "saved": "Changes saved.",
     "signInRequired": "Sign in to save.",
-    "noChanges": "No changes."
+    "noChanges": "No changes.",
+    "usernameChecking": "Checking availability…",
+    "usernameAvailable": "This username is available.",
+    "usernameCheckFailed": "We couldn't check this username. Focus the field and leave it again to retry."
   },
   "menu": {
     "open": "Open your account",
