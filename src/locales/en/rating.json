@@ -1,0 +1,42 @@
+{
+  "title": "Your rating",
+  "loading": "Loading rating…",
+  "unrated": "Not rated",
+  "currentRating": "Your rating: {{value}} out of 5 stars",
+  "starControl": "Select up to {{value}} stars",
+  "instructions": "Press the left half for a half star or the right half for a full star. You can also adjust half a point with the arrow keys. Your selection saves immediately. Selecting the same rating again does not remove it.",
+  "retry": "Try again",
+  "retryRating": "Load rating",
+  "cancel": "Cancel",
+  "saving": "Saving…",
+  "saved": "Changes saved",
+  "retryAfter": "You can try again in {{count}} s.",
+  "saveError": "We couldn't confirm the save. Select the rating again to retry.",
+  "rateError": "You've temporarily reached the save limit.",
+  "sessionError": "Your session ended. Please sign in again.",
+  "statusChanged": "The album's status changed. Reopen the detail to refresh it.",
+  "confirmation": {
+    "title": "Move back to pending?",
+    "description": "Your rating, review, listening date, and track selections will be removed. The album will stay in your library.",
+    "confirm": "Move to pending"
+  },
+  "status": {
+    "label": "Library status",
+    "add": "Save album",
+    "pending": "Pending",
+    "listened": "Listened",
+    "loading": "Checking library…",
+    "readError": "We couldn't check the album's status.",
+    "saveError": "We couldn't confirm the status change. Please try again.",
+    "sessionError": "Your session ended. Please sign in again.",
+    "rateError": "You've temporarily reached the save limit.",
+    "spotifyError": "Spotify is temporarily unavailable. Try saving again later."
+  },
+  "errors": {
+    "read": "We couldn't load your rating.",
+    "save": "We couldn't confirm the save. Please try again.",
+    "session": "Your session ended. Please sign in again.",
+    "rate": "You've temporarily reached the save limit.",
+    "statusChanged": "The album's status changed. Reopen the detail to refresh it."
+  }
+}

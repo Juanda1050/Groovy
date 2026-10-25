@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { AlbumStatus } from "@/components/AlbumStatus";
 import { AlbumTrackList } from "@/components/AlbumTrackList";
 import { LoadingButton } from "@/components/LoadingButton";
 import { RecordLoader } from "@/components/RecordLoader";
@@ -34,12 +35,10 @@ export default function AlbumDetailPage() {
     return (
       <div
         role="status"
-        className="
-          flex min-h-[60svh] flex-col items-center
-          justify-center gap-6 px-4 text-center
-        "
+        className="flex min-h-[60svh] flex-col items-center justify-center gap-6 px-4 text-center"
       >
         <RecordLoader size="lg" />
+
         <p className="max-w-sm text-sm text-muted-foreground">
           {waiting
             ? t("waiting", { count: detail.waitingSeconds })
@@ -55,10 +54,7 @@ export default function AlbumDetailPage() {
     return (
       <section
         aria-labelledby="albumErrorTitle"
-        className="
-          flex min-h-[60svh] flex-col items-center
-          justify-center px-4 py-10 text-center
-        "
+        className="flex min-h-[60svh] flex-col items-center justify-center px-4 py-10 text-center"
       >
         <Disc3
           aria-hidden="true"
@@ -108,12 +104,7 @@ export default function AlbumDetailPage() {
         <Link
           to={recovery.returnTo}
           replace
-          className="
-            mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg
-            text-sm text-muted-foreground hover:text-foreground
-            focus-visible:outline-none focus-visible:ring-2
-            focus-visible:ring-ring
-          "
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
           {t(recovery.returnLabelKey)}
@@ -127,32 +118,14 @@ export default function AlbumDetailPage() {
       <Link
         to={recovery.returnTo}
         replace
-        className="
-          inline-flex min-h-10 items-center gap-2 rounded-lg
-          text-sm text-muted-foreground hover:text-foreground
-          focus-visible:outline-none focus-visible:ring-2
-          focus-visible:ring-ring
-        "
+        className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
         {t(recovery.returnLabelKey)}
       </Link>
 
-      <header
-        className="
-          grid min-w-0 gap-6 sm:grid-cols-[13rem_minmax(0,1fr)]
-          sm:items-center sm:gap-8
-          lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10
-        "
-      >
-        <div
-          className="
-            mx-auto aspect-square w-full max-w-60 overflow-hidden
-            rounded-xl bg-muted shadow-lg shadow-black/15
-            ring-1 ring-black/5 dark:shadow-black/35
-            dark:ring-white/10 sm:mx-0 sm:max-w-none
-          "
-        >
+      <header className="grid min-w-0 items-start gap-6 sm:grid-cols-[13rem_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10">
+        <div className="mx-auto aspect-square w-full max-w-60 self-start overflow-hidden rounded-xl bg-muted shadow-lg shadow-black/15 ring-1 ring-black/5 dark:shadow-black/35 dark:ring-white/10 sm:mx-0 sm:max-w-none">
           {album.coverUrl ? (
             <img
               src={album.coverUrl}
@@ -172,28 +145,26 @@ export default function AlbumDetailPage() {
           )}
         </div>
 
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
-            {t("eyebrow")}
-          </p>
+        <div className="min-w-0 space-y-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+              {t("eyebrow")}
+            </p>
 
-          <h1
-            className="
-              mt-3 wrap-break-word text-3xl font-bold leading-tight
-              tracking-tight sm:text-4xl lg:text-5xl text-balance
-            "
-          >
-            {album.name}
-          </h1>
+            <h1 className="mt-3 text-balance wrap-break-word text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+              {album.name}
+            </h1>
 
-          <p className="mt-3 text-base font-medium text-foreground/75 sm:text-lg">
-            {metadata.artistsLabel}
-          </p>
+            <p className="mt-3 text-base font-medium text-foreground/75 sm:text-lg">
+              {metadata.artistsLabel}
+            </p>
+          </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-muted-foreground">
             {metadata.releaseDateLabel && album.releaseDate && (
               <span className="inline-flex items-center gap-2">
                 <CalendarDays aria-hidden="true" className="size-3.5" />
+
                 <time dateTime={album.releaseDate}>
                   {metadata.releaseDateLabel}
                 </time>
@@ -210,16 +181,13 @@ export default function AlbumDetailPage() {
             href={album.spotifyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="
-              mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg
-              text-xs font-medium text-primary hover:underline
-              focus-visible:outline-none focus-visible:ring-2
-              focus-visible:ring-ring
-            "
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t("openSpotify")}
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
+
+          <AlbumStatus key={album.id} albumId={album.id} />
         </div>
       </header>
 
@@ -238,6 +206,7 @@ export default function AlbumDetailPage() {
             className="flex items-center justify-center gap-3 py-6"
           >
             <RecordLoader size="sm" />
+
             <p className="text-sm text-muted-foreground">
               {waiting
                 ? t("waiting", { count: detail.waitingSeconds })

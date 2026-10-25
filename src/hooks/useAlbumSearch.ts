@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CatalogError } from "@/lib/catalogError";
+import { getCatalogRatings } from "@/services/catalogRatingsService";
 import { saveCatalogAlbum, searchAlbums } from "@/services/spotifyService";
 import { useAuthStore } from "@/stores/authStore";
 import { useDebouncedValue } from "./useDebouncedValue";
@@ -40,6 +41,27 @@ export function useAlbumSearch() {
     queryFn: ({ signal }) => searchAlbums(debounced, offset, signal),
   });
 
+  const visibleData = enabled ? search.data : undefined;
+
+  const albumIds = (visibleData?.items ?? [])
+    .map((album) => album.id)
+    .sort();
+
+  const ratings = useQuery({
+    queryKey: ["catalogRatings", userId, albumIds],
+    enabled: enabled && albumIds.length > 0,
+    queryFn: ({ signal }) => {
+      if (!userId) throw new Error("AUTH_REQUIRED");
+
+      return getCatalogRatings(userId, albumIds, signal);
+    },
+    staleTime: 0,
+    gcTime: 5 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
   const save = useMutation({
     mutationFn: saveCatalogAlbum,
     retry: false,
@@ -65,6 +87,10 @@ export function useAlbumSearch() {
         queryKey: ["library", userId],
         refetchType: "none",
       });
+
+      void queryClient.invalidateQueries({
+        queryKey: ["catalogRatings", userId],
+      });
     },
     onSettled: () => {
       saveLock.current = false;
@@ -88,9 +114,7 @@ export function useAlbumSearch() {
   function onQueryChange(value: string): void {
     updateSearch(value, 0);
 
-    if (!saveLock.current) {
-      save.reset();
-    }
+    if (!saveLock.current) save.reset();
   }
 
   function onSave(albumId: string, status: ListeningStatus): void {
@@ -103,14 +127,27 @@ export function useAlbumSearch() {
   const loading =
     userId !== null && canSearch && (isDebouncing || search.isFetching);
 
-  const visibleData = enabled ? search.data : undefined;
-  const failure = save.error ?? (enabled ? search.error : null);
+  const failure =
+    save.error ??
+    (enabled ? search.error : null) ??
+    (enabled && albumIds.length > 0 ? ratings.error : null);
+
+  const availableRatings =
+    ratings.isSuccess && !ratings.isFetching ? ratings.data : undefined;
+
+  const items = (visibleData?.items ?? []).map((album) => ({
+    ...album,
+    libraryRating:
+      album.libraryStatus === "listened"
+        ? (availableRatings?.[album.id] ?? null)
+        : null,
+  }));
 
   return {
     query,
     onQueryChange,
     onSave,
-    items: visibleData?.items ?? [],
+    items,
     needsSignIn: userId === null,
     canSearch,
     isDebouncing,

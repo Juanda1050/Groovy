@@ -1,0 +1,25 @@
+{
+  "label": "Tu reseña",
+  "write": "Escribir reseña",
+  "edit": "Editar reseña",
+  "empty": "Aún no has escrito una reseña.",
+  "placeholder": "Tu opinión en 144 caracteres…",
+  "loading": "Consultando reseña…",
+  "save": "Guardar",
+  "remove": "Eliminar reseña",
+  "cancel": "Cancelar",
+  "saving": "Guardando…",
+  "retry": "Reintentar",
+  "removalHint": "Al guardar se eliminará tu reseña.",
+  "retryAfter": "Puedes reintentar en {{count}} s.",
+  "errors": {
+    "read": "No pudimos consultar tu reseña.",
+    "save": "No pudimos completar el guardado. Tu texto sigue aquí para que puedas reintentar.",
+    "rate": "Alcanzaste temporalmente el límite de guardados.",
+    "session": "Tu sesión terminó. Inicia sesión nuevamente.",
+    "statusChanged": "El estado del álbum cambió. Vuelve a abrir el detalle para actualizarlo.",
+    "tooLong": "La reseña no puede superar los 144 caracteres.",
+    "appearsSpanish": "El texto parece estar en español. Selecciona español como idioma de la aplicación o revisa el texto.",
+    "appearsEnglish": "El texto parece estar en inglés. Selecciona inglés como idioma de la aplicación o revisa el texto."
+  }
+}

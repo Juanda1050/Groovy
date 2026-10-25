@@ -6,10 +6,14 @@ import type {
   savedCatalogAlbumSchema,
 } from "@/lib/catalogSchemas";
 
-export type CatalogAlbum = z.infer<typeof catalogAlbumSchema>;
+export type CatalogAlbum = z.infer<typeof catalogAlbumSchema> & {
+  libraryRating?: number | null;
+};
+
 export type CatalogPage = z.infer<typeof catalogPageSchema>;
 export type CatalogErrorCode = z.infer<typeof catalogErrorCodeSchema>;
 export type SavedCatalogAlbum = z.infer<typeof savedCatalogAlbumSchema>;
+export type CatalogRatings = Record<string, number | null>;
 
 export type ListeningStatus = "pending" | "listened";
 

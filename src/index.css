@@ -5,7 +5,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -25,8 +25,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--primary);
-  --radius-sm: .5rem;
-  --radius-md: .75rem;
+  --color-rating: var(--rating);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
@@ -48,6 +49,7 @@
   --input: #9eb8ce;
   --destructive: #a5283d;
   --destructive-foreground: #ffffff;
+  --rating: #a66c00;
   --glass: rgb(255 255 255 / 86%);
   --glass-border: rgb(67 99 129 / 20%);
   --surface-start: #ffffff;
@@ -71,6 +73,7 @@
   --input: #527594;
   --destructive: #ffb0bb;
   --destructive-foreground: #39111b;
+  --rating: #facc15;
   --glass: rgb(18 44 72 / 85%);
   --glass-border: rgb(119 196 255 / 23%);
   --surface-start: #1c4060;
@@ -79,17 +82,40 @@
 }
 
 @layer base {
-  * { @apply border-border; }
-  html { min-width: 320px; background: var(--background); }
+  * {
+    @apply border-border;
+  }
+
+  html {
+    min-width: 320px;
+    background: var(--background);
+  }
+
   body {
     @apply m-0 font-sans text-foreground antialiased;
     min-height: 100dvh;
-    background: radial-gradient(ellipse at 5% 0%, var(--ambient), transparent 55%), var(--background);
+    background:
+      radial-gradient(ellipse at 5% 0%, var(--ambient), transparent 55%),
+      var(--background);
   }
-  button, input { font: inherit; }
-  button:not(:disabled) { cursor: pointer; }
-  ::selection { background: var(--primary); color: var(--primary-foreground); }
-  :focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+
+  button,
+  input {
+    font: inherit;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+  }
 }
 
 @layer components {
@@ -97,37 +123,107 @@
     background: var(--glass);
     border: 1px solid var(--glass-border);
   }
-  .glassBlur { backdrop-filter: blur(12px); }
+
+  .glassBlur {
+    backdrop-filter: blur(12px);
+  }
+
   .surfacePanel {
     border: 1px solid var(--glass-border);
-    background: linear-gradient(135deg, var(--surface-start), var(--surface-end));
+    background: linear-gradient(
+      135deg,
+      var(--surface-start),
+      var(--surface-end)
+    );
     box-shadow: 0 16px 48px rgb(0 12 30 / 8%);
   }
-  .brandBars { display: inline-flex; align-items: center; gap: 4px; height: 28px; }
-  .brandBars span { width: 4px; border-radius: 4px; background: #57b6ff; height: 11px; }
-  .brandBars span:nth-child(2), .brandBars span:nth-child(4) { height: 20px; background: #77c4ff; }
-  .brandBars span:nth-child(3) { height: 28px; background: #b0e0ff; }
-  .authArtwork { background: radial-gradient(ellipse at center, rgb(87 182 255 / 15%), transparent 65%); }
-  .recordDisc {
-    width: min(72vw, 260px); aspect-ratio: 1; border-radius: 50%;
-    background: repeating-radial-gradient(circle, #10263f 0 3px, #193b5b 4px 5px, #0b1d33 6px 8px);
-    border: 1px solid #436381; box-shadow: 0 20px 60px rgb(0 12 30 / 25%);
-    display: grid; place-items: center; transform: rotate(-18deg);
+
+  .brandBars {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
   }
+
+  .brandBars span {
+    width: 4px;
+    border-radius: 4px;
+    background: #57b6ff;
+    height: 11px;
+  }
+
+  .brandBars span:nth-child(2),
+  .brandBars span:nth-child(4) {
+    height: 20px;
+    background: #77c4ff;
+  }
+
+  .brandBars span:nth-child(3) {
+    height: 28px;
+    background: #b0e0ff;
+  }
+
+  .authArtwork {
+    background: radial-gradient(
+      ellipse at center,
+      rgb(87 182 255 / 15%),
+      transparent 65%
+    );
+  }
+
+  .recordDisc {
+    width: min(72vw, 260px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: repeating-radial-gradient(
+      circle,
+      #10263f 0 3px,
+      #193b5b 4px 5px,
+      #0b1d33 6px 8px
+    );
+    border: 1px solid #436381;
+    box-shadow: 0 20px 60px rgb(0 12 30 / 25%);
+    display: grid;
+    place-items: center;
+    transform: rotate(-18deg);
+  }
+
   .recordLabel {
-    width: 34%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-    background: linear-gradient(135deg, #b0e0ff, #57b6ff); color: #06182b;
-    font-size: 12px; font-weight: 800; letter-spacing: -.5px;
+    width: 34%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #b0e0ff, #57b6ff);
+    color: #06182b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
   }
 }
 
 @media (min-width: 768px) {
-  .appNavigation { background: transparent; border: 0; backdrop-filter: none; }
+  .appNavigation {
+    background: transparent;
+    border: 0;
+    backdrop-filter: none;
+  }
 }
+
 @media (prefers-reduced-transparency: reduce) {
-  .glassPanel { background: var(--card); }
-  .glassBlur { backdrop-filter: none; }
+  .glassPanel {
+    background: var(--card);
+  }
+  .glassBlur {
+    backdrop-filter: none;
+  }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

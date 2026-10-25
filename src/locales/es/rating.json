@@ -1,0 +1,42 @@
+{
+  "title": "Tu valoración",
+  "loading": "Consultando valoración…",
+  "unrated": "Sin valoración",
+  "currentRating": "Tu valoración: {{value}} de 5 estrellas",
+  "starControl": "Seleccionar hasta {{value}} estrellas",
+  "instructions": "Pulsa la mitad izquierda para seleccionar media estrella o la derecha para una estrella completa. También puedes ajustar medio punto con las flechas del teclado. La valoración se guarda al seleccionarla. Repetir la misma nota no la elimina.",
+  "retry": "Reintentar",
+  "retryRating": "Consultar valoración",
+  "cancel": "Cancelar",
+  "saving": "Guardando…",
+  "saved": "Cambios guardados",
+  "retryAfter": "Puedes reintentar en {{count}} s.",
+  "saveError": "No pudimos confirmar el guardado. Vuelve a seleccionar la nota para reintentar.",
+  "rateError": "Alcanzaste temporalmente el límite de guardados.",
+  "sessionError": "Tu sesión terminó. Inicia sesión nuevamente.",
+  "statusChanged": "El estado del álbum cambió. Vuelve a abrir el detalle para actualizarlo.",
+  "confirmation": {
+    "title": "¿Volver a pendiente?",
+    "description": "Se borrarán tu valoración, reseña, fecha de escucha y selecciones de canciones. El álbum seguirá en tu biblioteca.",
+    "confirm": "Volver a pendiente"
+  },
+  "status": {
+    "label": "Estado en tu biblioteca",
+    "add": "Guardar álbum",
+    "pending": "Pendiente",
+    "listened": "Escuchado",
+    "loading": "Consultando biblioteca…",
+    "readError": "No pudimos consultar el estado del álbum.",
+    "saveError": "No pudimos confirmar el cambio de estado. Inténtalo nuevamente.",
+    "sessionError": "Tu sesión terminó. Inicia sesión nuevamente.",
+    "rateError": "Alcanzaste temporalmente el límite de guardados.",
+    "spotifyError": "Spotify no está disponible temporalmente. Intenta guardar más tarde."
+  },
+  "errors": {
+    "read": "No pudimos consultar tu valoración.",
+    "save": "No pudimos confirmar el guardado. Puedes reintentarlo.",
+    "session": "Tu sesión terminó. Inicia sesión nuevamente.",
+    "rate": "Alcanzaste temporalmente el límite de guardados.",
+    "statusChanged": "El estado del álbum cambió. Vuelve a abrir el detalle para actualizarlo."
+  }
+}

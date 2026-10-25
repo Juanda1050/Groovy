@@ -1,0 +1,25 @@
+{
+  "label": "Your review",
+  "write": "Write review",
+  "edit": "Edit review",
+  "empty": "You haven't written a review yet.",
+  "placeholder": "Your thoughts in 144 characters…",
+  "loading": "Loading review…",
+  "save": "Save",
+  "remove": "Delete review",
+  "cancel": "Cancel",
+  "saving": "Saving…",
+  "retry": "Try again",
+  "removalHint": "Saving will remove your review.",
+  "retryAfter": "You can try again in {{count}} s.",
+  "errors": {
+    "read": "We couldn't load your review.",
+    "save": "We couldn't complete the save. Your text is still here so you can try again.",
+    "rate": "You've temporarily reached the save limit.",
+    "session": "Your session ended. Please sign in again.",
+    "statusChanged": "The album's status changed. Reopen the detail to refresh it.",
+    "tooLong": "Your review cannot exceed 144 characters.",
+    "appearsSpanish": "This text appears to be in Spanish. Select Spanish as the application language or review the text.",
+    "appearsEnglish": "This text appears to be in English. Select English as the application language or review the text."
+  }
+}
