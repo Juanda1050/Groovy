@@ -1,10 +1,12 @@
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import { useSignOut } from "@/features/auth/hooks/useSignOut";
+import { usePublicProfile } from "@/features/community/hooks/usePublicProfile";
 import { ThemeToggle } from "@/features/preferences/components/ThemeToggle";
 import { useTheme } from "@/features/preferences/hooks/useTheme";
 import { PreferencesSection } from "@/features/preferences/pages/PreferencesSection";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import { useProfile } from "@/features/profile/hooks/useProfile";
+import { Button } from "@/shared/components/ui/button";
 import { Popover } from "@base-ui/react/popover";
 import { Settings } from "lucide-react";
 import { useState } from "react";
@@ -12,14 +14,20 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 export function AccountMenu() {
-  const { t } = useTranslation("profile");
+  const { t, i18n } = useTranslation("profile");
+  const { t: tCommunity } = useTranslation("community");
+
   const [open, setOpen] = useState(false);
   const { data: profile } = useProfile();
+
+  const publicProfile = usePublicProfile(open ? (profile?.id ?? "") : "");
+
+  const formatter = new Intl.NumberFormat(i18n.resolvedLanguage ?? "en");
+
   const { error, ...signOutProps } = useSignOut();
   const { theme, label, toggleTheme } = useTheme();
 
   const name = profile?.display_name || t("preview.name");
-
   const complete = Boolean(profile?.display_name.trim() && profile.username);
 
   return (
@@ -44,19 +52,50 @@ export function AccountMenu() {
 
             <div className="flex items-center gap-3 border-b border-border/40 px-3 py-3">
               <UserAvatar name={name} src={profile?.avatar_url} />
+
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{name}</p>
+
                 {profile?.username && (
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     @{profile.username}
                   </p>
                 )}
+
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p
+                    aria-busy={publicProfile.isFetching}
+                    className="text-xs text-muted-foreground"
+                  >
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {publicProfile.data
+                        ? formatter.format(publicProfile.data.followers_count)
+                        : "—"}
+                    </span>{" "}
+                    {tCommunity("social.followersCount")}
+                  </p>
+
+                  {publicProfile.isError && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      disabled={publicProfile.isFetching}
+                      title={tCommunity("social.readError")}
+                      onClick={() => void publicProfile.refetch()}
+                      className="px-1 text-xs text-muted-foreground"
+                    >
+                      {tCommunity("actions.retry")}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="space-y-1 px-2 py-2">
               <div className="flex min-h-12 items-center justify-between gap-3">
                 <span className="text-sm">{t("menu.theme")}</span>
+
                 <ThemeToggle
                   theme={theme}
                   label={label}
@@ -83,6 +122,7 @@ export function AccountMenu() {
 
             <div className="mt-1 border-t border-border/40 pt-2">
               <SignOutButton {...signOutProps} />
+
               {error && (
                 <p
                   role="alert"

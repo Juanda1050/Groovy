@@ -1,15 +1,22 @@
 import { useAuthStore } from "@/features/auth/stores/authStore";
-import { profileKey,profileWriteKey } from "@/features/profile/hooks/useProfile";
-import { prepareAvatar } from "@/features/profile/lib/avatarImage";
-import { discardProfileAvatar,getAvatarUrl,saveProfileAvatar } from "@/features/profile/services/avatarService";
-import type { AvatarDraft,Profile } from "@/models/profile";
 import {
-useIsMutating,
-useMutation,
-useQuery,
-useQueryClient
+  profileKey,
+  profileWriteKey,
+} from "@/features/profile/hooks/useProfile";
+import { prepareAvatar } from "@/features/profile/lib/avatarImage";
+import {
+  discardProfileAvatar,
+  getAvatarUrl,
+  saveProfileAvatar,
+} from "@/features/profile/services/avatarService";
+import type { AvatarDraft, Profile } from "@/models/profile";
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect,useRef,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function getAvatarErrorKey(error: unknown): string {
   const code =
@@ -23,21 +30,28 @@ function getAvatarErrorKey(error: unknown): string {
   switch (code) {
     case "AVATAR_INVALID_TYPE":
       return "avatar.errors.type";
+
     case "AVATAR_SOURCE_TOO_LARGE":
       return "avatar.errors.sourceSize";
+
     case "AVATAR_INVALID_RESOLUTION":
       return "avatar.errors.resolution";
+
     case "AVATAR_INVALID_IMAGE":
       return "avatar.errors.invalidImage";
+
     case "AVATAR_ENCODING_FAILED":
     case "AVATAR_OUTPUT_TOO_LARGE":
     case "AVATAR_INVALID_UPLOAD":
       return "avatar.errors.processing";
+
     case "AUTH_REQUIRED":
     case "SESSION_EXPIRED":
       return "avatar.errors.session";
+
     case "RATE_LIMITED":
       return "avatar.errors.rate";
+
     default:
       return "avatar.errors.save";
   }
@@ -45,6 +59,7 @@ function getAvatarErrorKey(error: unknown): string {
 
 export function useAvatarUrl(source: string | null | undefined) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const direct = Boolean(
     source?.startsWith("blob:") || source?.startsWith("https://"),
   );
@@ -52,21 +67,32 @@ export function useAvatarUrl(source: string | null | undefined) {
   const query = useQuery({
     queryKey: ["avatar", userId, source ?? null],
     enabled: userId !== null && Boolean(source) && !direct,
-    queryFn: () => {
+    queryFn: async ({ signal }) => {
       if (!source) throw new Error("AVATAR_NOT_FOUND");
-      return getAvatarUrl(source);
+
+      signal.throwIfAborted();
+
+      const url = await getAvatarUrl(source);
+
+      signal.throwIfAborted();
+
+      return url;
     },
     staleTime: 50 * 60_000,
     gcTime: 60 * 60_000,
     refetchInterval: 50 * 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
-    retry: false,
+    refetchOnReconnect: true,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 2_000),
   });
 
   return {
     src: direct ? (source ?? null) : (query.data ?? null),
     direct,
+    version: query.dataUpdatedAt,
+    identity: `${userId ?? ""}:${source ?? ""}`,
     refresh: query.refetch,
   };
 }
@@ -74,6 +100,7 @@ export function useAvatarUrl(source: string | null | undefined) {
 export function useProfileAvatar() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const queryClient = useQueryClient();
+
   const writes = useIsMutating({
     mutationKey: profileWriteKey(userId),
   });
@@ -81,13 +108,16 @@ export function useProfileAvatar() {
   const [draft, setDraft] = useState<AvatarDraft | null>(null);
   const [processing, setProcessing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
   const mounted = useRef(false);
   const revision = useRef(0);
+
   const currentDraft = draft?.userId === userId ? draft : null;
   const previewUrl = currentDraft?.previewUrl;
 
   useEffect(() => {
     mounted.current = true;
+
     return () => {
       mounted.current = false;
       revision.current += 1;
@@ -108,6 +138,7 @@ export function useProfileAvatar() {
       if (useAuthStore.getState().user?.id !== request.userId) return;
 
       queryClient.setQueryData<Profile>(profileKey(request.userId), saved);
+
       setDraft(null);
       setLocalError(null);
     },
@@ -130,6 +161,7 @@ export function useProfileAvatar() {
     const requestedUserId = userId;
     const currentRevision = ++revision.current;
     const previous = currentDraft;
+
     const previousAttempted =
       previous !== null && mutation.variables?.path === previous.path;
 
@@ -155,7 +187,9 @@ export function useProfileAvatar() {
         previewUrl: URL.createObjectURL(blob),
       });
 
-      if (previous && previousAttempted) void cleanupDraft(previous);
+      if (previous && previousAttempted) {
+        void cleanupDraft(previous);
+      }
     } catch (error: unknown) {
       if (mounted.current && revision.current === currentRevision) {
         setLocalError(getAvatarErrorKey(error));
@@ -190,6 +224,7 @@ export function useProfileAvatar() {
     if (processing || writes > 0) return;
 
     const previous = currentDraft;
+
     const attempted =
       previous !== null && mutation.variables?.path === previous.path;
 
@@ -197,7 +232,9 @@ export function useProfileAvatar() {
     setLocalError(null);
     mutation.reset();
 
-    if (previous && attempted) void cleanupDraft(previous);
+    if (previous && attempted) {
+      void cleanupDraft(previous);
+    }
   }
 
   return {

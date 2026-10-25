@@ -60,7 +60,7 @@ export default function ProtectedLayout() {
   }
 
   if (complete && onboardingRoute) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

@@ -4,8 +4,11 @@ import { useState } from "react";
 
 export function UserAvatar({ name, src, size = "sm" }: UserAvatarProps) {
   const avatar = useAvatarUrl(src);
-  const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const [refreshedPath, setRefreshedPath] = useState<string | null>(null);
+
+  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const [refreshedIdentity, setRefreshedIdentity] = useState<string | null>(
+    null,
+  );
 
   const initials =
     name
@@ -19,6 +22,7 @@ export function UserAvatar({ name, src, size = "sm" }: UserAvatarProps) {
 
   const large = size === "lg";
   const imageUrl = avatar.src;
+  const imageKey = `${avatar.identity}:${avatar.version}:${imageUrl ?? ""}`;
 
   return (
     <span
@@ -27,8 +31,9 @@ export function UserAvatar({ name, src, size = "sm" }: UserAvatarProps) {
         large ? "size-16 text-lg" : "size-9 text-xs"
       }`}
     >
-      {imageUrl && imageUrl !== failedSrc ? (
+      {imageUrl && imageKey !== failedImage ? (
         <img
+          key={imageKey}
           src={imageUrl}
           alt=""
           width={large ? 64 : 36}
@@ -36,10 +41,14 @@ export function UserAvatar({ name, src, size = "sm" }: UserAvatarProps) {
           decoding="async"
           className="size-full object-cover"
           onError={() => {
-            setFailedSrc(imageUrl);
+            setFailedImage(imageKey);
 
-            if (!avatar.direct && src && refreshedPath !== src) {
-              setRefreshedPath(src);
+            if (
+              !avatar.direct &&
+              src &&
+              refreshedIdentity !== avatar.identity
+            ) {
+              setRefreshedIdentity(avatar.identity);
               void avatar.refresh();
             }
           }}

@@ -213,7 +213,7 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
       setFeedbackKey("feedback.saved");
 
       if (mode === "onboarding") {
-        navigate("/profile", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (error: unknown) {
       if (useAuthStore.getState().user?.id !== requestedUserId) return;
