@@ -7,10 +7,15 @@ import {
   validateReviewLanguage,
 } from "@/lib/reviewText";
 import { saveCatalogAlbum } from "./spotifyService";
-import type { DeleteUserAlbumInput } from "@/models/library";
+
 import type { CatalogRatings } from "@/models/catalog";
 import type {
+  AlbumFeedCursor,
+  AlbumPost,
   AlbumWriteRequest,
+  DeleteUserAlbumInput,
+  FeedAlbum,
+  FeedProfile,
   LibraryAlbum,
   SaveUserAlbumArgs,
   UserAlbumRow,
@@ -58,13 +63,24 @@ function mapUserAlbum(
     throw new Error("INVALID_STATUS");
   }
 
-  return { ...row, status: row.status };
+  return {
+    ...row,
+    status: row.status,
+  };
 }
 
 function libraryQuery(userId: string, filter: LibraryFilter, head = false) {
   let query = supabase
     .from("user_albums")
-    .select("*", head ? { count: "exact", head: true } : {})
+    .select(
+      "*",
+      head
+        ? {
+            count: "exact",
+            head: true,
+          }
+        : {},
+    )
     .eq("user_id", userId);
 
   switch (filter) {
@@ -72,12 +88,15 @@ function libraryQuery(userId: string, filter: LibraryFilter, head = false) {
     case "listened":
       query = query.eq("status", filter);
       break;
+
     case "rated":
       query = query.not("rating", "is", null);
       break;
+
     case "unrated":
       query = query.eq("status", "listened").is("rating", null);
       break;
+
     case "reviewed":
       query = query.filter("review", "match", "[^ ]");
       break;
@@ -110,7 +129,10 @@ async function persistAlbum(
     .abortSignal(createSignal());
 
   if (error) throw error;
-  if (!data) throw new Error("INVALID_SAVE_RESPONSE");
+
+  if (!data) {
+    throw new Error("INVALID_SAVE_RESPONSE");
+  }
 
   const saved = mapUserAlbum(data, userId, albumId);
 
@@ -142,10 +164,14 @@ export async function getLibrary({
     createSignal(signal),
   );
 
-  if (countResult.error) throw countResult.error;
+  if (countResult.error) {
+    throw countResult.error;
+  }
 
   const total = countResult.count ?? 0;
+
   const lastPage = Math.max(1, Math.ceil(total / pageSize));
+
   const currentPage = Math.min(page, lastPage);
 
   if (total === 0) {
@@ -160,8 +186,12 @@ export async function getLibrary({
   const start = (currentPage - 1) * pageSize;
 
   const { data, error } = await libraryQuery(userId, filter)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    })
     .range(start, start + pageSize - 1)
     .abortSignal(createSignal(signal));
 
@@ -187,7 +217,9 @@ export async function getLibrary({
     )
     .abortSignal(createSignal(signal));
 
-  if (metadataError) throw metadataError;
+  if (metadataError) {
+    throw metadataError;
+  }
 
   const albums = new Map(
     (metadata ?? []).map((album) => [album.spotify_album_id, album]),
@@ -196,7 +228,9 @@ export async function getLibrary({
   return {
     items: rows.map((row) => {
       const album = mapUserAlbum(row, userId, row.spotify_album_id);
+
       const cached = albums.get(row.spotify_album_id);
+
       const artists = catalogAlbumSchema.shape.artists.safeParse(
         cached?.artists,
       );
@@ -209,12 +243,15 @@ export async function getLibrary({
         hasReview: Boolean(album.review?.trim()),
         title: cached?.name ?? null,
         coverUrl: cached?.cover_url ?? null,
+
         artists: artists.success
           ? artists.data.map((artist) => artist.name)
           : [],
+
         metadataAvailable: Boolean(cached),
       };
     }),
+
     total,
     page: currentPage,
     pageSize,
@@ -250,11 +287,14 @@ export async function getCatalogRatings(
   await requireUser(userId);
 
   const ids = [...new Set(albumIds)];
+
   const ratings: CatalogRatings = Object.fromEntries(
     ids.map((id) => [id, null]),
   );
 
-  if (ids.length === 0) return ratings;
+  if (ids.length === 0) {
+    return ratings;
+  }
 
   const { data, error } = await supabase
     .from("user_albums")
@@ -290,15 +330,22 @@ export async function saveUserAlbum(
 
       const saved = await getUserAlbum(userId, albumId);
 
-      if (!saved) throw new Error("INVALID_SAVE_RESPONSE");
+      if (!saved) {
+        throw new Error("INVALID_SAVE_RESPONSE");
+      }
 
       return saved;
     }
 
     const current = await getUserAlbum(userId, albumId);
 
-    if (!current) throw new Error("ALBUM_NOT_SAVED");
-    if (current.status === request.status) return current;
+    if (!current) {
+      throw new Error("ALBUM_NOT_SAVED");
+    }
+
+    if (current.status === request.status) {
+      return current;
+    }
 
     return persistAlbum(userId, albumId, {
       p_spotify_album_id: albumId,
@@ -333,7 +380,10 @@ export async function saveUserAlbum(
     .maybeSingle();
 
   if (error) throw error;
-  if (!current) throw new Error("ALBUM_NOT_SAVED");
+
+  if (!current) {
+    throw new Error("ALBUM_NOT_SAVED");
+  }
 
   const album = mapUserAlbum(current, userId, albumId);
 
@@ -342,6 +392,7 @@ export async function saveUserAlbum(
   }
 
   const favoriteTrackIds: string[] = [];
+
   const leastFavoriteTrackIds: string[] = [];
 
   for (const pick of current.user_track_picks) {
@@ -361,12 +412,30 @@ export async function saveUserAlbum(
 
   return persistAlbum(userId, albumId, {
     p_spotify_album_id: albumId,
+
     p_status: "listened",
+
     p_favorite_track_ids: favoriteTrackIds,
+
     p_least_favorite_track_ids: leastFavoriteTrackIds,
-    ...(rating !== null ? { p_rating: rating } : {}),
-    ...(review !== null ? { p_review: review } : {}),
-    ...(album.listened_at !== null ? { p_listened_at: album.listened_at } : {}),
+
+    ...(rating !== null
+      ? {
+          p_rating: rating,
+        }
+      : {}),
+
+    ...(review !== null
+      ? {
+          p_review: review,
+        }
+      : {}),
+
+    ...(album.listened_at !== null
+      ? {
+          p_listened_at: album.listened_at,
+        }
+      : {}),
   });
 }
 
@@ -374,6 +443,7 @@ export async function deleteUserAlbum(
   request: DeleteUserAlbumInput,
 ): Promise<boolean> {
   validateAlbumId(request.albumId);
+
   await requireUser(request.userId);
 
   const { data, error } = await supabase
@@ -411,4 +481,121 @@ export async function deleteUserAlbum(
   }
 
   throw error ?? new Error("ALBUM_NOT_DELETED");
+}
+
+export async function getAlbumFeed(
+  userId: string,
+  cursor: AlbumFeedCursor | null,
+  signal: AbortSignal,
+): Promise<{
+  items: AlbumPost[];
+  nextCursor: AlbumFeedCursor | null;
+}> {
+  await requireUser(userId);
+
+  const { data, error } = await supabase
+    .rpc("get_album_feed", {
+      p_limit: 10,
+
+      ...(cursor
+        ? {
+            p_before_created_at: cursor.createdAt,
+            p_before_id: cursor.id,
+          }
+        : {}),
+    })
+    .abortSignal(createSignal(signal));
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+
+  const items: AlbumPost[] = rows.slice(0, 10).map((row) => {
+    if (row.visibility !== "community") {
+      throw new Error("INVALID_POST_RESPONSE");
+    }
+
+    return {
+      ...row,
+      visibility: "community",
+    };
+  });
+
+  const last = items.at(-1);
+
+  return {
+    items,
+
+    nextCursor:
+      rows.length > 10 && last
+        ? {
+            createdAt: last.updated_at,
+            id: last.id,
+          }
+        : null,
+  };
+}
+
+export async function getFeedMetadata(
+  userId: string,
+  profileIds: string[],
+  albumIds: string[],
+  signal: AbortSignal,
+): Promise<{
+  profiles: FeedProfile[];
+  albums: FeedAlbum[];
+}> {
+  await requireUser(userId);
+
+  const [profiles, albums] = await Promise.all([
+    profileIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, display_name, username, avatar_url")
+          .in("id", profileIds)
+          .abortSignal(createSignal(signal))
+      : Promise.resolve({
+          data: [],
+          error: null,
+        }),
+
+    albumIds.length
+      ? supabase
+          .from("album_cache")
+          .select("spotify_album_id, name, cover_url, artists")
+          .in("spotify_album_id", albumIds)
+          .abortSignal(createSignal(signal))
+      : Promise.resolve({
+          data: [],
+          error: null,
+        }),
+  ]);
+
+  if (profiles.error) {
+    throw profiles.error;
+  }
+
+  if (albums.error) {
+    throw albums.error;
+  }
+
+  return {
+    profiles: profiles.data ?? [],
+
+    albums: (albums.data ?? []).map((album) => {
+      const artists = catalogAlbumSchema.shape.artists.safeParse(album.artists);
+
+      return {
+        id: album.spotify_album_id,
+
+        name: album.name,
+
+        coverUrl: album.cover_url,
+
+        artists: artists.success
+          ? artists.data.map((artist) => artist.name)
+          : [],
+      };
+    }),
+  };
 }

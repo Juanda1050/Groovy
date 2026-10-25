@@ -23,6 +23,7 @@ import type { AlbumStatusProps } from "@/models/albumDetail";
 export function AlbumStatus({ albumId }: AlbumStatusProps) {
   const { t } = useTranslation("rating");
   const navigate = useNavigate();
+
   const userId = useAuthStore((state) => state.user?.id ?? null);
 
   const status = useAlbumStatus(albumId);
@@ -30,11 +31,15 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
   const labelId = useId();
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+
   const [confirmPending, setConfirmPending] = useState(false);
+
   const [confirmationSubmitted, setConfirmationSubmitted] = useState(false);
 
   const pending = status.currentStatus === "pending";
+
   const listened = status.currentStatus === "listened";
+
   const dialogOpen = confirmPending && listened;
 
   async function onConfirmRemoval() {
@@ -50,10 +55,7 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
     return (
       <div
         role="status"
-        className="
-          flex min-h-11 items-center gap-2
-          text-xs text-muted-foreground
-        "
+        className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground"
       >
         <RecordLoader size="sm" />
         {t("status.loading")}
@@ -98,7 +100,9 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
                 return;
               }
 
-              if (value === status.currentStatus) return;
+              if (value === status.currentStatus) {
+                return;
+              }
 
               if (listened && value === "pending") {
                 setConfirmationSubmitted(false);

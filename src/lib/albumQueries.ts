@@ -166,6 +166,9 @@ export function syncAlbumLibrary(
   void queryClient.invalidateQueries({
     queryKey: ["library", userId],
   });
+  void queryClient.invalidateQueries({
+    queryKey: ["albumFeed"],
+  });
 }
 
 export function syncAlbumRemoval(
@@ -198,6 +201,10 @@ export function syncAlbumRemoval(
     },
     [],
   );
+
+  client.setQueriesData({ queryKey: ["albumPost", userId, albumId] }, null);
+
+  void client.invalidateQueries({ queryKey: ["albumFeed"] });
 
   const libraryEntries = client.getQueriesData<LibraryPageResult>({
     queryKey: ["library", userId],

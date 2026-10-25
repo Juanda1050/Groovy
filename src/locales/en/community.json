@@ -1,4 +1,59 @@
 {
   "title": "Good music travels.",
-  "description": "Discover what other listeners are enjoying and reviewing."
+  "description": "Discover what other listeners are enjoying and reviewing.",
+  "loading": "Loading posts…",
+  "error": "We couldn't refresh the posts. Please try again.",
+  "signInRequired": "Sign in to see posts.",
+  "actions": {
+    "refresh": "Refresh posts",
+    "updates": "Updates available · Refresh",
+    "retry": "Try again",
+    "more": "See more",
+    "library": "Go to my library"
+  },
+  "connection": {
+    "connecting": "Connecting to updates…",
+    "live": "Live updates",
+    "offline": "Live updates are unavailable. You can refresh manually."
+  },
+  "empty": {
+    "title": "No posts yet",
+    "description": "Mark an album as listened to see it here. Your changes are published automatically."
+  },
+  "post": {
+    "author": "Groovy listener",
+    "album": "View album",
+    "openAlbum": "Open {{album}}",
+    "listened": "Listened to this album."
+  },
+  "social": {
+    "openProfile": "View {{name}}’s profile",
+    "follow": "Follow",
+    "following": "Following",
+    "unfollow": "Unfollow",
+    "viewAlbum": "View album",
+    "react": "Like this post",
+    "unreact": "Unlike this post",
+    "saveAlbum": "Add to my library",
+    "inLibrary": "Already in your library",
+    "saved": "Album added to your library",
+    "openPost": "View post",
+    "postTitle": "Post",
+    "postDescription": "Album rating and review.",
+    "profileTitle": "Profile",
+    "profileDescription": "Public profile information.",
+    "profileLoading": "Loading profile…",
+    "profileError": "We couldn't load this profile.",
+    "followingCount": "following",
+    "followersCount": "followers",
+    "close": "Close",
+    "readError": "We couldn't load reactions and follows.",
+    "error": "We couldn't confirm the change. Please try again.",
+    "sessionError": "Your session ended. Please sign in again.",
+    "rateError": "You've made several changes in a row. Please wait a moment.",
+    "retryAfter": "You can try again in {{count}} s.",
+    "saveShort": "Save",
+    "savedShort": "Saved",
+    "openShort": "View"
+  }
 }

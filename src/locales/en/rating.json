@@ -49,5 +49,24 @@
     "error": "We couldn't confirm the removal. Please try again.",
     "sessionError": "Your session ended. Please sign in again.",
     "rateError": "Wait a moment before trying again."
+  },
+  "post": {
+    "share": "Share",
+    "manage": "Post",
+    "title": "Share this album",
+    "description": "Your post will show this rating and review.",
+    "visibility": "Who can see it",
+    "community": "Community",
+    "private": "Only me",
+    "update": "Save changes",
+    "remove": "Remove post",
+    "removeTitle": "Remove this post?",
+    "removeDescription": "It will no longer be available. The album will stay in your library.",
+    "contentRequired": "Add a rating or review before sharing.",
+    "readError": "We couldn't load your post.",
+    "conflict": "The post changed. We're refreshing its information; review it before trying again.",
+    "rateError": "You've made several changes in a row. Please wait a moment.",
+    "sessionError": "Your session doesn't allow this action. Sign in again.",
+    "error": "We couldn't confirm the change. We'll refresh the information before you try again."
   }
 }

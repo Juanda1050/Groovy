@@ -49,5 +49,24 @@
     "error": "No pudimos confirmar la eliminación. Inténtalo de nuevo.",
     "sessionError": "Tu sesión terminó. Inicia sesión nuevamente.",
     "rateError": "Espera un momento antes de volver a intentarlo."
+  },
+  "post": {
+    "share": "Compartir",
+    "manage": "Publicación",
+    "title": "Comparte este álbum",
+    "description": "Tu publicación mostrará esta valoración y reseña.",
+    "visibility": "Quién puede verla",
+    "community": "Comunidad",
+    "private": "Solo yo",
+    "update": "Guardar cambios",
+    "remove": "Retirar publicación",
+    "removeTitle": "¿Retirar publicación?",
+    "removeDescription": "Dejará de estar disponible. El álbum seguirá en tu biblioteca.",
+    "contentRequired": "Agrega una valoración o reseña antes de compartir.",
+    "readError": "No pudimos consultar tu publicación.",
+    "conflict": "La publicación cambió. Estamos actualizando su información; revísala antes de intentarlo otra vez.",
+    "rateError": "Has hecho varios cambios seguidos. Espera un momento.",
+    "sessionError": "Tu sesión no permite realizar esta acción. Vuelve a iniciar sesión.",
+    "error": "No pudimos confirmar el cambio. Actualizaremos la información antes de que lo intentes de nuevo."
   }
 }

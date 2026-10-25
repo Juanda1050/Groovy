@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  useInfiniteQuery,
   useQuery,
   useQueryClient,
   type InfiniteData,
@@ -11,12 +12,24 @@ import {
   albumGcTime,
   albumStaleTime,
 } from "@/lib/albumQueries";
-import { getLibrary } from "@/services/libraryService";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  getAlbumFeed,
+  getFeedMetadata,
+  getLibrary,
+} from "@/services/libraryService";
 import { getLibraryTracks } from "@/services/trackPicksService";
 import { getAlbumTracks } from "@/services/spotifyService";
 import { useAuthStore } from "@/stores/authStore";
 
 import type { AlbumTracksPage } from "@/models/albumDetail";
+import type {
+  AlbumFeedCursor,
+  AlbumFeedItem,
+  AlbumFeedPage,
+  FeedAlbum,
+  FeedProfile,
+} from "@/models/library";
 import type { LibraryFilter, LibraryPageSize } from "@/models/libraryView";
 import type {
   LibraryTrack,
@@ -36,6 +49,7 @@ async function loadTrackMetadata(
   signal: AbortSignal,
 ): Promise<Record<string, LibraryTrackMetadata>> {
   const result: Record<string, LibraryTrackMetadata> = {};
+
   const groups = new Map<string, Set<string>>();
 
   for (const row of rows) {
@@ -46,6 +60,7 @@ async function loadTrackMetadata(
   }
 
   const entries = [...groups.entries()];
+
   let index = 0;
   let failed = false;
 
@@ -59,6 +74,7 @@ async function loadTrackMetadata(
         signal.throwIfAborted();
 
         const [albumId, requestedIds] = entry;
+
         const missing = new Set(requestedIds);
 
         const detail = await client.fetchQuery(
@@ -69,15 +85,19 @@ async function loadTrackMetadata(
 
         function collect(page: AlbumTracksPage): void {
           for (const track of page.items) {
-            if (!missing.has(track.id)) continue;
+            if (!missing.has(track.id)) {
+              continue;
+            }
 
             const seconds = Math.floor(track.durationMs / 1000);
 
             result[`${albumId}:${track.id}`] = {
               albumName: detail.album.name,
               coverUrl: detail.album.coverUrl,
+
               track: {
                 ...track,
+
                 durationLabel:
                   `${Math.floor(seconds / 60)}:` +
                   String(seconds % 60).padStart(2, "0"),
@@ -105,27 +125,33 @@ async function loadTrackMetadata(
         }
 
         let offset = detail.tracks.nextOffset;
+
         const visited = new Set<number>();
 
         while (missing.size > 0 && offset !== null && !visited.has(offset)) {
           signal.throwIfAborted();
+
           visited.add(offset);
 
           const currentOffset: number = offset;
+
           const cached = cachedPages.get(currentOffset);
 
           const page: AlbumTracksPage =
             cached ??
             (await client.fetchQuery({
               queryKey: ["albumTracksPage", userId, albumId, currentOffset],
+
               queryFn: ({ signal: pageSignal }) =>
                 getAlbumTracks(albumId, currentOffset, pageSignal),
+
               staleTime: albumStaleTime,
               gcTime: albumGcTime,
               retry: false,
             }));
 
           signal.throwIfAborted();
+
           collect(page);
           offset = page.nextOffset;
         }
@@ -163,9 +189,12 @@ export function useLibrary(active = true) {
 
   const query = useQuery({
     queryKey: ["library", userId, filter, requestedPage, pageSize],
+
     enabled: active && userId !== null,
+
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -182,6 +211,7 @@ export function useLibrary(active = true) {
   });
 
   const total = query.data?.total ?? 0;
+
   const pageCount = Math.ceil(total / pageSize);
 
   const pageNumber =
@@ -195,10 +225,15 @@ export function useLibrary(active = true) {
     (query.data?.items.length ?? 0) > 0;
 
   function onFilterChange(next: LibraryFilter): void {
-    if (next === filter || query.isFetching) return;
+    if (next === filter || query.isFetching) {
+      return;
+    }
 
     setFilter(next);
-    setNavigation({ userId, page: 1 });
+    setNavigation({
+      userId,
+      page: 1,
+    });
   }
 
   function onPageSizeChange(next: number): void {
@@ -207,11 +242,16 @@ export function useLibrary(active = true) {
     }
 
     setPageSize(next);
-    setNavigation({ userId, page: 1 });
+    setNavigation({
+      userId,
+      page: 1,
+    });
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) return;
+    if (query.isFetching || !hasPrevious) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -220,7 +260,9 @@ export function useLibrary(active = true) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) return;
+    if (query.isFetching || !hasNext) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -234,20 +276,30 @@ export function useLibrary(active = true) {
     pageCount,
     pageNumber,
     total,
+
     items: query.data?.items ?? [],
+
     needsSignIn: userId === null,
+
     isPending: query.isPending,
     isFetching: query.isFetching,
     isError: query.isError,
+
     hasPrevious,
     hasNext,
+
     onFilterChange,
     onPageSizeChange,
     onPrevious,
     onNext,
+
     onFirst: () => {
-      setNavigation({ userId, page: 1 });
+      setNavigation({
+        userId,
+        page: 1,
+      });
     },
+
     onRetry: () => {
       void query.refetch();
     },
@@ -256,6 +308,7 @@ export function useLibrary(active = true) {
 
 export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const client = useQueryClient();
 
   const [pageSize, setPageSize] = useState<LibraryPageSize>(10);
@@ -273,9 +326,12 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const query = useQuery({
     queryKey: ["likedAlbums", userId, preference, requestedPage, pageSize],
+
     enabled: active && userId !== null,
+
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -297,10 +353,13 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const metadata = useQuery({
     queryKey: ["libraryTrackMetadata", userId, identifiers],
+
     enabled: active && userId !== null && rows.length > 0,
+
     staleTime: albumStaleTime,
     gcTime: albumGcTime,
     retry: false,
+
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -311,6 +370,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   });
 
   const total = query.data?.total ?? 0;
+
   const pageCount = Math.ceil(total / pageSize);
 
   const pageNumber =
@@ -318,6 +378,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const items: readonly LibraryTrackView[] = rows.map((row) => ({
     ...row,
+
     metadata: metadata.data?.[`${row.albumId}:${row.trackId}`] ?? null,
   }));
 
@@ -331,6 +392,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     }
 
     setPageSize(next);
+
     setNavigation({
       userId,
       preference,
@@ -339,7 +401,9 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) return;
+    if (query.isFetching || !hasPrevious) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -349,7 +413,9 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) return;
+    if (query.isFetching || !hasNext) {
+      return;
+    }
 
     setNavigation({
       userId,
@@ -364,16 +430,22 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     pageSize,
     pageCount,
     pageNumber,
+
     metadataLoading: rows.length > 0 && metadata.isFetching,
+
     metadataError: metadata.isError,
+
     isPending: query.isPending,
     isFetching: query.isFetching,
     isError: query.isError,
+
     hasPrevious,
     hasNext,
+
     onPageSizeChange,
     onPrevious,
     onNext,
+
     onFirst: () => {
       setNavigation({
         userId,
@@ -381,11 +453,372 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
         page: 1,
       });
     },
+
     onRetry: () => {
       if (query.isError) {
         void query.refetch();
       } else {
         void metadata.refetch();
+      }
+    },
+  };
+}
+
+async function loadFeedPage(
+  client: QueryClient,
+  userId: string,
+  cursor: AlbumFeedCursor | null,
+  signal: AbortSignal,
+): Promise<AlbumFeedPage> {
+  const page = await getAlbumFeed(userId, cursor, signal);
+
+  const profiles = [...new Set(page.items.map((post) => post.user_id))];
+
+  const albums = [...new Set(page.items.map((post) => post.spotify_album_id))];
+
+  const profileKey = (id: string) => ["feedProfile", userId, id];
+
+  const albumKey = (id: string) => ["feedAlbum", userId, id];
+
+  const now = Date.now();
+
+  function fresh(key: readonly unknown[], age: number): boolean {
+    const state = client.getQueryState(key);
+
+    return state?.data !== undefined && now - state.dataUpdatedAt < age;
+  }
+
+  const missingProfiles = profiles.filter(
+    (id) => !fresh(profileKey(id), 5 * 60_000),
+  );
+
+  const missingAlbums = albums.filter(
+    (id) => !fresh(albumKey(id), 15 * 60_000),
+  );
+
+  if (missingProfiles.length || missingAlbums.length) {
+    const metadata = await getFeedMetadata(
+      userId,
+      missingProfiles,
+      missingAlbums,
+      signal,
+    );
+
+    if (signal.aborted || useAuthStore.getState().user?.id !== userId) {
+      throw new Error("AUTH_REQUIRED");
+    }
+
+    for (const id of missingProfiles) {
+      client.setQueryData<FeedProfile | null>(
+        profileKey(id),
+
+        metadata.profiles.find((profile) => profile.id === id) ?? null,
+      );
+    }
+
+    for (const id of missingAlbums) {
+      client.setQueryData<FeedAlbum | null>(
+        albumKey(id),
+
+        metadata.albums.find((album) => album.id === id) ?? null,
+      );
+    }
+  }
+
+  return {
+    ...page,
+
+    items: page.items.map((post) => ({
+      ...post,
+
+      author:
+        client.getQueryData<FeedProfile | null>(profileKey(post.user_id)) ??
+        null,
+
+      album:
+        client.getQueryData<FeedAlbum | null>(
+          albumKey(post.spotify_album_id),
+        ) ?? null,
+    })),
+  };
+}
+
+export function useCommunityFeed() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+
+  const client = useQueryClient();
+
+  const [updates, setUpdates] = useState(false);
+
+  const [connection, setConnection] = useState<
+    "connecting" | "live" | "offline"
+  >("connecting");
+
+  const events = useRef(0);
+
+  const key = ["albumFeed", userId];
+
+  const query = useInfiniteQuery({
+    queryKey: key,
+    enabled: Boolean(userId),
+
+    initialPageParam: null as AlbumFeedCursor | null,
+
+    queryFn: ({ pageParam, signal }) => {
+      if (!userId) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
+      return loadFeedPage(client, userId, pageParam, signal);
+    },
+
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let active = true;
+
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+
+    let lastResume = 0;
+
+    const feedKey = ["albumFeed", userId];
+
+    const currentUser = () =>
+      active && useAuthStore.getState().user?.id === userId;
+
+    function reconcile(): void {
+      if (!currentUser() || document.visibilityState !== "visible") {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (now - lastResume < 15_000) {
+        return;
+      }
+
+      lastResume = now;
+
+      void client.invalidateQueries({
+        queryKey: feedKey,
+      });
+    }
+
+    async function subscribe(): Promise<void> {
+      try {
+        await supabase.realtime.setAuth();
+
+        if (!currentUser()) return;
+
+        channel = supabase
+          .channel("groovy:community", {
+            config: {
+              private: true,
+            },
+          })
+          .on(
+            "broadcast",
+            {
+              event: "feed_changed",
+            },
+            ({ payload }: { payload: unknown }) => {
+              if (!currentUser() || typeof payload !== "object" || !payload) {
+                return;
+              }
+
+              if (
+                !("id" in payload) ||
+                typeof payload.id !== "string" ||
+                !("kind" in payload) ||
+                !["new", "changed", "removed"].includes(String(payload.kind))
+              ) {
+                return;
+              }
+
+              const postId = payload.id;
+
+              events.current += 1;
+
+              if (payload.kind === "removed") {
+                void client.cancelQueries({
+                  queryKey: feedKey,
+                });
+
+                client.setQueryData<
+                  InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>
+                >(
+                  feedKey,
+
+                  (previous) =>
+                    previous
+                      ? {
+                          ...previous,
+
+                          pages: previous.pages.map((page) => ({
+                            ...page,
+
+                            items: page.items.filter(
+                              (post) => post.id !== postId,
+                            ),
+                          })),
+                        }
+                      : previous,
+                );
+
+                if (!client.getQueryData(feedKey)) {
+                  void client.invalidateQueries({
+                    queryKey: feedKey,
+                  });
+                }
+              } else {
+                setUpdates(true);
+              }
+            },
+          )
+          .subscribe((status) => {
+            if (!currentUser()) {
+              return;
+            }
+
+            if (status === "SUBSCRIBED") {
+              setConnection("live");
+
+              if (document.visibilityState === "visible") {
+                lastResume = Date.now();
+
+                void client
+                  .cancelQueries({
+                    queryKey: feedKey,
+                  })
+                  .then(() => {
+                    if (currentUser()) {
+                      void client.invalidateQueries({
+                        queryKey: feedKey,
+                      });
+                    }
+                  });
+              } else {
+                lastResume = 0;
+              }
+            } else if (
+              status === "CHANNEL_ERROR" ||
+              status === "TIMED_OUT" ||
+              status === "CLOSED"
+            ) {
+              setConnection("offline");
+            }
+          });
+      } catch {
+        if (currentUser()) {
+          setConnection("offline");
+        }
+      }
+    }
+
+    void subscribe();
+
+    window.addEventListener("online", reconcile);
+
+    document.addEventListener("visibilitychange", reconcile);
+
+    return () => {
+      active = false;
+
+      window.removeEventListener("online", reconcile);
+
+      document.removeEventListener("visibilitychange", reconcile);
+
+      if (channel) {
+        void supabase.removeChannel(channel);
+      }
+    };
+  }, [client, userId]);
+
+  const unique = new Map<string, AlbumFeedItem>();
+
+  for (const page of query.data?.pages ?? []) {
+    for (const post of page.items) {
+      const previous = unique.get(post.id);
+
+      if (!previous || previous.revision < post.revision) {
+        unique.set(post.id, post);
+      }
+    }
+  }
+
+  async function onRefresh(): Promise<void> {
+    if (!userId || query.isFetching) {
+      return;
+    }
+
+    const revision = events.current;
+
+    await client.cancelQueries({
+      queryKey: key,
+    });
+
+    client.setQueryData<InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>>(
+      key,
+
+      (previous) =>
+        previous
+          ? {
+              pages: previous.pages.slice(0, 1),
+
+              pageParams: previous.pageParams.slice(0, 1),
+            }
+          : previous,
+    );
+
+    const result = await query.refetch();
+
+    if (
+      !result.isError &&
+      events.current === revision &&
+      useAuthStore.getState().user?.id === userId
+    ) {
+      setUpdates(false);
+    }
+  }
+
+  return {
+    items: [...unique.values()],
+
+    needsSignIn: !userId,
+    pending: query.isPending,
+    error: query.isError,
+
+    nextError: query.isFetchNextPageError,
+
+    fetching: query.isFetching,
+
+    loadingMore: query.isFetchingNextPage,
+
+    hasMore: Boolean(query.hasNextPage),
+
+    updates,
+    connection,
+
+    onRefresh: () => {
+      void onRefresh();
+    },
+
+    onRetry: () => {
+      void query.refetch();
+    },
+
+    onLoadMore: () => {
+      if (query.hasNextPage && !query.isFetching) {
+        void query.fetchNextPage();
       }
     },
   };

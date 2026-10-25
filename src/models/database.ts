@@ -50,6 +50,126 @@ export type Database = {
         }
         Relationships: []
       }
+      album_post_reactions: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "album_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_post_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      album_posts: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number | null
+          review: string | null
+          revision: number
+          spotify_album_id: string
+          updated_at: string
+          user_album_id: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating?: number | null
+          review?: string | null
+          revision?: number
+          spotify_album_id: string
+          updated_at?: string
+          user_album_id: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number | null
+          review?: string | null
+          revision?: number
+          spotify_album_id?: string
+          updated_at?: string
+          user_album_id?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_posts_user_album_id_fkey"
+            columns: ["user_album_id"]
+            isOneToOne: true
+            referencedRelation: "user_albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_follows: {
+        Row: {
+          created_at: string
+          followed_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followed_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followed_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_follows_followed_id_fkey"
+            columns: ["followed_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -224,6 +344,41 @@ export type Database = {
         }[]
       }
       delete_user_album: { Args: { p_user_album_id: string }; Returns: boolean }
+      get_album_feed: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_limit?: number
+        }
+        Returns: {
+          created_at: string
+          id: string
+          rating: number | null
+          review: string | null
+          revision: number
+          spotify_album_id: string
+          updated_at: string
+          user_album_id: string
+          user_id: string
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "album_posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_community_social: {
+        Args: { p_post_ids: string[] }
+        Returns: {
+          following_author: boolean
+          library_status: string
+          post_id: string
+          reacted: boolean
+          reaction_count: number
+        }[]
+      }
       get_my_library: {
         Args: {
           p_before_created_at?: string
@@ -242,6 +397,19 @@ export type Database = {
           rating: number
           spotify_album_id: string
           status: string
+        }[]
+      }
+      get_public_profile: {
+        Args: { p_profile_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          followers_count: number
+          following: boolean
+          following_count: number
+          id: string
+          username: string
         }[]
       }
       reserve_spotify_request: {
@@ -295,6 +463,26 @@ export type Database = {
           p_spotify_album_id: string
           p_status: string
         }
+        Returns: {
+          created_at: string
+          id: string
+          listened_at: string | null
+          rating: number | null
+          review: string | null
+          spotify_album_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_albums"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_community_action: {
+        Args: { p_action: string; p_active: boolean; p_target_id: string }
         Returns: {
           created_at: string
           id: string

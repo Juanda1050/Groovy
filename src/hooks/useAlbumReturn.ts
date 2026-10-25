@@ -2,21 +2,33 @@ import { useLocation } from "react-router-dom";
 import { z } from "zod";
 
 const navigationStateSchema = z.object({
-  discoverSearch: z.string().max(2048),
+  returnTo: z.literal("/community").optional(),
+
+  discoverSearch: z.string().max(2048).optional(),
 });
 
 export function useAlbumReturn() {
   const location = useLocation();
 
   const navigationState: unknown = location.state;
+
   const parsed = navigationStateSchema.safeParse(navigationState);
 
+  const fromCommunity = parsed.success && parsed.data.returnTo === "/community";
+
+  const fromDiscover =
+    !fromCommunity &&
+    parsed.success &&
+    parsed.data.discoverSearch !== undefined;
+
   const returnParams = new URLSearchParams();
+
   const savedParams = new URLSearchParams(
-    parsed.success ? parsed.data.discoverSearch : "",
+    parsed.success ? (parsed.data.discoverSearch ?? "") : "",
   );
 
   const query = (savedParams.get("q") ?? "").slice(0, 120);
+
   const offset = Number(savedParams.get("offset") ?? 0);
 
   if (query.trim()) {
@@ -33,17 +45,24 @@ export function useAlbumReturn() {
   }
 
   const restoredSearch = returnParams.toString();
-  const fromDiscover = parsed.success;
 
   return {
     detailNavigationState: {
       discoverSearch: location.search,
     },
-    returnTo: fromDiscover
-      ? restoredSearch
-        ? `/?${restoredSearch}`
-        : "/"
-      : "/library",
-    returnLabelKey: fromDiscover ? "backToSearch" : "library",
+
+    returnTo: fromCommunity
+      ? "/community"
+      : fromDiscover
+        ? restoredSearch
+          ? `/?${restoredSearch}`
+          : "/"
+        : "/library",
+
+    returnLabelKey: fromCommunity
+      ? "community"
+      : fromDiscover
+        ? "backToSearch"
+        : "library",
   };
 }

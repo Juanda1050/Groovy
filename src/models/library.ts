@@ -90,6 +90,19 @@ export interface DeleteUserAlbumInput {
   userAlbumId: string;
 }
 
+export interface AlbumPost {
+  id: string;
+  user_id: string;
+  user_album_id: string;
+  spotify_album_id: string;
+  rating: number | null;
+  review: string | null;
+  visibility: "community" | "private";
+  created_at: string;
+  updated_at: string;
+  revision: number;
+}
+
 export type AlbumRatingRecord = Pick<LibraryAlbum, "rating" | "status">;
 
 export type AlbumReviewRecord = Pick<LibraryAlbum, "review" | "status">;
@@ -98,3 +111,75 @@ export type AlbumWriteRequest =
   | (AlbumStatusRequest & { action: "status" })
   | (SaveAlbumRatingInput & { action: "rating" })
   | (SaveAlbumReviewInput & { action: "review" });
+
+export interface AlbumFeedCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface FeedProfile {
+  id: string;
+  display_name: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+export interface FeedAlbum {
+  id: string;
+  name: string;
+  coverUrl: string | null;
+  artists: string[];
+}
+
+export interface AlbumFeedItem extends AlbumPost {
+  author: FeedProfile | null;
+  album: FeedAlbum | null;
+}
+
+export interface AlbumFeedPage {
+  items: AlbumFeedItem[];
+  nextCursor: AlbumFeedCursor | null;
+}
+
+export interface CommunityPostState {
+  post_id: string;
+  reaction_count: number;
+  reacted: boolean;
+  following_author: boolean;
+  library_status: "pending" | "listened" | null;
+}
+
+export interface CommunityAction {
+  userId: string;
+  action: "follow" | "reaction" | "library";
+  targetId: string;
+  active: boolean;
+}
+
+export interface PublicProfile {
+  id: string;
+  display_name: string;
+  username: string | null;
+  bio: string;
+  avatar_url: string | null;
+  followers_count: number;
+  following_count: number;
+  following: boolean;
+}
+
+export interface AlbumFeedCardProps {
+  item: AlbumFeedItem;
+  social: CommunityPostState | null;
+  viewerId: string | null;
+  busy: boolean;
+  onProfile: () => void;
+  onReaction: () => void;
+  onFollow: () => void;
+  onSaveAlbum: () => void;
+}
+
+export interface PublicProfileDialogProps {
+  userId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}

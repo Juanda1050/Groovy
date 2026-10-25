@@ -2,18 +2,32 @@ import { useEffect, useRef, useState } from "react";
 import {
   useIsMutating,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
+import { toast } from "@/app/queryClient";
+import { syncAlbumLibrary } from "@/lib/albumQueries";
 import { prepareAvatar } from "@/lib/avatarImage";
+import {
+  getLibraryErrorCode,
+  getLibraryRetrySeconds,
+} from "@/lib/libraryErrors";
 import {
   discardProfileAvatar,
   getAvatarUrl,
+  getCommunitySocial,
   getProfile,
+  getPublicProfile,
   getUserSettings,
   saveProfileAvatar,
+  setCommunityAction,
 } from "@/services/profileService";
 import { useAuthStore } from "@/stores/authStore";
+
+import type { CommunityAction, CommunityPostState } from "@/models/library";
 import type { AvatarDraft, Profile } from "@/models/profile";
 
 const accountStaleTime = 5 * 60_000;
@@ -42,21 +56,28 @@ function getAvatarErrorKey(error: unknown): string {
   switch (code) {
     case "AVATAR_INVALID_TYPE":
       return "avatar.errors.type";
+
     case "AVATAR_SOURCE_TOO_LARGE":
       return "avatar.errors.sourceSize";
+
     case "AVATAR_INVALID_RESOLUTION":
       return "avatar.errors.resolution";
+
     case "AVATAR_INVALID_IMAGE":
       return "avatar.errors.invalidImage";
+
     case "AVATAR_ENCODING_FAILED":
     case "AVATAR_OUTPUT_TOO_LARGE":
     case "AVATAR_INVALID_UPLOAD":
       return "avatar.errors.processing";
+
     case "AUTH_REQUIRED":
     case "SESSION_EXPIRED":
       return "avatar.errors.session";
+
     case "RATE_LIMITED":
       return "avatar.errors.rate";
+
     default:
       return "avatar.errors.save";
   }
@@ -69,8 +90,11 @@ export function useProfile() {
     queryKey: profileKey(userId),
     enabled: userId !== null,
     staleTime: accountStaleTime,
+
     queryFn: ({ signal }) => {
-      if (!userId) throw new Error("Authentication required.");
+      if (!userId) {
+        throw new Error("Authentication required.");
+      }
 
       return getProfile(userId, signal);
     },
@@ -84,8 +108,11 @@ export function useUserSettings() {
     queryKey: userSettingsKey(userId),
     enabled: userId !== null,
     staleTime: accountStaleTime,
+
     queryFn: ({ signal }) => {
-      if (!userId) throw new Error("Authentication required.");
+      if (!userId) {
+        throw new Error("Authentication required.");
+      }
 
       return getUserSettings(userId, signal);
     },
@@ -101,12 +128,17 @@ export function useAvatarUrl(source: string | null | undefined) {
 
   const query = useQuery({
     queryKey: ["avatar", userId, source ?? null],
+
     enabled: userId !== null && Boolean(source) && !direct,
+
     queryFn: () => {
-      if (!source) throw new Error("AVATAR_NOT_FOUND");
+      if (!source) {
+        throw new Error("AVATAR_NOT_FOUND");
+      }
 
       return getAvatarUrl(source);
     },
+
     staleTime: 50 * 60_000,
     gcTime: 60 * 60_000,
     refetchInterval: 50 * 60_000,
@@ -117,6 +149,7 @@ export function useAvatarUrl(source: string | null | undefined) {
 
   return {
     src: direct ? (source ?? null) : (query.data ?? null),
+
     direct,
     refresh: query.refetch,
   };
@@ -124,19 +157,24 @@ export function useAvatarUrl(source: string | null | undefined) {
 
 export function useProfileAvatar() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const queryClient = useQueryClient();
+
   const writes = useIsMutating({
     mutationKey: profileWriteKey(userId),
   });
 
   const [draft, setDraft] = useState<AvatarDraft | null>(null);
+
   const [processing, setProcessing] = useState(false);
+
   const [localError, setLocalError] = useState<string | null>(null);
 
   const mounted = useRef(false);
   const revision = useRef(0);
 
   const currentDraft = draft?.userId === userId ? draft : null;
+
   const previewUrl = currentDraft?.previewUrl;
 
   useEffect(() => {
@@ -150,16 +188,23 @@ export function useProfileAvatar() {
 
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
   }, [previewUrl]);
 
   const mutation = useMutation({
     mutationKey: profileWriteKey(userId),
+
     mutationFn: saveProfileAvatar,
+
     retry: false,
+
     onSuccess: (saved, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) return;
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
 
       queryClient.setQueryData<Profile>(profileKey(request.userId), saved);
 
@@ -180,11 +225,16 @@ export function useProfileAvatar() {
   }
 
   async function onChoose(file: File): Promise<void> {
-    if (!userId || processing || writes > 0) return;
+    if (!userId || processing || writes > 0) {
+      return;
+    }
 
     const requestedUserId = userId;
+
     const currentRevision = ++revision.current;
+
     const previous = currentDraft;
+
     const previousAttempted =
       previous !== null && mutation.variables?.path === previous.path;
 
@@ -244,9 +294,12 @@ export function useProfileAvatar() {
   }
 
   function onCancel(): void {
-    if (processing || writes > 0) return;
+    if (processing || writes > 0) {
+      return;
+    }
 
     const previous = currentDraft;
+
     const attempted =
       previous !== null && mutation.variables?.path === previous.path;
 
@@ -266,11 +319,273 @@ export function useProfileAvatar() {
     processing,
     saving: mutation.isPending,
     saved: mutation.isSuccess,
+
     errorKey:
       localError ??
       (mutation.isError ? getAvatarErrorKey(mutation.error) : null),
+
     onChoose,
     onSave,
     onCancel,
+  };
+}
+
+export function useCommunitySocial(postIds: string[]) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+
+  const ids = [...new Set(postIds)].sort();
+
+  const groups: string[][] = [];
+
+  for (let offset = 0; offset < ids.length; offset += 40) {
+    groups.push(ids.slice(offset, offset + 40));
+  }
+
+  const queries = useQueries({
+    queries: groups.map((group) => ({
+      queryKey: ["communitySocial", userId, group],
+
+      enabled: Boolean(userId),
+
+      queryFn: ({ signal }: { signal: AbortSignal }) => {
+        if (!userId) {
+          throw new Error("AUTH_REQUIRED");
+        }
+
+        return getCommunitySocial(userId, group, signal);
+      },
+
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: false,
+      refetchOnWindowFocus: true,
+    })),
+  });
+
+  return {
+    byId: new Map(
+      queries.flatMap((query) =>
+        (query.data ?? []).map((row) => [row.post_id, row] as const),
+      ),
+    ),
+
+    error: queries.some((query) => query.isError),
+
+    onRetry: () => {
+      for (const query of queries) {
+        void query.refetch();
+      }
+    },
+  };
+}
+
+export function usePublicProfile(profileId: string) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+
+  return useQuery({
+    queryKey: ["publicProfile", userId, profileId],
+
+    enabled: Boolean(userId && profileId),
+
+    queryFn: ({ signal }) => {
+      if (!userId) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
+      return getPublicProfile(userId, profileId, signal);
+    },
+
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
+export function useCommunityActions() {
+  const { t } = useTranslation("community");
+
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+
+  const client = useQueryClient();
+
+  const key = ["communityWrite", userId];
+
+  const writes = useIsMutating({
+    mutationKey: key,
+  });
+
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
+  useEffect(() => {
+    if (remainingSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setRemainingSeconds((value) => Math.max(0, value - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [remainingSeconds]);
+
+  const mutation = useMutation({
+    mutationKey: key,
+    mutationFn: setCommunityAction,
+    retry: false,
+
+    onMutate: async (request) => {
+      await Promise.all([
+        client.cancelQueries({
+          queryKey: ["communitySocial", request.userId],
+        }),
+
+        client.cancelQueries({
+          queryKey: ["publicProfile", request.userId],
+        }),
+      ]);
+
+      const previous = client.getQueriesData<CommunityPostState[]>({
+        queryKey: ["communitySocial", request.userId],
+      });
+
+      if (
+        request.action === "reaction" &&
+        useAuthStore.getState().user?.id === request.userId
+      ) {
+        client.setQueriesData<CommunityPostState[]>(
+          {
+            queryKey: ["communitySocial", request.userId],
+          },
+
+          (rows) =>
+            rows?.map((row) => {
+              if (
+                row.post_id !== request.targetId ||
+                row.reacted === request.active
+              ) {
+                return row;
+              }
+
+              return {
+                ...row,
+                reacted: request.active,
+
+                reaction_count: Math.max(
+                  0,
+                  row.reaction_count + (request.active ? 1 : -1),
+                ),
+              };
+            }),
+        );
+      }
+
+      return { previous };
+    },
+
+    onSuccess: async (album, request) => {
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
+
+      if (album) {
+        syncAlbumLibrary(client, album);
+
+        toast.add({
+          type: "success",
+          title: t("social.saved"),
+          timeout: 2600,
+        });
+      }
+
+      await Promise.all([
+        client.invalidateQueries({
+          queryKey: ["communitySocial", request.userId],
+        }),
+
+        client.invalidateQueries({
+          queryKey: ["publicProfile", request.userId],
+        }),
+      ]);
+    },
+
+    onError: (error, request, context) => {
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
+
+      for (const [queryKey, data] of context?.previous ?? []) {
+        client.setQueryData(queryKey, data);
+      }
+
+      const code = getLibraryErrorCode(error);
+
+      const limited = code === "RATE_LIMITED";
+
+      const seconds = limited ? getLibraryRetrySeconds(error) : 0;
+
+      if (limited) {
+        setRemainingSeconds(seconds);
+      }
+
+      const message = limited
+        ? "social.rateError"
+        : ["AUTH_REQUIRED", "SESSION_EXPIRED", "UNAUTHORIZED"].includes(code)
+          ? "social.sessionError"
+          : "social.error";
+
+      toast.add({
+        type: "error",
+        title: t(message),
+        timeout: 5000,
+
+        ...(limited
+          ? {
+              description: t("social.retryAfter", {
+                count: seconds,
+              }),
+            }
+          : {}),
+      });
+
+      void client.invalidateQueries({
+        queryKey: ["communitySocial", request.userId],
+      });
+
+      void client.invalidateQueries({
+        queryKey: ["publicProfile", request.userId],
+      });
+    },
+  });
+
+  const disabled = !userId || writes > 0 || remainingSeconds > 0;
+
+  function onAction(
+    action: CommunityAction["action"],
+    targetId: string,
+    active: boolean,
+  ): void {
+    if (
+      disabled ||
+      !userId ||
+      useAuthStore.getState().user?.id !== userId ||
+      client.isMutating({
+        mutationKey: key,
+      }) > 0
+    ) {
+      return;
+    }
+
+    mutation.mutate({
+      userId,
+      action,
+      targetId,
+      active,
+    });
+  }
+
+  return {
+    userId,
+    disabled,
+    onAction,
   };
 }

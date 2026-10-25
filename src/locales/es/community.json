@@ -1,4 +1,59 @@
 {
   "title": "La buena música se comparte.",
-  "description": "Descubre lo que otras personas están escuchando y reseñando."
+  "description": "Descubre lo que otras personas están escuchando y reseñando.",
+  "loading": "Cargando publicaciones…",
+  "error": "No pudimos actualizar las publicaciones. Inténtalo de nuevo.",
+  "signInRequired": "Inicia sesión para ver las publicaciones.",
+  "actions": {
+    "refresh": "Actualizar publicaciones",
+    "updates": "Hay novedades · Actualizar",
+    "retry": "Reintentar",
+    "more": "Ver más",
+    "library": "Ir a mi biblioteca"
+  },
+  "connection": {
+    "connecting": "Conectando actualizaciones…",
+    "live": "Actualizaciones en tiempo real",
+    "offline": "Sin conexión en tiempo real. Puedes actualizar manualmente."
+  },
+  "empty": {
+    "title": "Aún no hay publicaciones",
+    "description": "Marca un álbum como escuchado para que aparezca aquí. Tus cambios se publican automáticamente."
+  },
+  "post": {
+    "author": "Oyente de Groovy",
+    "album": "Ver álbum",
+    "openAlbum": "Abrir {{album}}",
+    "listened": "Escuchó este álbum."
+  },
+  "social": {
+    "openProfile": "Ver el perfil de {{name}}",
+    "follow": "Seguir",
+    "following": "Siguiendo",
+    "unfollow": "Dejar de seguir",
+    "viewAlbum": "Ver álbum",
+    "react": "Me gusta esta publicación",
+    "unreact": "Quitar Me gusta",
+    "saveAlbum": "Agregar a mi biblioteca",
+    "inLibrary": "Ya está en tu biblioteca",
+    "saved": "Álbum agregado a tu biblioteca",
+    "openPost": "Ver publicación",
+    "postTitle": "Publicación",
+    "postDescription": "Valoración y opinión del álbum.",
+    "profileTitle": "Perfil",
+    "profileDescription": "Información pública del usuario.",
+    "profileLoading": "Cargando perfil…",
+    "profileError": "No pudimos cargar este perfil.",
+    "followingCount": "siguiendo",
+    "followersCount": "seguidores",
+    "close": "Cerrar",
+    "readError": "No pudimos cargar las reacciones y seguimientos.",
+    "error": "No pudimos confirmar el cambio. Inténtalo de nuevo.",
+    "sessionError": "Tu sesión terminó. Vuelve a iniciar sesión.",
+    "rateError": "Has hecho varios cambios seguidos. Espera un momento.",
+    "retryAfter": "Puedes reintentar en {{count}} s.",
+    "saveShort": "Guardar",
+    "savedShort": "Guardado",
+    "openShort": "Ver"
+  }
 }

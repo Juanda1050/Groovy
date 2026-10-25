@@ -1,4 +1,11 @@
 import { supabase } from "@/lib/supabaseClient";
+
+import type {
+  CommunityAction,
+  CommunityPostState,
+  LibraryAlbum,
+  PublicProfile,
+} from "@/models/library";
 import type {
   AvatarUploadInput,
   Profile,
@@ -38,7 +45,9 @@ function isOwnedAvatarPath(
 }
 
 function isDuplicateUpload(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
 
   return (
     ("statusCode" in error && String(error.statusCode) === "409") ||
@@ -61,7 +70,10 @@ async function cleanupStaleAvatars(
     .from(avatarBucket)
     .list(userId, {
       limit: 20,
-      sortBy: { column: "created_at", order: "asc" },
+      sortBy: {
+        column: "created_at",
+        order: "asc",
+      },
     });
 
   if (error || !data) return;
@@ -70,6 +82,7 @@ async function cleanupStaleAvatars(
 
   const paths = data.flatMap((object) => {
     const path = `${userId}/${object.name}`;
+
     const createdAt = Date.parse(object.created_at ?? "");
 
     if (
@@ -148,7 +161,10 @@ export async function updateLanguage({
     .single();
 
   if (error) throw error;
-  if (!data) throw new Error("Settings update failed.");
+
+  if (!data) {
+    throw new Error("Settings update failed.");
+  }
 }
 
 export async function getAvatarUrl(path: string): Promise<string> {
@@ -225,7 +241,9 @@ export async function saveProfileAvatar({
       () => null,
     );
 
-    if (recovered?.avatar_url !== path) throw error;
+    if (recovered?.avatar_url !== path) {
+      throw error;
+    }
 
     saved = recovered;
   }
@@ -241,4 +259,91 @@ export async function saveProfileAvatar({
   }
 
   return saved;
+}
+
+export async function getCommunitySocial(
+  userId: string,
+  postIds: string[],
+  signal: AbortSignal,
+): Promise<CommunityPostState[]> {
+  await requireUser(userId);
+
+  const { data, error } = await supabase
+    .rpc("get_community_social", {
+      p_post_ids: postIds,
+    })
+    .abortSignal(AbortSignal.any([signal, createSignal()]));
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    if (
+      row.library_status !== null &&
+      row.library_status !== "pending" &&
+      row.library_status !== "listened"
+    ) {
+      throw new Error("INVALID_RESPONSE");
+    }
+
+    return {
+      ...row,
+      library_status: row.library_status,
+    };
+  });
+}
+
+export async function getPublicProfile(
+  userId: string,
+  profileId: string,
+  signal: AbortSignal,
+): Promise<PublicProfile> {
+  await requireUser(userId);
+
+  const { data, error } = await supabase
+    .rpc("get_public_profile", {
+      p_profile_id: profileId,
+    })
+    .abortSignal(AbortSignal.any([signal, createSignal()]))
+    .single();
+
+  if (error) throw error;
+
+  if (!data || data.id !== profileId) {
+    throw new Error("PROFILE_NOT_FOUND");
+  }
+
+  return data;
+}
+
+export async function setCommunityAction(
+  request: CommunityAction,
+): Promise<LibraryAlbum | null> {
+  await requireUser(request.userId);
+
+  const { data, error } = await supabase
+    .rpc("set_community_action", {
+      p_action: request.action,
+      p_target_id: request.targetId,
+      p_active: request.active,
+    })
+    .abortSignal(createSignal());
+
+  if (error) throw error;
+
+  if (request.action !== "library") {
+    return null;
+  }
+
+  if (
+    !data ||
+    data.user_id !== request.userId ||
+    (data.status !== "pending" && data.status !== "listened")
+  ) {
+    throw new Error("INVALID_RESPONSE");
+  }
+
+  return {
+    ...data,
+    status: data.status,
+  };
 }
