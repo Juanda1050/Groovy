@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { AlbumConfirmation } from "@/components/AlbumConfirmation";
 import { LibraryCard } from "@/components/LibraryCard";
 import { LibraryFilters } from "@/components/LibraryFilters";
 import { RecordLoader } from "@/components/RecordLoader";
@@ -22,11 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAlbumRemoval } from "@/hooks/useAlbumStatus";
 import { useLibrary, useLibraryTracks } from "@/hooks/useLibrary";
 
 import type {
   LibraryCardLabels,
   LibraryFilterOption,
+  LibraryItem,
   LibrarySection,
 } from "@/models/libraryView";
 import type { LibraryTrackView } from "@/models/trackPicks";
@@ -47,11 +50,26 @@ function TrackRow({
   const waiting = loading && !metadata;
 
   return (
-    <li className="group grid min-w-0 grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 py-3 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:gap-4 sm:py-4">
+    <li
+      className="
+        group grid min-w-0
+        grid-cols-[3.5rem_minmax(0,1fr)_auto]
+        items-center gap-3 py-3
+        sm:grid-cols-[4rem_minmax(0,1fr)_auto]
+        sm:gap-4 sm:py-4
+      "
+    >
       <Link
         to={`/albums/${item.albumId}`}
         aria-label={t("tracks.openAlbum")}
-        className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border/50 transition-shadow hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-16"
+        className="
+          relative flex size-14 shrink-0 items-center
+          justify-center overflow-hidden rounded-xl
+          bg-muted ring-1 ring-border/50 transition-shadow
+          hover:ring-primary/40
+          focus-visible:outline-none focus-visible:ring-2
+          focus-visible:ring-ring sm:size-16
+        "
       >
         {cover && failedCover !== cover ? (
           <img
@@ -84,7 +102,13 @@ function TrackRow({
               href={`https://open.spotify.com/track/${item.trackId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block truncate rounded-sm text-sm font-semibold leading-5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="
+                block truncate rounded-sm text-sm
+                font-semibold leading-5 transition-colors
+                hover:text-primary
+                focus-visible:outline-none focus-visible:ring-2
+                focus-visible:ring-ring
+              "
             >
               {track?.name ?? t("tracks.unavailable")}
             </a>
@@ -97,7 +121,13 @@ function TrackRow({
 
             <Link
               to={`/albums/${item.albumId}`}
-              className="block truncate rounded-sm text-[11px] leading-5 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="
+                block truncate rounded-sm text-[11px]
+                leading-5 text-muted-foreground transition-colors
+                hover:text-primary
+                focus-visible:outline-none focus-visible:ring-2
+                focus-visible:ring-ring
+              "
             >
               {metadata?.albumName ?? t("tracks.openAlbum")}
             </Link>
@@ -106,7 +136,12 @@ function TrackRow({
       </div>
 
       {track && (
-        <span className="self-center pl-1 text-[11px] tabular-nums text-muted-foreground sm:text-xs">
+        <span
+          className="
+            self-center pl-1 text-[11px] tabular-nums
+            text-muted-foreground sm:text-xs
+          "
+        >
           {track.durationLabel}
         </span>
       )}
@@ -117,7 +152,12 @@ function TrackRow({
 export default function LibraryPage() {
   const { t, i18n } = useTranslation("library");
   const pageSizeId = useId();
+
   const [section, setSection] = useState<LibrarySection>("albums");
+
+  const [albumToRemove, setAlbumToRemove] = useState<LibraryItem | null>(null);
+
+  const removal = useAlbumRemoval(albumToRemove?.spotifyAlbumId ?? "");
 
   const showingTracks = section !== "albums";
   const library = useLibrary(!showingTracks);
@@ -125,6 +165,7 @@ export default function LibraryPage() {
     section === "dislikes" ? "least_favorite" : "favorite",
     showingTracks,
   );
+
   const current = showingTracks ? tracks : library;
 
   const options: readonly LibraryFilterOption[] = [
@@ -149,17 +190,47 @@ export default function LibraryPage() {
     maximumFractionDigits: 1,
   });
 
+  function onRequestRemove(item: LibraryItem) {
+    if (removal.saving) return;
+
+    removal.onReset();
+    setAlbumToRemove(item);
+  }
+
+  function onRemovalOpenChange(open: boolean) {
+    if (open || removal.saving) return;
+
+    setAlbumToRemove(null);
+    removal.onReset();
+  }
+
+  async function onConfirmRemoval() {
+    const removed = await removal.onRemove();
+
+    if (!removed) return;
+
+    setAlbumToRemove(null);
+    removal.onReset();
+  }
+
   return (
     <section className="min-w-0 space-y-5 pb-6">
-      <header className="flex items-start justify-between gap-4 border-b border-border/50 pb-5">
+      <header
+        className="
+          flex items-start justify-between gap-4
+          border-b border-border/50 pb-5
+        "
+      >
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {t("title")}
           </h1>
+
           <p className="mt-2 text-sm text-muted-foreground">
             {t("description")}
           </p>
         </div>
+
         <Link
           to="/"
           className="
@@ -211,17 +282,17 @@ export default function LibraryPage() {
                 setSection(value);
               }}
               className={`
-          min-h-11 gap-2 rounded-xl px-3
-          text-xs sm:text-sm ${colors}
-        `}
+                  min-h-11 gap-2 rounded-xl px-3
+                  text-xs sm:text-sm ${colors}
+                `}
             >
               <Icon
                 aria-hidden="true"
                 className={`
-            size-4
-            ${value === "likes" ? "text-like" : ""}
-            ${value === "dislikes" ? "text-dislike" : ""}
-          `}
+                    size-4
+                    ${value === "likes" ? "text-like" : ""}
+                    ${value === "dislikes" ? "text-dislike" : ""}
+                  `}
               />
 
               {t(`sections.${value}`)}
@@ -245,7 +316,10 @@ export default function LibraryPage() {
       ) : current.isPending ? (
         <div
           role="status"
-          className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground"
+          className="
+            flex items-center justify-center gap-3
+            py-12 text-sm text-muted-foreground
+          "
         >
           <RecordLoader size="sm" />
           {t("loading")}
@@ -253,6 +327,7 @@ export default function LibraryPage() {
       ) : current.isError ? (
         <div role="alert" className="space-y-3 py-6">
           <p className="text-sm text-destructive">{t("error")}</p>
+
           <Button type="button" variant="outline" onClick={current.onRetry}>
             {t("actions.retry")}
           </Button>
@@ -262,6 +337,7 @@ export default function LibraryPage() {
           <h2 className="text-base font-medium">
             {t(showingTracks ? "tracks.emptyTitle" : "empty.title")}
           </h2>
+
           <p className="mt-2 text-sm text-muted-foreground">
             {t(showingTracks ? "tracks.emptyDescription" : "empty.description")}
           </p>
@@ -276,6 +352,7 @@ export default function LibraryPage() {
               <p className="text-xs text-destructive">
                 {t("tracks.metadataError")}
               </p>
+
               <Button
                 type="button"
                 variant="ghost"
@@ -300,7 +377,11 @@ export default function LibraryPage() {
       ) : (
         <div
           aria-busy={library.isFetching}
-          className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5"
+          className="
+            grid min-w-0 grid-cols-2 gap-x-3 gap-y-5
+            sm:grid-cols-3 sm:gap-5
+            lg:grid-cols-4 xl:grid-cols-5
+          "
         >
           {library.items.map((item) => (
             <LibraryCard
@@ -310,6 +391,7 @@ export default function LibraryPage() {
               ratingLabel={
                 item.rating === null ? null : formatter.format(item.rating)
               }
+              onRemove={onRequestRemove}
             />
           ))}
         </div>
@@ -318,9 +400,11 @@ export default function LibraryPage() {
       {!library.needsSignIn && !current.isPending && !current.isError && (
         <nav
           aria-label={t("pagination.label")}
-          className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-3 ${
-            showingTracks ? "" : "border-t border-border/40"
-          }`}
+          className={`
+              flex flex-wrap items-center justify-center
+              gap-x-4 gap-y-2 pt-3
+              ${showingTracks ? "" : "border-t border-border/40"}
+            `}
         >
           <div className="flex items-center gap-1">
             <Button
@@ -330,21 +414,29 @@ export default function LibraryPage() {
               aria-label={t("pagination.previous")}
               disabled={!current.hasPrevious || current.isFetching}
               onClick={current.onPrevious}
-              className="size-11 rounded-xl p-0 text-muted-foreground"
+              className="
+                  size-11 rounded-xl p-0
+                  text-muted-foreground
+                "
             >
               <ChevronLeft aria-hidden="true" className="size-4" />
             </Button>
+
             <span
               role="status"
               aria-live="polite"
               aria-atomic="true"
-              className="min-w-16 text-center text-xs tabular-nums text-muted-foreground"
+              className="
+                  min-w-16 text-center text-xs
+                  tabular-nums text-muted-foreground
+                "
             >
               {t("pagination.position", {
                 page: current.pageNumber,
                 total: current.pageCount,
               })}
             </span>
+
             <Button
               type="button"
               variant="ghost"
@@ -352,7 +444,10 @@ export default function LibraryPage() {
               aria-label={t("pagination.next")}
               disabled={!current.hasNext || current.isFetching}
               onClick={current.onNext}
-              className="size-11 rounded-xl p-0 text-muted-foreground"
+              className="
+                  size-11 rounded-xl p-0
+                  text-muted-foreground
+                "
             >
               <ChevronRight aria-hidden="true" className="size-4" />
             </Button>
@@ -362,6 +457,7 @@ export default function LibraryPage() {
             <span id={pageSizeId} className="text-xs text-muted-foreground">
               {t("pagination.perPage")}
             </span>
+
             <Select
               value={String(current.pageSize)}
               onValueChange={(value) => {
@@ -373,10 +469,14 @@ export default function LibraryPage() {
               <SelectTrigger
                 aria-labelledby={pageSizeId}
                 disabled={current.isFetching}
-                className="min-h-11 w-18 rounded-xl border-border/60 px-2.5 text-xs"
+                className="
+                    min-h-11 w-18 rounded-xl
+                    border-border/60 px-2.5 text-xs
+                  "
               >
                 <SelectValue>{current.pageSize}</SelectValue>
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="20">20</SelectItem>
@@ -386,6 +486,19 @@ export default function LibraryPage() {
           </div>
         </nav>
       )}
+
+      <AlbumConfirmation
+        mode="delete"
+        open={albumToRemove !== null}
+        saving={removal.saving}
+        disabled={removal.disabled}
+        errorKey={removal.errorKey}
+        remainingSeconds={removal.remainingSeconds}
+        onOpenChange={onRemovalOpenChange}
+        onConfirm={() => {
+          void onConfirmRemoval();
+        }}
+      />
     </section>
   );
 }

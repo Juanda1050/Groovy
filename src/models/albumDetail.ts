@@ -44,6 +44,7 @@ export interface AlbumStatusBadgeProps {
 }
 
 export interface AlbumConfirmationProps {
+  mode?: "pending" | "delete";
   open: boolean;
   saving: boolean;
   disabled: boolean;

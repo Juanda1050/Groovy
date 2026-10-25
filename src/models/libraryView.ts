@@ -81,3 +81,10 @@ export interface LibraryCardProps {
   ratingLabel: string | null;
   labels: LibraryCardLabels;
 }
+
+export interface LibraryCardProps {
+  item: LibraryItem;
+  ratingLabel: string | null;
+  labels: LibraryCardLabels;
+  onRemove: (item: LibraryItem) => void;
+}

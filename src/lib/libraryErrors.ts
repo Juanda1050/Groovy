@@ -5,6 +5,20 @@ export function getLibraryErrorCode(error: unknown): string {
     return error.code;
   }
 
+  if (typeof error === "object" && error !== null && "code" in error) {
+    if (error.code === "PT401") {
+      return "SESSION_EXPIRED";
+    }
+
+    if (error.code === "28000" || error.code === "PGRST301") {
+      return "AUTH_REQUIRED";
+    }
+
+    if (error.code === "42501") {
+      return "UNAUTHORIZED";
+    }
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&

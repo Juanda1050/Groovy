@@ -7,7 +7,7 @@ import {
   validateReviewLanguage,
 } from "@/lib/reviewText";
 import { saveCatalogAlbum } from "./spotifyService";
-
+import type { DeleteUserAlbumInput } from "@/models/library";
 import type { CatalogRatings } from "@/models/catalog";
 import type {
   AlbumWriteRequest,
@@ -368,4 +368,47 @@ export async function saveUserAlbum(
     ...(review !== null ? { p_review: review } : {}),
     ...(album.listened_at !== null ? { p_listened_at: album.listened_at } : {}),
   });
+}
+
+export async function deleteUserAlbum(
+  request: DeleteUserAlbumInput,
+): Promise<boolean> {
+  validateAlbumId(request.albumId);
+  await requireUser(request.userId);
+
+  const { data, error } = await supabase
+    .rpc("delete_user_album", {
+      p_user_album_id: request.userAlbumId,
+    })
+    .abortSignal(createSignal());
+
+  if (!error && data === true) {
+    return true;
+  }
+
+  if (
+    error &&
+    (error.code === "PT401" ||
+      error.code === "28000" ||
+      error.code === "42501" ||
+      error.message === "RATE_LIMITED")
+  ) {
+    throw error;
+  }
+
+  const session = await supabase
+    .rpc("touch_groovy_session")
+    .abortSignal(createSignal());
+
+  if (session.error || session.data !== true) {
+    throw error ?? session.error ?? new Error("SESSION_EXPIRED");
+  }
+
+  const current = await getUserAlbum(request.userId, request.albumId);
+
+  if (current === null) {
+    return true;
+  }
+
+  throw error ?? new Error("ALBUM_NOT_DELETED");
 }

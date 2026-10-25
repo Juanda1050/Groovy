@@ -13,6 +13,7 @@ import type {
   CatalogRatings,
   ListeningStatus,
 } from "@/models/catalog";
+import type { LibraryTracksPage, TrackPick } from "@/models/trackPicks";
 import type { LibraryAlbum } from "@/models/library";
 import type { LibraryPageResult } from "@/models/libraryView";
 
@@ -87,7 +88,7 @@ export function syncCatalogAlbumStatus(
   queryClient: QueryClient,
   userId: string | null,
   albumId: string,
-  status: ListeningStatus,
+  status: ListeningStatus | null,
 ): void {
   void queryClient.cancelQueries(
     { queryKey: ["albumSearchInfinite", userId] },
@@ -164,5 +165,95 @@ export function syncAlbumLibrary(
 
   void queryClient.invalidateQueries({
     queryKey: ["library", userId],
+  });
+}
+
+export function syncAlbumRemoval(
+  client: QueryClient,
+  userId: string,
+  albumId: string,
+): void {
+  const album = client.getQueryData<LibraryAlbum | null>(
+    albumLibraryKey(userId, albumId),
+  );
+
+  client.setQueryData<LibraryAlbum | null>(
+    albumLibraryKey(userId, albumId),
+    null,
+  );
+
+  syncCatalogAlbumStatus(client, userId, albumId, null);
+
+  client.setQueriesData<CatalogRatings>(
+    { queryKey: ["catalogRatings", userId] },
+    (previous) =>
+      previous && albumId in previous
+        ? { ...previous, [albumId]: null }
+        : previous,
+  );
+
+  client.setQueriesData<TrackPick[]>(
+    {
+      queryKey: ["albumTrackPicks", userId, albumId],
+    },
+    [],
+  );
+
+  const libraryEntries = client.getQueriesData<LibraryPageResult>({
+    queryKey: ["library", userId],
+  });
+
+  for (const [key, previous] of libraryEntries) {
+    if (!previous) continue;
+
+    const filter = key[2];
+
+    const included =
+      album &&
+      (filter === "all" ||
+        filter === album.status ||
+        (filter === "rated" && album.rating !== null) ||
+        (filter === "unrated" &&
+          album.status === "listened" &&
+          album.rating === null) ||
+        (filter === "reviewed" && Boolean(album.review?.trim())));
+
+    const items = previous.items.filter(
+      (item) => item.spotifyAlbumId !== albumId,
+    );
+
+    const removed = included || items.length < previous.items.length;
+
+    client.setQueryData<LibraryPageResult>(key, {
+      ...previous,
+      items,
+      total: Math.max(0, previous.total - (removed ? 1 : 0)),
+    });
+  }
+
+  client.setQueriesData<LibraryTracksPage>(
+    { queryKey: ["likedAlbums", userId] },
+    (previous) => {
+      if (!previous) return previous;
+
+      const items = previous.items.filter((item) => item.albumId !== albumId);
+
+      return {
+        ...previous,
+        items,
+        total: Math.max(
+          0,
+          previous.total - (previous.items.length - items.length),
+        ),
+      };
+    },
+  );
+
+  void client.invalidateQueries({
+    queryKey: ["library", userId],
+  });
+
+  void client.invalidateQueries({
+    queryKey: ["likedAlbums", userId],
   });
 }

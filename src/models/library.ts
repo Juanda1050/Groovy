@@ -83,6 +83,13 @@ export interface SaveAlbumReviewInput {
   language: ReviewLanguage;
 }
 
+export interface DeleteUserAlbumInput {
+  action: "delete";
+  userId: string;
+  albumId: string;
+  userAlbumId: string;
+}
+
 export type AlbumRatingRecord = Pick<LibraryAlbum, "rating" | "status">;
 
 export type AlbumReviewRecord = Pick<LibraryAlbum, "review" | "status">;

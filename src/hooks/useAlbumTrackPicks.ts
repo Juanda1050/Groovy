@@ -36,7 +36,10 @@ function trackErrorKey(error: unknown): string {
   }
 
   if (code === "RATE_LIMITED") return "rate";
-  if (code === "TOO_MANY_TRACK_PICKS") return "limit";
+
+  if (code === "TOO_MANY_TRACK_PICKS") {
+    return "limit";
+  }
 
   if (code === "ALBUM_NOT_LISTENED" || code === "ALBUM_NOT_SAVED") {
     return "listened";
@@ -48,23 +51,24 @@ function trackErrorKey(error: unknown): string {
 export function useAlbumTrackPicks(albumId: string) {
   const library = useAlbumLibrary(albumId);
   const client = useQueryClient();
+
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   const { userId } = library;
   const album = library.query.data;
   const listened = album?.status === "listened";
+
   const writeKey = albumWriteKey(userId, albumId);
-  const writes = useIsMutating({ mutationKey: writeKey });
+
+  const writes = useIsMutating({
+    mutationKey: writeKey,
+  });
 
   const query = useQuery({
-    queryKey: [
-      "albumTrackPicks",
-      userId,
-      albumId,
-      album?.updated_at ?? null,
-      album?.status ?? null,
-    ],
+    queryKey: ["albumTrackPicks", userId, albumId, album?.status ?? null],
+
     enabled: Boolean(userId && album && listened),
+
     queryFn: ({ signal }) => {
       if (!userId || !album) {
         throw new Error("AUTH_REQUIRED");
@@ -76,6 +80,7 @@ export function useAlbumTrackPicks(albumId: string) {
         signal,
       });
     },
+
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     retry: false,
@@ -96,11 +101,13 @@ export function useAlbumTrackPicks(albumId: string) {
     mutationKey: writeKey,
     mutationFn: saveTrackPick,
     retry: false,
+
     onMutate: async (request) => {
       await client.cancelQueries({
         queryKey: ["albumTrackPicks", request.userId, request.albumId],
       });
     },
+
     onSuccess: (picks, request) => {
       if (useAuthStore.getState().user?.id !== request.userId) {
         return;
@@ -113,7 +120,12 @@ export function useAlbumTrackPicks(albumId: string) {
         picks,
       );
     },
-    onError: (error) => {
+
+    onError: (error, request) => {
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
+
       if (getLibraryErrorCode(error) === "RATE_LIMITED") {
         setRemainingSeconds(getLibraryRetrySeconds(error));
       }
@@ -137,7 +149,9 @@ export function useAlbumTrackPicks(albumId: string) {
       disabled ||
       !userId ||
       useAuthStore.getState().user?.id !== userId ||
-      client.isMutating({ mutationKey: writeKey }) > 0
+      client.isMutating({
+        mutationKey: writeKey,
+      }) > 0
     ) {
       return;
     }
@@ -156,15 +170,21 @@ export function useAlbumTrackPicks(albumId: string) {
     preferences,
     listened,
     disabled,
+
     loading: library.query.isPending || (listened && query.isPending),
+
     readError: library.query.isError || (listened && query.isError),
+
     saving: mutation.isPending,
     saved: mutation.isSuccess,
     saveError: mutation.isError,
+
     savingTrackId: mutation.isPending ? mutation.variables.trackId : null,
+
     errorKey: trackErrorKey(mutation.error),
     remainingSeconds,
     onSelect,
+
     onRetry: () => {
       if (library.query.isError) {
         library.onRetry();
@@ -177,10 +197,16 @@ export function useAlbumTrackPicks(albumId: string) {
 
 export function useLibraryTrackPick(item: LibraryTrack) {
   const { t } = useTranslation("trackPicks");
+
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const client = useQueryClient();
   const writeKey = albumWriteKey(userId, item.albumId);
-  const writes = useIsMutating({ mutationKey: writeKey });
+
+  const writes = useIsMutating({
+    mutationKey: writeKey,
+  });
+
   const [blockedUntil, setBlockedUntil] = useState(0);
 
   useEffect(() => {
@@ -199,16 +225,19 @@ export function useLibraryTrackPick(item: LibraryTrack) {
     mutationKey: writeKey,
     mutationFn: saveTrackPick,
     retry: false,
+
     onMutate: async (request) => {
       await Promise.all([
         client.cancelQueries({
           queryKey: ["likedAlbums", request.userId],
         }),
+
         client.cancelQueries({
           queryKey: ["albumTrackPicks", request.userId, request.albumId],
         }),
       ]);
     },
+
     onSuccess: (picks, request) => {
       if (useAuthStore.getState().user?.id !== request.userId) {
         return;
@@ -221,6 +250,7 @@ export function useLibraryTrackPick(item: LibraryTrack) {
         picks,
       );
     },
+
     onError: (error, request) => {
       if (useAuthStore.getState().user?.id !== request.userId) {
         return;
@@ -238,6 +268,7 @@ export function useLibraryTrackPick(item: LibraryTrack) {
         type: "error",
         title: t(`errors.${trackErrorKey(error)}`),
         timeout: 5000,
+
         ...(limited
           ? {
               description: t("retryAfter", {
@@ -264,7 +295,9 @@ export function useLibraryTrackPick(item: LibraryTrack) {
       disabled ||
       !userId ||
       useAuthStore.getState().user?.id !== userId ||
-      client.isMutating({ mutationKey: writeKey }) > 0
+      client.isMutating({
+        mutationKey: writeKey,
+      }) > 0
     ) {
       return;
     }

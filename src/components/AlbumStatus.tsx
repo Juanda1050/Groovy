@@ -1,8 +1,11 @@
 import { useId, useState } from "react";
-import { BookmarkPlus, Check, Clock } from "lucide-react";
+import { BookmarkPlus, Check, Clock, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+
 import { AlbumConfirmation } from "@/components/AlbumConfirmation";
 import { AlbumRating } from "@/components/AlbumRating";
+import { AlbumReview } from "@/components/AlbumReview";
 import { RecordLoader } from "@/components/RecordLoader";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,17 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAlbumStatus } from "@/hooks/useAlbumStatus";
+import { useAlbumRemoval, useAlbumStatus } from "@/hooks/useAlbumStatus";
 import { useAuthStore } from "@/stores/authStore";
+
 import type { AlbumStatusProps } from "@/models/albumDetail";
-import { AlbumReview } from '@/components/AlbumReview';
 
 export function AlbumStatus({ albumId }: AlbumStatusProps) {
   const { t } = useTranslation("rating");
+  const navigate = useNavigate();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+
   const status = useAlbumStatus(albumId);
+  const removal = useAlbumRemoval(albumId);
   const labelId = useId();
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmationSubmitted, setConfirmationSubmitted] = useState(false);
 
@@ -30,11 +37,23 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
   const listened = status.currentStatus === "listened";
   const dialogOpen = confirmPending && listened;
 
+  async function onConfirmRemoval() {
+    const removed = await removal.onRemove();
+
+    if (!removed) return;
+
+    setConfirmDelete(false);
+    navigate("/library", { replace: true });
+  }
+
   if (status.loading) {
     return (
       <div
         role="status"
-        className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground"
+        className="
+          flex min-h-11 items-center gap-2
+          text-xs text-muted-foreground
+        "
       >
         <RecordLoader size="sm" />
         {t("status.loading")}
@@ -75,7 +94,10 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
           <Select
             value={status.currentStatus}
             onValueChange={(value) => {
-              if (value !== "pending" && value !== "listened") return;
+              if (value !== "pending" && value !== "listened") {
+                return;
+              }
+
               if (value === status.currentStatus) return;
 
               if (listened && value === "pending") {
@@ -136,6 +158,30 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
           {listened && (
             <AlbumRating key={`${userId}:${albumId}`} albumId={albumId} />
           )}
+
+          {status.currentStatus !== null && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("removal.open")}
+              title={t("removal.open")}
+              disabled={removal.disabled}
+              className="
+                ml-auto size-11 shrink-0 rounded-xl
+                text-muted-foreground
+                hover:bg-destructive/10
+                hover:text-destructive
+              "
+              onClick={() => {
+                removal.onReset();
+                setConfirmPending(false);
+                setConfirmDelete(true);
+              }}
+            >
+              <Trash2 aria-hidden="true" className="size-4" />
+            </Button>
+          )}
         </div>
 
         {status.saveError && !dialogOpen && (
@@ -149,7 +195,9 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
 
         {status.remainingSeconds > 0 && !dialogOpen && (
           <p role="status" className="text-xs text-muted-foreground">
-            {t("retryAfter", { count: status.remainingSeconds })}
+            {t("retryAfter", {
+              count: status.remainingSeconds,
+            })}
           </p>
         )}
 
@@ -163,6 +211,27 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
       )}
 
       <AlbumConfirmation
+        mode="delete"
+        open={confirmDelete}
+        saving={removal.saving}
+        disabled={removal.disabled}
+        errorKey={removal.errorKey}
+        remainingSeconds={removal.remainingSeconds}
+        onOpenChange={(open) => {
+          if (removal.saving) return;
+
+          setConfirmDelete(open);
+
+          if (!open) {
+            removal.onReset();
+          }
+        }}
+        onConfirm={() => {
+          void onConfirmRemoval();
+        }}
+      />
+
+      <AlbumConfirmation
         open={dialogOpen}
         saving={status.saving}
         disabled={status.disabled}
@@ -173,7 +242,9 @@ export function AlbumStatus({ albumId }: AlbumStatusProps) {
         onOpenChange={(open) => {
           setConfirmPending(open);
 
-          if (!open) setConfirmationSubmitted(false);
+          if (!open) {
+            setConfirmationSubmitted(false);
+          }
         }}
         onConfirm={() => {
           setConfirmationSubmitted(true);

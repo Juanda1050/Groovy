@@ -38,5 +38,16 @@
     "session": "Your session ended. Please sign in again.",
     "rate": "You've temporarily reached the save limit.",
     "statusChanged": "The album's status changed. Reopen the detail to refresh it."
+  },
+  "removal": {
+    "open": "Remove from my library",
+    "title": "Remove from your library?",
+    "description": "Your rating, review, and track selections for this album will be removed. This action cannot be undone.",
+    "confirm": "Remove album",
+    "removing": "Removing…",
+    "saved": "Album removed from your library",
+    "error": "We couldn't confirm the removal. Please try again.",
+    "sessionError": "Your session ended. Please sign in again.",
+    "rateError": "Wait a moment before trying again."
   }
 }

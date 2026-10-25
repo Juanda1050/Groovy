@@ -38,5 +38,16 @@
     "session": "Tu sesión terminó. Inicia sesión nuevamente.",
     "rate": "Alcanzaste temporalmente el límite de guardados.",
     "statusChanged": "El estado del álbum cambió. Vuelve a abrir el detalle para actualizarlo."
+  },
+  "removal": {
+    "open": "Eliminar de mi biblioteca",
+    "title": "¿Eliminar de tu biblioteca?",
+    "description": "Se eliminarán tu valoración, reseña y selecciones de canciones de este álbum. Esta acción no se puede deshacer.",
+    "confirm": "Eliminar álbum",
+    "removing": "Eliminando…",
+    "saved": "Álbum eliminado de tu biblioteca",
+    "error": "No pudimos confirmar la eliminación. Inténtalo de nuevo.",
+    "sessionError": "Tu sesión terminó. Inicia sesión nuevamente.",
+    "rateError": "Espera un momento antes de volver a intentarlo."
   }
 }
