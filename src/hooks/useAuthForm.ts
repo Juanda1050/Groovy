@@ -1,9 +1,13 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAuthFeedback } from "@/lib/authErrors";
-import { validateAuthValues } from "@/lib/authValidation";
-import { signIn, signUp } from "@/services/authService";
-import { usePasswordRules } from "./usePasswordRules";
+import {
+  getPasswordChecks,
+  getPasswordStatus,
+  passwordMaxBytes,
+  signInPasswordMaxLength,
+  validateAuthValues,
+} from "@/lib/authValidation";
+import { getAuthFeedback, signIn, signUp } from "@/services/authService";
 import type {
   AuthFeedback,
   AuthField,
@@ -12,12 +16,13 @@ import type {
   AuthFormProps,
   AuthMode,
   AuthValues,
+  PasswordRulesProps,
 } from "@/models/auth";
 
 export function useAuthForm(): AuthFormProps {
   const { t } = useTranslation("auth");
-  const [mode, setMode] = useState<AuthMode>("signIn");
 
+  const [mode, setMode] = useState<AuthMode>("signIn");
   const [values, setValues] = useState<AuthValues>({
     email: "",
     password: "",
@@ -31,9 +36,21 @@ export function useAuthForm(): AuthFormProps {
   const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const submitting = useRef(false);
-  const passwordRules = usePasswordRules(values.password);
+
+  const checks = getPasswordChecks(values.password);
+  const passwordStatus = getPasswordStatus(values.password, checks);
   const validation = validateAuthValues(mode, values);
   const isValid = Object.keys(validation).length === 0;
+
+  const passwordRules: PasswordRulesProps = {
+    status: passwordStatus,
+    heading: t("password.heading"),
+    label: t(`password.status.${passwordStatus}`),
+    checks: checks.map((check) => ({
+      ...check,
+      label: t(`password.rules.${check.id}`),
+    })),
+  };
 
   const fields: AuthField[] = [
     {
@@ -49,7 +66,7 @@ export function useAuthForm(): AuthFormProps {
       label: t("fields.password"),
       type: passwordVisible ? "text" : "password",
       autoComplete: mode === "signUp" ? "new-password" : "current-password",
-      maxLength: mode === "signUp" ? 72 : 1024,
+      maxLength: mode === "signUp" ? passwordMaxBytes : signInPasswordMaxLength,
       visibilityLabel: t(passwordVisible ? "password.hide" : "password.show"),
       onToggleVisibility: () => {
         setPasswordVisible((current) => !current);
@@ -63,7 +80,7 @@ export function useAuthForm(): AuthFormProps {
       label: t("fields.confirmPassword"),
       type: confirmationVisible ? "text" : "password",
       autoComplete: "new-password",
-      maxLength: 72,
+      maxLength: passwordMaxBytes,
       visibilityLabel: t(
         confirmationVisible ? "password.hide" : "password.show",
       ),
@@ -71,6 +88,18 @@ export function useAuthForm(): AuthFormProps {
         setConfirmationVisible((current) => !current);
       },
     });
+  }
+
+  function clearPasswords(): void {
+    setValues((current) => ({
+      ...current,
+      password: "",
+      confirmPassword: "",
+    }));
+
+    setPasswordVisible(false);
+    setConfirmationVisible(false);
+    setSubmitted(false);
   }
 
   function onChange(name: AuthFieldName, value: string): void {
@@ -85,16 +114,8 @@ export function useAuthForm(): AuthFormProps {
 
     setMode((current) => (current === "signIn" ? "signUp" : "signIn"));
 
-    setValues((current) => ({
-      ...current,
-      password: "",
-      confirmPassword: "",
-    }));
-
-    setSubmitted(false);
+    clearPasswords();
     setFeedback(null);
-    setPasswordVisible(false);
-    setConfirmationVisible(false);
   }
 
   async function onSubmit(): Promise<void> {
@@ -122,15 +143,7 @@ export function useAuthForm(): AuthFormProps {
         await signUp(credentials);
       }
 
-      setValues((current) => ({
-        ...current,
-        password: "",
-        confirmPassword: "",
-      }));
-
-      setPasswordVisible(false);
-      setConfirmationVisible(false);
-      setSubmitted(false);
+      clearPasswords();
     } catch (error: unknown) {
       setFeedback(getAuthFeedback(error));
     } finally {

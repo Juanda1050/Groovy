@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useUserSettings } from "./useUserSettings";
+import { useUserSettings } from "./useProfile";
 
 export function useAccountLanguage(): void {
   const { i18n } = useTranslation("common");
@@ -14,7 +14,7 @@ export function useAccountLanguage(): void {
 
     if (i18n.resolvedLanguage !== language) {
       void i18n.changeLanguage(language).catch(() => {
-        // Mantener el idioma actual si falla su carga.
+        // Conservar el idioma actual si falla la carga.
       });
     }
   }, [locale, i18n]);

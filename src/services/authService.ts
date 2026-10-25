@@ -1,6 +1,11 @@
 import { AuthError, type User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import type { AuthCredentials, AuthObserver, AuthUser } from "@/models/auth";
+import type {
+  AuthCredentials,
+  AuthFeedback,
+  AuthObserver,
+  AuthUser,
+} from "@/models/auth";
 
 function mapUser(user: User | null): AuthUser | null {
   if (!user) return null;
@@ -9,6 +14,35 @@ function mapUser(user: User | null): AuthUser | null {
     id: user.id,
     email: user.email ?? null,
   };
+}
+
+export function getAuthFeedback(error: unknown): AuthFeedback {
+  if (error instanceof TypeError) return "network";
+  if (!(error instanceof AuthError)) return "requestFailed";
+
+  if (error.status === 429) return "rateLimited";
+  if (error.status === 0) return "network";
+
+  switch (error.code) {
+    case "invalid_credentials":
+      return "invalidCredentials";
+
+    case "email_not_confirmed":
+      return "emailNotConfirmed";
+
+    case "weak_password":
+      return "weakPassword";
+
+    case "signup_session_missing":
+      return "registrationUnavailable";
+
+    case "over_request_rate_limit":
+    case "over_email_send_rate_limit":
+      return "rateLimited";
+
+    default:
+      return "requestFailed";
+  }
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {

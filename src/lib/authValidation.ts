@@ -1,11 +1,64 @@
 import { z } from "zod";
-import { getPasswordChecks, isPasswordLengthAllowed } from "./passwordPolicy";
 import type {
   AuthFieldErrors,
   AuthFieldName,
   AuthMode,
   AuthValues,
+  PasswordCheck,
+  PasswordStatus,
 } from "@/models/auth";
+
+export const passwordMinLength = 12;
+export const passwordMaxBytes = 72;
+export const signInPasswordMaxLength = 1024;
+
+const specialCharacters = "!@#$%^&*()_+-=[]{};':\"\\|<>?,./`~";
+
+export function isPasswordLengthAllowed(password: string): boolean {
+  return new TextEncoder().encode(password).length <= passwordMaxBytes;
+}
+
+export function getPasswordChecks(password: string): readonly PasswordCheck[] {
+  return [
+    {
+      id: "length",
+      passed: password.length >= passwordMinLength,
+    },
+    {
+      id: "lowercase",
+      passed: /[a-z]/.test(password),
+    },
+    {
+      id: "uppercase",
+      passed: /[A-Z]/.test(password),
+    },
+    {
+      id: "number",
+      passed: /[0-9]/.test(password),
+    },
+    {
+      id: "special",
+      passed: [...specialCharacters].some((character) =>
+        password.includes(character),
+      ),
+    },
+  ];
+}
+
+export function getPasswordStatus(
+  password: string,
+  checks: readonly PasswordCheck[] = getPasswordChecks(password),
+): PasswordStatus {
+  if (!password) return "empty";
+  if (!isPasswordLengthAllowed(password)) return "invalid";
+
+  const passed = checks.filter((check) => check.passed).length;
+
+  if (passed === checks.length) return "valid";
+  if (passed >= 3) return "partial";
+
+  return "invalid";
+}
 
 const emailSchema = z.email({ error: "email" }).max(254, {
   error: "email",
@@ -13,7 +66,7 @@ const emailSchema = z.email({ error: "email" }).max(254, {
 
 const newPasswordSchema = z
   .string()
-  .min(12, { error: "passwordRequirements" })
+  .min(passwordMinLength, { error: "passwordRequirements" })
   .refine(isPasswordLengthAllowed, {
     message: "passwordTooLong",
   })
@@ -29,7 +82,7 @@ export const signInSchema = z.object({
   password: z
     .string()
     .min(1, { error: "required" })
-    .max(1024, { error: "passwordTooLong" }),
+    .max(signInPasswordMaxLength, { error: "passwordTooLong" }),
 });
 
 export const signUpSchema = z

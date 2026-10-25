@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { updateLanguage } from "@/services/settingsService";
+import { updateLanguage } from "@/services/profileService";
 import { useAuthStore } from "@/stores/authStore";
-import { useUserSettings } from "./useUserSettings";
+import { useUserSettings, userSettingsKey } from "./useProfile";
 import type { LanguageOption, LanguageSaveState } from "@/models/language";
 import type { SupportedLanguage } from "@/models/preferences";
 import type { UserSettings } from "@/models/profile";
@@ -29,6 +29,7 @@ export function useLanguage() {
   const changing = useRef(false);
 
   const value = normalizeLanguage(i18n.resolvedLanguage ?? "en");
+
   const loading =
     status === "loading" || (userId !== null && settings.isPending);
 
@@ -66,7 +67,7 @@ export function useLanguage() {
 
       if (requestedUserId) {
         queryClient.setQueryData<UserSettings>(
-          ["userSettings", requestedUserId],
+          userSettingsKey(requestedUserId),
           {
             user_id: requestedUserId,
             locale: language,
