@@ -14,16 +14,19 @@ export function useAppearance() {
     const dark = theme === "dark";
 
     root.classList.toggle("dark", dark);
+    root.dataset.accent = accent;
     root.style.colorScheme = theme;
 
+    root.style.setProperty("--palette-hue", String(palette.hue));
+    root.style.setProperty("--palette-chroma", String(palette.chroma));
+
     root.style.setProperty("--primary", dark ? palette.dark : palette.light);
+
     root.style.setProperty(
       "--primary-hover",
       dark ? palette.darkHover : palette.lightHover,
     );
-    root.style.setProperty(
-      "--primary-foreground",
-      dark ? "#06182b" : "#ffffff",
-    );
+
+    root.style.removeProperty("--primary-foreground");
   }, [theme, accent]);
 }

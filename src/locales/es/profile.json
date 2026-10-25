@@ -1,82 +1,83 @@
 {
   "title": "Configuración",
-  "description": "Dale identidad a tu espacio y elige cómo apareces en Groovy.",
+  "description": "Tu perfil y apariencia.",
   "onboarding": {
-    "eyebrow": "Un último paso",
-    "title": "Ponle nombre a tu espacio.",
-    "description": "Elige cómo quieres aparecer. Tu nombre puede ser el que prefieras; tu usuario será tu identificador único. La biografía puede esperar."
+    "eyebrow": "Tu perfil",
+    "title": "Bienvenido a Groovy",
+    "description": "Elige tu nombre y usuario. La foto y la bio son opcionales."
   },
   "preview": {
     "name": "Tu nombre",
-    "username": "tu_usuario",
-    "caption": "Así aparecerás en Groovy"
+    "username": "tu_usuario"
   },
   "fields": {
     "displayName": "Nombre",
-    "displayNamePlaceholder": "¿Cómo te llamamos?",
-    "displayNameHint": "El nombre que verán otros oyentes.",
+    "displayNamePlaceholder": "Tu nombre",
     "username": "Usuario",
     "usernamePlaceholder": "tu_usuario",
-    "usernameHint": "De 3 a 30 caracteres: letras minúsculas, números y guion bajo.",
-    "bio": "Sobre ti",
-    "bioPlaceholder": "Tus géneros favoritos, un álbum imprescindible o algo sobre ti…",
-    "bioHint": "Unas palabras para acompañar tu perfil.",
+    "usernameHint": "Minúsculas, números o _.",
+    "bio": "Bio",
+    "bioPlaceholder": "Algo sobre ti…",
     "optional": "Opcional"
   },
   "validation": {
-    "displayName": "Escribe un nombre de entre 1 y 80 caracteres.",
-    "username": "Usa de 3 a 30 caracteres: minúsculas, números o guion bajo.",
-    "bio": "La biografía no puede superar los 500 caracteres."
+    "displayName": "Escribe un nombre de hasta 80 caracteres.",
+    "username": "Usa de 3 a 30 caracteres: minúsculas, números o _.",
+    "bio": "Máximo 500 caracteres."
   },
   "actions": {
-    "continue": "Empezar a explorar",
+    "continue": "Continuar",
     "save": "Guardar cambios",
     "saving": "Guardando…",
     "retry": "Reintentar"
   },
   "feedback": {
-    "invalidInput": "Revisa los datos de tu perfil.",
-    "usernameTaken": "Ese usuario ya está ocupado. Prueba con otro.",
-    "rateLimited": "Has realizado demasiados cambios. Espera un momento.",
-    "failed": "No pudimos guardar tu perfil. Inténtalo nuevamente.",
+    "invalidInput": "Revisa tus datos.",
+    "usernameTaken": "Ese usuario ya está ocupado.",
+    "rateLimited": "Espera un momento antes de guardar otra vez.",
+    "failed": "No pudimos guardar los cambios.",
     "loadFailed": "No pudimos cargar tu perfil.",
-    "saved": "Perfil actualizado.",
-    "signInRequired": "Inicia sesión para guardar tu perfil.",
-    "noChanges": "No hay cambios pendientes."
+    "saved": "Cambios guardados.",
+    "signInRequired": "Inicia sesión para guardar.",
+    "noChanges": "Sin cambios."
   },
   "menu": {
-    "open": "Abrir opciones de tu cuenta",
+    "open": "Abrir tu cuenta",
     "title": "Tu cuenta",
-    "theme": "Apariencia",
+    "theme": "Tema",
     "language": "Idioma",
     "settings": "Configuración"
   },
   "colors": {
-    "title": "Color principal",
-    "hint": "La apariencia se guarda en este navegador.",
-    "blue": "Azul",
-    "violet": "Violeta",
-    "rose": "Rosa",
-    "teal": "Verde agua"
+    "title": "Apariencia",
+    "hint": "Se guarda en este navegador.",
+    "blue": "Azul Groovy",
+    "violet": "Morado Groovy",
+    "rose": "Rosa Groovy",
+    "teal": "Verde Groovy",
+    "red": "Rojo Groovy",
+    "brown": "Café Groovy",
+    "neutral": "Neutro Groovy",
+    "colorful": "Colorful"
   },
   "avatar": {
-    "choose": "Elegir foto de perfil",
-    "hint": "JPG, PNG o WebP · Hasta 5 MB · De 256 a 4096 px por lado.",
-    "preview": "Vista previa del recorte cuadrado. Guarda para aplicar la foto.",
-    "processing": "Preparando tu foto…",
+    "choose": "Cambiar foto",
+    "hint": "JPG, PNG o WebP · Máx. 5 MB.",
+    "preview": "Nueva foto sin guardar.",
+    "processing": "Preparando foto…",
     "save": "Guardar foto",
-    "saving": "Guardando foto…",
+    "saving": "Guardando…",
     "cancel": "Cancelar",
     "saved": "Foto actualizada.",
     "errors": {
       "type": "Elige una imagen JPG, PNG o WebP.",
-      "sourceSize": "La imagen debe pesar como máximo 5 MB.",
-      "resolution": "La imagen debe medir entre 256 y 4096 píxeles por lado.",
-      "invalidImage": "No pudimos abrir esta imagen. Prueba con otra.",
-      "processing": "No pudimos preparar una versión compatible. Prueba con otra imagen.",
-      "session": "Tu sesión terminó. Inicia sesión nuevamente.",
-      "rate": "Has realizado demasiados cambios. Espera antes de reintentar.",
-      "save": "No pudimos completar el guardado. Puedes reintentar con la misma selección. Si hubo varios intentos fallidos, espera 15 minutos y vuelve a intentarlo."
+      "sourceSize": "La imagen supera los 5 MB.",
+      "resolution": "Usa una imagen de 256 a 4096 px por lado.",
+      "invalidImage": "No pudimos abrir esta imagen.",
+      "processing": "No pudimos procesarla. Prueba otra imagen.",
+      "session": "Inicia sesión nuevamente.",
+      "rate": "Espera un momento antes de reintentar.",
+      "save": "No pudimos guardar la foto. Reintenta; si persiste, espera 15 minutos."
     }
   }
 }

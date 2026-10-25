@@ -54,20 +54,17 @@ export function ProfileForm({
               maxLength={80}
               placeholder={t("fields.displayNamePlaceholder")}
               aria-invalid={Boolean(fieldErrors.displayName)}
-              aria-describedby={`${id}NameHint`}
+              aria-describedby={
+                fieldErrors.displayName ? `${id}NameError` : undefined
+              }
               onBlur={() => onBlur("displayName")}
               onChange={(event) => onChange("displayName", event.target.value)}
             />
-            <p
-              id={`${id}NameHint`}
-              className={`text-xs leading-5 ${
-                fieldErrors.displayName
-                  ? "text-destructive"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {fieldErrors.displayName || t("fields.displayNameHint")}
-            </p>
+            {fieldErrors.displayName && (
+              <p id={`${id}NameError`} className="text-xs text-destructive">
+                {fieldErrors.displayName}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -97,7 +94,7 @@ export function ProfileForm({
             </div>
             <p
               id={`${id}UsernameHint`}
-              className={`text-xs leading-5 ${
+              className={`text-xs ${
                 fieldErrors.username
                   ? "text-destructive"
                   : "text-muted-foreground"
@@ -123,26 +120,19 @@ export function ProfileForm({
             value={values.bio}
             placeholder={t("fields.bioPlaceholder")}
             aria-invalid={Boolean(fieldErrors.bio)}
-            aria-describedby={`${id}BioHint`}
+            aria-describedby={`${id}BioFeedback`}
             onBlur={() => onBlur("bio")}
             onChange={(event) => onChange("bio", event.target.value)}
           />
-          <div className="flex items-start justify-between gap-3">
-            <p
-              id={`${id}BioHint`}
-              className={`text-xs leading-5 ${
-                fieldErrors.bio ? "text-destructive" : "text-muted-foreground"
-              }`}
-            >
-              {fieldErrors.bio || t("fields.bioHint")}
-            </p>
-            <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+          <div id={`${id}BioFeedback`} className="flex justify-between gap-3">
+            <span className="text-xs text-destructive">{fieldErrors.bio}</span>
+            <span className="text-[11px] tabular-nums text-muted-foreground">
               {values.bio.length} / 500
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             {!dirty && !feedback ? t("feedback.noChanges") : ""}
           </p>

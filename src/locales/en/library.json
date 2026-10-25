@@ -5,7 +5,7 @@
   "error": "We couldn't load your library. Please try again.",
   "localPreview": "You're in preview mode. Sign in with a real account to access your library.",
   "filters": {
-    "label": "Filter library",
+    "label": "Filters",
     "all": "All",
     "pending": "Pending",
     "listened": "Listened",

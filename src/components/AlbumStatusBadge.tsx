@@ -10,7 +10,7 @@ export function AlbumStatusBadge({ status, label }: AlbumStatusBadgeProps) {
       className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-2 text-xs font-medium backdrop-blur-md ${
         pending
           ? "border-amber-300/30 bg-amber-950/85 text-amber-100"
-          : "border-sky-300/30 bg-sky-950/85 text-sky-100"
+          : "border-primary/30 bg-background/95 text-primary"
       }`}
     >
       <Icon aria-hidden="true" className="size-3.5 shrink-0" />

@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Check, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserAvatar } from "@/components/UserAvatar";
-import { Button } from "@/components/ui/button";
 import { PreferencesSection } from "@/pages/PreferencesSection";
 import { useProfile } from "@/hooks/useProfile";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useTheme } from "@/hooks/useTheme";
-import { accentOptions, usePreferencesStore } from "@/stores/preferencesStore";
 
 export function AccountMenu() {
   const { t } = useTranslation("profile");
@@ -19,8 +17,6 @@ export function AccountMenu() {
   const { data: profile } = useProfile();
   const { error, ...signOutProps } = useSignOut();
   const { theme, label, toggleTheme } = useTheme();
-  const accent = usePreferencesStore((state) => state.accent);
-  const setAccent = usePreferencesStore((state) => state.setAccent);
 
   const name = profile?.display_name || t("preview.name");
 
@@ -43,18 +39,18 @@ export function AccountMenu() {
           collisionPadding={16}
           className="z-50"
         >
-          <Popover.Popup className="max-h-[80svh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-border/60 bg-popover p-2 text-popover-foreground shadow-xl outline-none">
+          <Popover.Popup className="max-h-[80svh] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-border/60 bg-popover p-2 text-popover-foreground shadow-xl outline-none">
             <Popover.Title className="sr-only">{t("menu.title")}</Popover.Title>
 
             <div className="flex items-center gap-3 border-b border-border/40 px-3 py-3">
               <UserAvatar name={name} src={profile?.avatar_url} />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{name}</p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {profile?.username
-                    ? `@${profile.username}`
-                    : t("onboarding.eyebrow")}
-                </p>
+                {profile?.username && (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    @{profile.username}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -71,42 +67,6 @@ export function AccountMenu() {
               <div className="flex min-h-12 items-center justify-between gap-3">
                 <span className="text-sm">{t("menu.language")}</span>
                 <PreferencesSection />
-              </div>
-
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground">
-                  {t("colors.title")}
-                </p>
-                <div
-                  role="group"
-                  aria-label={t("colors.title")}
-                  className="mt-1 flex items-center gap-1"
-                >
-                  {accentOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      type="button"
-                      variant="ghost"
-                      aria-label={t(`colors.${option.value}`)}
-                      aria-pressed={accent === option.value}
-                      title={t(`colors.${option.value}`)}
-                      className="size-11 p-0"
-                      onClick={() => setAccent(option.value)}
-                    >
-                      <span
-                        className="flex size-6 items-center justify-center rounded-full text-[#06182b]"
-                        style={{ backgroundColor: option.dark }}
-                      >
-                        {accent === option.value && (
-                          <Check aria-hidden="true" className="size-3.5" />
-                        )}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-                <p className="pb-2 text-[11px] leading-5 text-muted-foreground">
-                  {t("colors.hint")}
-                </p>
               </div>
             </div>
 

@@ -64,15 +64,10 @@ export function AvatarEditor({
           <p className="mt-1 truncate text-sm text-muted-foreground">
             @{username.trim() || t("preview.username")}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("preview.caption")}
-          </p>
         </div>
       </div>
 
-      <p className="text-[11px] leading-5 text-muted-foreground">
-        {t("avatar.hint")}
-      </p>
+      <p className="text-[11px] text-muted-foreground">{t("avatar.hint")}</p>
 
       {avatar.processing && (
         <p role="status" className="text-xs text-muted-foreground">
@@ -84,7 +79,7 @@ export function AvatarEditor({
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">{t("avatar.preview")}</p>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-2">
             <LoadingButton
               type="button"
               size="sm"

@@ -5,7 +5,7 @@
   "error": "No pudimos cargar tu biblioteca. Inténtalo de nuevo.",
   "localPreview": "Estás en modo de vista previa. Inicia sesión con una cuenta real para consultar tu biblioteca.",
   "filters": {
-    "label": "Filtrar biblioteca",
+    "label": "Filtros",
     "all": "Todos",
     "pending": "Pendientes",
     "listened": "Escuchados",

@@ -1,82 +1,83 @@
 {
   "title": "Settings",
-  "description": "Make your space yours and choose how you appear on Groovy.",
+  "description": "Your profile and appearance.",
   "onboarding": {
-    "eyebrow": "One last step",
-    "title": "Give your space a name.",
-    "description": "Choose how you want to appear. Your name can be anything you like; your username is your unique identifier. Your bio can wait."
+    "eyebrow": "Your profile",
+    "title": "Welcome to Groovy",
+    "description": "Choose your name and username. Your photo and bio are optional."
   },
   "preview": {
     "name": "Your name",
-    "username": "your_username",
-    "caption": "How you'll appear on Groovy"
+    "username": "your_username"
   },
   "fields": {
     "displayName": "Name",
-    "displayNamePlaceholder": "What should we call you?",
-    "displayNameHint": "The name other listeners will see.",
+    "displayNamePlaceholder": "Your name",
     "username": "Username",
     "usernamePlaceholder": "your_username",
-    "usernameHint": "3–30 characters: lowercase letters, numbers and underscores.",
-    "bio": "About you",
-    "bioPlaceholder": "Your favorite genres, an essential album or a little about you…",
-    "bioHint": "A few words to go with your profile.",
+    "usernameHint": "Lowercase letters, numbers or _.",
+    "bio": "Bio",
+    "bioPlaceholder": "A little about you…",
     "optional": "Optional"
   },
   "validation": {
-    "displayName": "Enter a name between 1 and 80 characters.",
-    "username": "Use 3–30 lowercase letters, numbers or underscores.",
-    "bio": "Your bio cannot exceed 500 characters."
+    "displayName": "Enter a name of up to 80 characters.",
+    "username": "Use 3–30 lowercase letters, numbers or _.",
+    "bio": "Maximum 500 characters."
   },
   "actions": {
-    "continue": "Start exploring",
+    "continue": "Continue",
     "save": "Save changes",
     "saving": "Saving…",
     "retry": "Try again"
   },
   "feedback": {
-    "invalidInput": "Check your profile details.",
-    "usernameTaken": "That username is already taken. Try another.",
-    "rateLimited": "You've made too many changes. Wait a moment.",
-    "failed": "We couldn't save your profile. Please try again.",
+    "invalidInput": "Check your details.",
+    "usernameTaken": "That username is taken.",
+    "rateLimited": "Wait a moment before saving again.",
+    "failed": "We couldn't save your changes.",
     "loadFailed": "We couldn't load your profile.",
-    "saved": "Profile updated.",
-    "signInRequired": "Sign in to save your profile.",
-    "noChanges": "No pending changes."
+    "saved": "Changes saved.",
+    "signInRequired": "Sign in to save.",
+    "noChanges": "No changes."
   },
   "menu": {
-    "open": "Open account options",
+    "open": "Open your account",
     "title": "Your account",
-    "theme": "Appearance",
+    "theme": "Theme",
     "language": "Language",
     "settings": "Settings"
   },
   "colors": {
-    "title": "Accent color",
-    "hint": "Appearance is saved in this browser.",
-    "blue": "Blue",
-    "violet": "Violet",
-    "rose": "Rose",
-    "teal": "Teal"
+    "title": "Appearance",
+    "hint": "Saved in this browser.",
+    "blue": "Groovy Blue",
+    "violet": "Groovy Purple",
+    "rose": "Groovy Pink",
+    "teal": "Groovy Green",
+    "red": "Groovy Red",
+    "brown": "Groovy Brown",
+    "neutral": "Groovy Neutral",
+    "colorful": "Colorful"
   },
   "avatar": {
-    "choose": "Choose profile photo",
-    "hint": "JPG, PNG or WebP · Up to 5 MB · 256–4096 px on each side.",
-    "preview": "Square crop preview. Save to apply your photo.",
-    "processing": "Preparing your photo…",
+    "choose": "Change photo",
+    "hint": "JPG, PNG or WebP · Max. 5 MB.",
+    "preview": "New photo, not saved.",
+    "processing": "Preparing photo…",
     "save": "Save photo",
-    "saving": "Saving photo…",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "saved": "Photo updated.",
     "errors": {
       "type": "Choose a JPG, PNG or WebP image.",
-      "sourceSize": "Your image must be no larger than 5 MB.",
-      "resolution": "Your image must measure between 256 and 4096 pixels on each side.",
-      "invalidImage": "We couldn't open this image. Try another.",
-      "processing": "We couldn't prepare a compatible version. Try another image.",
-      "session": "Your session ended. Please sign in again.",
-      "rate": "You've made too many changes. Wait before trying again.",
-      "save": "We couldn't complete the save. You can retry the same selection. After several failed attempts, wait 15 minutes and try again."
+      "sourceSize": "Your image exceeds 5 MB.",
+      "resolution": "Use an image measuring 256–4096 px on each side.",
+      "invalidImage": "We couldn't open this image.",
+      "processing": "We couldn't process it. Try another image.",
+      "session": "Please sign in again.",
+      "rate": "Wait a moment before trying again.",
+      "save": "We couldn't save your photo. Retry; if it persists, wait 15 minutes."
     }
   }
 }
