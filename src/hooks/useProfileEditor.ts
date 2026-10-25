@@ -1,16 +1,22 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { profileSchema } from "@/lib/profileValidation";
 import { saveProfile } from "@/services/profileService";
 import { useAuthStore } from "@/stores/authStore";
-import { useProfile } from "./useProfile";
+import { profileKey, profileWriteKey, useProfile } from "./useProfile";
 import type {
   ProfileDraft,
   ProfileEditorMode,
+  ProfileFieldErrors,
   ProfileFormProps,
   ProfileInput,
+  ProfileTouchedFields,
 } from "@/models/profile";
 
 export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
@@ -21,22 +27,62 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
   const { data: profile } = useProfile();
 
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState<ProfileTouchedFields>({});
   const [feedbackKey, setFeedbackKey] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const submitting = useRef(false);
 
-  const values: ProfileInput =
-    draft && draft.userId === userId
-      ? draft.values
-      : {
-          displayName: profile?.display_name ?? "",
-          username: profile?.username ?? "",
-          bio: profile?.bio ?? "",
-        };
+  const writes = useIsMutating({
+    mutationKey: profileWriteKey(userId),
+  });
+
+  const mutation = useMutation({
+    mutationKey: profileWriteKey(userId),
+    mutationFn: saveProfile,
+    retry: false,
+  });
+
+  const busy = mutation.isPending;
+
+  const initial: ProfileInput = {
+    displayName: profile?.display_name ?? "",
+    username: profile?.username ?? "",
+    bio: profile?.bio ?? "",
+  };
+
+  const values = draft?.userId === userId ? draft.values : initial;
+
+  const parsed = profileSchema.safeParse(values);
+
+  const dirty =
+    values.displayName.trim() !== initial.displayName.trim() ||
+    values.username.trim().toLowerCase() !==
+      initial.username.trim().toLowerCase() ||
+    values.bio.trim() !== initial.bio.trim();
+
+  const disabled = writes > 0 || !userId || !profile;
+
+  const canSubmit =
+    !disabled && parsed.success && (mode === "onboarding" || dirty);
+
+  const fieldErrors: ProfileFieldErrors = {};
+
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0];
+
+      if (
+        (field === "displayName" || field === "username" || field === "bio") &&
+        touched[field] &&
+        !fieldErrors[field]
+      ) {
+        fieldErrors[field] = t(`validation.${issue.message}`);
+      }
+    }
+  }
 
   function onChange(field: keyof ProfileInput, value: string): void {
-    if (!userId || submitting.current) return;
+    if (!userId || submitting.current || disabled) return;
 
     setDraft({
       userId,
@@ -50,33 +96,40 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
     setSaved(false);
   }
 
+  function onBlur(field: keyof ProfileInput): void {
+    setTouched((current) => ({ ...current, [field]: true }));
+  }
+
   async function onSubmit(): Promise<void> {
-    if (!userId || submitting.current) return;
-
-    const parsed = profileSchema.safeParse(values);
-
-    if (!parsed.success) {
-      setSaved(false);
-      setFeedbackKey("feedback.invalidInput");
+    if (
+      !userId ||
+      submitting.current ||
+      !canSubmit ||
+      queryClient.isMutating({
+        mutationKey: profileWriteKey(userId),
+      }) > 0
+    ) {
       return;
     }
 
+    const result = profileSchema.safeParse(values);
+
+    if (!result.success) return;
+
     const requestedUserId = userId;
     submitting.current = true;
-    setBusy(true);
     setFeedbackKey(null);
     setSaved(false);
 
     try {
-      const updated = await saveProfile(parsed.data);
+      const updated = await mutation.mutateAsync(result.data);
 
-      if (useAuthStore.getState().user?.id !== requestedUserId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== requestedUserId) return;
 
-      queryClient.setQueryData(["profile", requestedUserId], updated);
+      queryClient.setQueryData(profileKey(requestedUserId), updated);
 
       setDraft(null);
+      setTouched({});
       setSaved(true);
       setFeedbackKey("feedback.saved");
 
@@ -84,9 +137,7 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
         navigate("/profile", { replace: true });
       }
     } catch (error: unknown) {
-      if (useAuthStore.getState().user?.id !== requestedUserId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== requestedUserId) return;
 
       if (
         typeof error === "object" &&
@@ -102,12 +153,19 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
         error.message === "RATE_LIMITED"
       ) {
         setFeedbackKey("feedback.rateLimited");
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        (error.message === "SESSION_EXPIRED" ||
+          error.message === "AUTH_REQUIRED")
+      ) {
+        setFeedbackKey("feedback.signInRequired");
       } else {
         setFeedbackKey("feedback.failed");
       }
     } finally {
       submitting.current = false;
-      setBusy(false);
     }
   }
 
@@ -119,10 +177,15 @@ export function useProfileEditor(mode: ProfileEditorMode): ProfileFormProps {
 
   return {
     values,
+    avatarUrl: profile?.avatar_url ?? null,
+    fieldErrors,
     busy,
+    disabled,
+    canSubmit,
+    dirty,
     onChange,
+    onBlur,
     onSubmit,
-    disabled: busy || !userId || !profile,
     feedback,
     feedbackTone: feedback ? (saved ? "success" : "error") : null,
     labels: {

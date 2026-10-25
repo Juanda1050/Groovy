@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { AccountMenu } from "@/components/AccountMenu";
 import { AppNavigation } from "@/components/AppNavigation";
 import { AppShell } from "@/components/AppShell";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
@@ -17,6 +18,7 @@ import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
 import { useBlockingLoading } from "@/hooks/useBlockingLoading";
 import { useTheme } from "@/hooks/useTheme";
 import { isLocalAuthBypassEnabled } from "@/lib/localDevelopment";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function App() {
   const session = useAuthBootstrap();
@@ -29,8 +31,11 @@ export default function App() {
   const { items, label: navigationLabel } = useAppNavigation();
   const { theme, label: themeLabel, toggleTheme } = useTheme();
 
-  const ready = isLocalAuthBypassEnabled || session.isReady;
+  const authenticated = useAuthStore(
+    (state) => state.status === "authenticated",
+  );
 
+  const ready = isLocalAuthBypassEnabled || session.isReady;
   const blocking = (!ready && !session.hasError) || (ready && requiresLogin);
 
   const loadingDialog = useBlockingLoading(blocking);
@@ -45,15 +50,18 @@ export default function App() {
           ) : null
         }
         actions={
-          <>
-            <PreferencesSection />
-
-            <ThemeToggle
-              theme={theme}
-              label={themeLabel}
-              onToggle={toggleTheme}
-            />
-          </>
+          ready && authenticated ? (
+            <AccountMenu />
+          ) : (
+            <>
+              <PreferencesSection />
+              <ThemeToggle
+                theme={theme}
+                label={themeLabel}
+                onToggle={toggleTheme}
+              />
+            </>
+          )
         }
       >
         {!ready ? (
@@ -62,7 +70,6 @@ export default function App() {
               <AlertDescription>
                 {t("session.connectionError")}
               </AlertDescription>
-
               <Button
                 type="button"
                 variant="outline"

@@ -1,4 +1,4 @@
-import { Compass, Library, Users, UserRound } from "lucide-react";
+import { Compass, Library, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { NavigationDefinition, NavigationItem } from "@/models/navigation";
 
@@ -17,11 +17,6 @@ const definitions: readonly NavigationDefinition[] = [
     path: "/community",
     labelKey: "navigation.community",
     icon: Users,
-  },
-  {
-    path: "/profile",
-    labelKey: "navigation.profile",
-    icon: UserRound,
   },
 ];
 

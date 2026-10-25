@@ -268,6 +268,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_profile_avatar: {
+        Args: { p_avatar_path: string }
+        Returns: {
+          avatar_url: string | null
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       save_user_album: {
         Args: {
           p_favorite_track_ids?: string[]

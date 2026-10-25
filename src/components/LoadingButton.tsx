@@ -13,7 +13,12 @@ export function LoadingButton({
     <Button {...props} disabled={disabled || loading} aria-busy={loading}>
       {loading && <RecordLoader size="sm" />}
 
-      <span aria-live="polite">{loading ? loadingLabel : children}</span>
+      <span
+        aria-live="polite"
+        className="inline-flex min-w-0 items-center justify-center gap-2"
+      >
+        {loading ? loadingLabel : children}
+      </span>
     </Button>
   );
 }
