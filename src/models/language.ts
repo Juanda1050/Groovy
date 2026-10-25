@@ -1,4 +1,4 @@
-import type { SupportedLanguage } from './preferences'
+import type { SupportedLanguage } from "@/models/preferences";
 
 export type LanguageSaveState =
   | 'idle'

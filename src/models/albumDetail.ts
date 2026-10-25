@@ -1,10 +1,6 @@
+import type { albumDetailSchema,albumTrackSchema,albumTracksPageSchema } from "@/features/catalog/lib/albumDetailSchemas";
+import type { ListeningStatus } from "@/models/catalog";
 import type { z } from "zod";
-import type {
-  albumDetailSchema,
-  albumTrackSchema,
-  albumTracksPageSchema,
-} from "@/lib/albumDetailSchemas";
-import type { ListeningStatus } from "./catalog";
 
 export type AlbumDetail = z.infer<typeof albumDetailSchema>;
 export type AlbumTrack = z.infer<typeof albumTrackSchema>;

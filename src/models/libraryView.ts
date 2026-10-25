@@ -1,4 +1,4 @@
-import type { Database } from "./database";
+import type { Database } from "@/models/database";
 
 export type LibraryFilter =
   | "all"

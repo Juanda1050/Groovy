@@ -1,5 +1,5 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import type { Theme } from "./preferences";
+import type { Theme } from "@/models/preferences";
+import type { ComponentPropsWithoutRef,ReactNode } from "react";
 
 export interface GlassPanelProps extends ComponentPropsWithoutRef<"div"> {
   blur?: boolean;

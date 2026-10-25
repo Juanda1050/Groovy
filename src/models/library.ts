@@ -1,5 +1,5 @@
-import type { Database } from "./database";
-import type { ListeningStatus } from "./catalog";
+import type { ListeningStatus } from "@/models/catalog";
+import type { Database } from "@/models/database";
 
 export type AlbumRating =
   | 1

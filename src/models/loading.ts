@@ -1,5 +1,5 @@
-import type { ReactNode, RefObject, SyntheticEvent } from "react";
-import type { ButtonProps } from "./ui";
+import type { ButtonProps } from "@/models/ui";
+import type { ReactNode,RefObject,SyntheticEvent } from "react";
 
 export interface BlockingLoadingBindings {
   dialogRef: RefObject<HTMLDialogElement | null>;
