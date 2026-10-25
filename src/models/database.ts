@@ -178,6 +178,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_album_to_library: {
+        Args: { p_spotify_album_id: string; p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          listened_at: string | null
+          rating: number | null
+          review: string | null
+          spotify_album_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_albums"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      authorize_spotify_action: {
+        Args: { p_action: string }
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+          user_id: string
+        }[]
+      }
+      block_spotify_requests: {
+        Args: { p_seconds: number }
+        Returns: undefined
+      }
       cleanup_expired_resources: { Args: never; Returns: Json }
       consume_request_budget: {
         Args: {
@@ -192,6 +224,33 @@ export type Database = {
         }[]
       }
       delete_user_album: { Args: { p_user_album_id: string }; Returns: boolean }
+      get_my_library: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_filter?: string
+          p_limit?: number
+        }
+        Returns: {
+          album_name: string
+          artist_names: string[]
+          cover_url: string
+          created_at: string
+          has_review: boolean
+          id: string
+          metadata_available: boolean
+          rating: number
+          spotify_album_id: string
+          status: string
+        }[]
+      }
+      reserve_spotify_request: {
+        Args: never
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+        }[]
+      }
       save_profile: {
         Args: { p_bio?: string; p_display_name: string; p_username: string }
         Returns: {

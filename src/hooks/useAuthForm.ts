@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAuthFeedback } from "@/lib/authErrors";
 import { validateAuthValues } from "@/lib/authValidation";
-import { signIn, signUp, verifyEmail } from "@/services/authService";
+import { signIn, signUp } from "@/services/authService";
 import { usePasswordRules } from "./usePasswordRules";
 import type {
   AuthFeedback,
@@ -22,7 +22,6 @@ export function useAuthForm(): AuthFormProps {
     email: "",
     password: "",
     confirmPassword: "",
-    code: "",
   });
 
   const [submitted, setSubmitted] = useState(false);
@@ -33,7 +32,6 @@ export function useAuthForm(): AuthFormProps {
 
   const submitting = useRef(false);
   const passwordRules = usePasswordRules(values.password);
-
   const validation = validateAuthValues(mode, values);
   const isValid = Object.keys(validation).length === 0;
 
@@ -46,20 +44,7 @@ export function useAuthForm(): AuthFormProps {
       inputMode: "email",
       maxLength: 254,
     },
-  ];
-
-  if (mode === "verify") {
-    fields.push({
-      name: "code",
-      label: t("fields.code"),
-      type: "text",
-      autoComplete: "one-time-code",
-      inputMode: "numeric",
-      minLength: 6,
-      maxLength: 10,
-    });
-  } else {
-    fields.push({
+    {
       name: "password",
       label: t("fields.password"),
       type: passwordVisible ? "text" : "password",
@@ -69,26 +54,28 @@ export function useAuthForm(): AuthFormProps {
       onToggleVisibility: () => {
         setPasswordVisible((current) => !current);
       },
-    });
+    },
+  ];
 
-    if (mode === "signUp") {
-      fields.push({
-        name: "confirmPassword",
-        label: t("fields.confirmPassword"),
-        type: confirmationVisible ? "text" : "password",
-        autoComplete: "new-password",
-        maxLength: 72,
-        visibilityLabel: t(
-          confirmationVisible ? "password.hide" : "password.show",
-        ),
-        onToggleVisibility: () => {
-          setConfirmationVisible((current) => !current);
-        },
-      });
-    }
+  if (mode === "signUp") {
+    fields.push({
+      name: "confirmPassword",
+      label: t("fields.confirmPassword"),
+      type: confirmationVisible ? "text" : "password",
+      autoComplete: "new-password",
+      maxLength: 72,
+      visibilityLabel: t(
+        confirmationVisible ? "password.hide" : "password.show",
+      ),
+      onToggleVisibility: () => {
+        setConfirmationVisible((current) => !current);
+      },
+    });
   }
 
   function onChange(name: AuthFieldName, value: string): void {
+    if (submitting.current) return;
+
     setValues((current) => ({ ...current, [name]: value }));
     setFeedback(null);
   }
@@ -102,7 +89,6 @@ export function useAuthForm(): AuthFormProps {
       ...current,
       password: "",
       confirmPassword: "",
-      code: "",
     }));
 
     setSubmitted(false);
@@ -116,7 +102,6 @@ export function useAuthForm(): AuthFormProps {
 
     setSubmitted(true);
 
-    // Comprobación adicional aunque el botón esté desactivado.
     const errors = validateAuthValues(mode, values);
 
     if (Object.keys(errors).length > 0) return;
@@ -133,28 +118,19 @@ export function useAuthForm(): AuthFormProps {
     try {
       if (mode === "signIn") {
         await signIn(credentials);
-      } else if (mode === "signUp") {
-        await signUp(credentials);
-
-        setMode("verify");
-        setSubmitted(false);
-        setPasswordVisible(false);
-        setConfirmationVisible(false);
-
-        setValues((current) => ({
-          ...current,
-          password: "",
-          confirmPassword: "",
-          code: "",
-        }));
-
-        setFeedback("checkEmail");
       } else {
-        await verifyEmail({
-          email: credentials.email,
-          token: values.code.trim(),
-        });
+        await signUp(credentials);
       }
+
+      setValues((current) => ({
+        ...current,
+        password: "",
+        confirmPassword: "",
+      }));
+
+      setPasswordVisible(false);
+      setConfirmationVisible(false);
+      setSubmitted(false);
     } catch (error: unknown) {
       setFeedback(getAuthFeedback(error));
     } finally {
@@ -190,6 +166,6 @@ export function useAuthForm(): AuthFormProps {
     submitLabel: t(`${mode}.${busy ? "pending" : "submit"}`),
     switchLabel: t(mode === "signIn" ? "switchToSignUp" : "switchToSignIn"),
     feedback: feedback ? t(`feedback.${feedback}`) : null,
-    feedbackTone: feedback === "checkEmail" ? "info" : "error",
+    feedbackTone: "error",
   };
 }

@@ -1,19 +1,18 @@
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
-export type AuthMode = "signIn" | "signUp" | "verify";
+export type AuthMode = "signIn" | "signUp";
 
-export type AuthFieldName = "email" | "password" | "confirmPassword" | "code";
+export type AuthFieldName = "email" | "password" | "confirmPassword";
 
 export type AuthFeedback =
   | "invalidInput"
   | "invalidCredentials"
-  | "invalidCode"
   | "emailNotConfirmed"
   | "weakPassword"
   | "rateLimited"
   | "network"
   | "requestFailed"
-  | "checkEmail";
+  | "registrationUnavailable";
 
 export type AuthFieldErrors = Partial<Record<AuthFieldName, string>>;
 
@@ -66,16 +65,10 @@ export interface AuthCredentials {
   password: string;
 }
 
-export interface EmailVerification {
-  email: string;
-  token: string;
-}
-
 export interface AuthValues {
   email: string;
   password: string;
   confirmPassword: string;
-  code: string;
 }
 
 export interface AuthField {

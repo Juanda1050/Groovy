@@ -1,4 +1,37 @@
 {
   "title": "Your listening collection.",
-  "description": "Keep track of albums you have heard and those waiting for their moment."
+  "description": "The albums you've heard and those waiting for their moment.",
+  "loading": "Loading your library…",
+  "error": "We couldn't load your library. Please try again.",
+  "localPreview": "You're in preview mode. Sign in with a real account to access your library.",
+  "filters": {
+    "label": "Filter library",
+    "all": "All",
+    "pending": "Pending",
+    "listened": "Listened",
+    "rated": "Rated",
+    "unrated": "Unrated",
+    "reviewed": "Reviewed"
+  },
+  "metadata": {
+    "unavailable": "Saved album",
+    "pending": "Album details need refreshing."
+  },
+  "card": {
+    "review": "Has a review",
+    "rating": "Your rating"
+  },
+  "empty": {
+    "title": "No albums here yet.",
+    "description": "Albums you save will appear in this collection. If you selected a filter, try another."
+  },
+  "actions": {
+    "retry": "Try again",
+    "discover": "Go to discover"
+  },
+  "pagination": {
+    "page": "Page {{count}}",
+    "previous": "Previous",
+    "next": "Next"
+  }
 }

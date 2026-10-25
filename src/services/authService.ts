@@ -1,11 +1,6 @@
-import type { User } from "@supabase/supabase-js";
+import { AuthError, type User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import type {
-  AuthCredentials,
-  AuthObserver,
-  AuthUser,
-  EmailVerification,
-} from "@/models/auth";
+import type { AuthCredentials, AuthObserver, AuthUser } from "@/models/auth";
 
 function mapUser(user: User | null): AuthUser | null {
   if (!user) return null;
@@ -63,22 +58,17 @@ export async function signIn(credentials: AuthCredentials): Promise<void> {
 }
 
 export async function signUp(credentials: AuthCredentials): Promise<void> {
-  const { error } = await supabase.auth.signUp(credentials);
+  const { data, error } = await supabase.auth.signUp(credentials);
 
   if (error) throw error;
-}
 
-export async function verifyEmail({
-  email,
-  token,
-}: EmailVerification): Promise<void> {
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: "signup",
-  });
-
-  if (error) throw error;
+  if (!data.session) {
+    throw new AuthError(
+      "Sign-up did not return an active session.",
+      400,
+      "signup_session_missing",
+    );
+  }
 }
 
 export async function signOut(): Promise<void> {

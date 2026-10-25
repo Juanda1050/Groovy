@@ -28,9 +28,8 @@ export function getAuthFeedback(error: unknown): AuthFeedback {
     case "weak_password":
       return "weakPassword";
 
-    case "otp_expired":
-    case "otp_disabled":
-      return "invalidCode";
+    case "signup_session_missing":
+      return "registrationUnavailable";
 
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":

@@ -7,7 +7,9 @@ import type {
   AuthValues,
 } from "@/models/auth";
 
-const emailSchema = z.email({ error: "email" }).max(254, { error: "email" });
+const emailSchema = z.email({ error: "email" }).max(254, {
+  error: "email",
+});
 
 const newPasswordSchema = z
   .string()
@@ -41,17 +43,9 @@ export const signUpSchema = z
     message: "passwordMismatch",
   });
 
-export const verificationSchema = z.object({
-  email: emailSchema,
-  code: z.string().regex(/^\d{6,10}$/, { error: "code" }),
-});
-
 function isAuthField(value: unknown): value is AuthFieldName {
   return (
-    value === "email" ||
-    value === "password" ||
-    value === "confirmPassword" ||
-    value === "code"
+    value === "email" || value === "password" || value === "confirmPassword"
   );
 }
 
@@ -62,16 +56,9 @@ export function validateAuthValues(
   const input = {
     ...values,
     email: values.email.trim(),
-    code: values.code.trim(),
   };
 
-  const schema =
-    mode === "signUp"
-      ? signUpSchema
-      : mode === "verify"
-        ? verificationSchema
-        : signInSchema;
-
+  const schema = mode === "signUp" ? signUpSchema : signInSchema;
   const result = schema.safeParse(input);
   const errors: AuthFieldErrors = {};
 

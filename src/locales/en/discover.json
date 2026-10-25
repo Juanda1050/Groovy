@@ -1,6 +1,34 @@
 {
   "eyebrow": "Your life in albums",
   "title": "Find your next obsession.",
-  "description": "Explore albums, keep your listening history and share your favorites.",
-  "searchPlaceholder": "Search albums or artists"
+  "description": "Search albums and start your listening collection.",
+  "searchLabel": "Search albums",
+  "searchPlaceholder": "Search an album or artist",
+  "searchHint": "Enter at least 3 characters.",
+  "signInRequired": "Sign in to search and save albums.",
+  "loading": "Searching albums…",
+  "empty": "No albums found. Try another name.",
+  "actions": {
+    "save": "Save",
+    "saveListened": "Save as listened",
+    "saving": "Saving…"
+  },
+  "saved": {
+    "pending": "In your pending albums",
+    "listened": "In your listened albums"
+  },
+  "pagination": {
+    "page": "Page {{count}}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "errors": {
+    "UNAUTHORIZED": "Your session ended. Please sign in again.",
+    "INVALID_REQUEST": "Check your details and try again.",
+    "RATE_LIMITED": "We've reached the request limit. Wait before trying again.",
+    "SPOTIFY_QUOTA": "Spotify's available quota has been temporarily exhausted. Please try later.",
+    "SPOTIFY_UNAVAILABLE": "We couldn't connect to Spotify. Please try later.",
+    "ALBUM_NOT_FOUND": "This album is no longer available.",
+    "SERVER_ERROR": "We couldn't complete the request. Please try later."
+  }
 }

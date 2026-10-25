@@ -1,4 +1,37 @@
 {
   "title": "Tu colección musical.",
-  "description": "Organiza los álbumes que escuchaste y los que esperan su momento."
+  "description": "Los álbumes que escuchaste y los que esperan su momento.",
+  "loading": "Cargando tu biblioteca…",
+  "error": "No pudimos cargar tu biblioteca. Inténtalo de nuevo.",
+  "localPreview": "Estás en modo de vista previa. Inicia sesión con una cuenta real para consultar tu biblioteca.",
+  "filters": {
+    "label": "Filtrar biblioteca",
+    "all": "Todos",
+    "pending": "Pendientes",
+    "listened": "Escuchados",
+    "rated": "Calificados",
+    "unrated": "Sin calificar",
+    "reviewed": "Con reseña"
+  },
+  "metadata": {
+    "unavailable": "Álbum guardado",
+    "pending": "Metadatos pendientes de actualizar."
+  },
+  "card": {
+    "review": "Tiene reseña",
+    "rating": "Tu calificación"
+  },
+  "empty": {
+    "title": "Todavía no hay álbumes aquí.",
+    "description": "Los álbumes que guardes aparecerán en esta colección. Si elegiste un filtro, prueba con otro."
+  },
+  "actions": {
+    "retry": "Reintentar",
+    "discover": "Ir a descubrir"
+  },
+  "pagination": {
+    "page": "Página {{count}}",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  }
 }
