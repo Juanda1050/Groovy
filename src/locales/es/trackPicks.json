@@ -1,0 +1,22 @@
+{
+  "favorite": "Favorita",
+  "leastFavorite": "Menos favorita",
+  "removeFavorite": "Quitar de favoritas",
+  "removeLeastFavorite": "Quitar de menos favoritas",
+  "trackAction": "{{action}}: {{track}}",
+  "hint": "Marca tus favoritas y menos favoritas.",
+  "pending": "Marca el álbum como escuchado para elegir canciones.",
+  "loading": "Cargando selecciones…",
+  "saving": "Guardando selección…",
+  "saved": "Selección guardada.",
+  "readError": "No pudimos cargar tus selecciones.",
+  "retry": "Reintentar",
+  "retryAfter": "Puedes reintentar en {{count}} s.",
+  "errors": {
+    "session": "Inicia sesión nuevamente.",
+    "rate": "Espera un momento antes de guardar otra selección.",
+    "limit": "Puedes elegir hasta 20 canciones de cada tipo.",
+    "listened": "El álbum debe estar marcado como escuchado.",
+    "save": "No pudimos confirmar el cambio. Reintenta la selección."
+  }
+}

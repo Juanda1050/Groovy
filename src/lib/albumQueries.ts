@@ -1,8 +1,18 @@
-import { queryOptions, type QueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
+
 import { CatalogError } from "@/lib/catalogError";
 import { getAlbumDetail } from "@/services/spotifyService";
 import { getUserAlbum } from "@/services/libraryService";
-import type { CatalogPage, CatalogRatings } from "@/models/catalog";
+
+import type {
+  CatalogPage,
+  CatalogRatings,
+  ListeningStatus,
+} from "@/models/catalog";
 import type { LibraryAlbum } from "@/models/library";
 import type { LibraryPageResult } from "@/models/libraryView";
 
@@ -73,6 +83,43 @@ export function albumLibraryOptions(userId: string | null, albumId: string) {
   });
 }
 
+export function syncCatalogAlbumStatus(
+  queryClient: QueryClient,
+  userId: string | null,
+  albumId: string,
+  status: ListeningStatus,
+): void {
+  void queryClient.cancelQueries(
+    { queryKey: ["albumSearchInfinite", userId] },
+    { revert: false },
+  );
+
+  function updatePage(page: CatalogPage): CatalogPage {
+    return {
+      ...page,
+      items: page.items.map((item) =>
+        item.id === albumId ? { ...item, libraryStatus: status } : item,
+      ),
+    };
+  }
+
+  queryClient.setQueriesData<CatalogPage>(
+    { queryKey: ["albumSearch", userId] },
+    (previous) => (previous ? updatePage(previous) : previous),
+  );
+
+  queryClient.setQueriesData<InfiniteData<CatalogPage, number>>(
+    { queryKey: ["albumSearchInfinite", userId] },
+    (previous) =>
+      previous
+        ? {
+            ...previous,
+            pages: previous.pages.map(updatePage),
+          }
+        : previous,
+  );
+}
+
 export function syncAlbumLibrary(
   queryClient: QueryClient,
   album: LibraryAlbum,
@@ -85,20 +132,7 @@ export function syncAlbumLibrary(
     album,
   );
 
-  queryClient.setQueriesData<CatalogPage>(
-    { queryKey: ["albumSearch", userId] },
-    (previous) =>
-      previous
-        ? {
-            ...previous,
-            items: previous.items.map((item) =>
-              item.id === albumId
-                ? { ...item, libraryStatus: album.status }
-                : item,
-            ),
-          }
-        : previous,
-  );
+  syncCatalogAlbumStatus(queryClient, userId, albumId, album.status);
 
   queryClient.setQueriesData<CatalogRatings>(
     { queryKey: ["catalogRatings", userId] },

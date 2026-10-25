@@ -313,6 +313,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_user_track_pick: {
+        Args: {
+          p_preference: string
+          p_spotify_album_id: string
+          p_spotify_track_id: string
+        }
+        Returns: Database["public"]["Tables"]["user_track_picks"]["Row"][]
+      }
       touch_groovy_session: { Args: never; Returns: boolean }
     }
     Enums: {

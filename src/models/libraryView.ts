@@ -7,7 +7,11 @@ export type LibraryFilter =
   | "rated"
   | "unrated"
   | "reviewed";
-  
+
+export type LibrarySection = "albums" | "likes" | "dislikes";
+
+export type LibraryPageSize = 10 | 20 | 50;
+
 export type LibraryLoadingDirection = "next" | "previous" | null;
 
 export type LibraryRow =
@@ -32,7 +36,9 @@ export interface LibraryItem {
 
 export interface LibraryPageResult {
   items: readonly LibraryItem[];
-  nextCursor: LibraryCursor | null;
+  total: number;
+  page: number;
+  pageSize: LibraryPageSize;
 }
 
 export interface LibraryNavigation {
@@ -41,8 +47,10 @@ export interface LibraryNavigation {
 }
 
 export interface GetLibraryInput {
+  userId: string;
   filter: LibraryFilter;
-  cursor: LibraryCursor | null;
+  page: number;
+  pageSize: LibraryPageSize;
   signal: AbortSignal;
 }
 

@@ -23,6 +23,8 @@ export interface AlbumTrackListProps {
   tracks: readonly AlbumTrackView[];
   explicitLabel: string;
   openLabel: string;
+  albumId?: string;
+  favoritesOnly?: boolean;
 }
 
 export interface AlbumStatusProps {

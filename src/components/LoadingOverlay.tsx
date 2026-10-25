@@ -1,4 +1,5 @@
-import { AuthLoading } from "./AuthLoading";
+import { AuthLoading } from "@/components/AuthLoading";
+
 import type { LoadingOverlayProps } from "@/models/loading";
 
 export function LoadingOverlay({
@@ -13,12 +14,29 @@ export function LoadingOverlay({
       aria-label={label}
       aria-modal="true"
       className="
-        dark fixed inset-0 m-0
-        h-dvh max-h-none w-screen max-w-none
-        border-0 bg-transparent p-0 text-foreground
-        backdrop:bg-black/75 backdrop:backdrop-blur-sm
+        fixed inset-0 m-0
+        h-dvh max-h-none w-full max-w-none
+        overflow-y-auto border-0 bg-background
+        p-6 text-foreground
+        backdrop:bg-background/80
+        backdrop:backdrop-blur-sm
         open:flex open:items-center open:justify-center
+        sm:p-8
       "
+      style={{
+        backgroundImage: `
+          radial-gradient(
+            ellipse at 25% 20%,
+            var(--ambient),
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse at 80% 80%,
+            var(--ambient-secondary),
+            transparent 60%
+          )
+        `,
+      }}
     >
       <AuthLoading label={label} />
     </dialog>

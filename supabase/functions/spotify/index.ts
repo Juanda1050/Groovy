@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+
 import { ApiError, readBody } from "./http.ts";
 import { getSpotifyJson } from "./spotifyClient.ts";
 import {
@@ -8,6 +9,7 @@ import {
   searchSchema,
 } from "./validation.ts";
 import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
+
 import type { Database } from "./models/database.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -122,13 +124,11 @@ Deno.serve(async (request) => {
 
     if (!budget.allowed) {
       userRateLimited = true;
-
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
     }
 
     if (input.action === "detail") {
       const parameters = new URLSearchParams({ market });
-
       const raw = await getSpotifyJson(
         `albums/${input.albumId}?${parameters}`,
         admin,
@@ -157,7 +157,7 @@ Deno.serve(async (request) => {
         q: input.query,
         type: "album",
         market,
-        limit: "10",
+        limit: String(input.limit),
         offset: String(input.offset),
       });
 
@@ -166,6 +166,8 @@ Deno.serve(async (request) => {
       );
 
       const albums = raw.albums.items.map(normalizeAlbum);
+      const total = Math.min(raw.albums.total, 1000);
+      const next = input.offset + input.limit;
 
       const { data: saved, error } =
         albums.length > 0
@@ -190,9 +192,12 @@ Deno.serve(async (request) => {
           ...album,
           libraryStatus: statuses.get(album.id) ?? null,
         })),
+        total,
+        offset: input.offset,
+        limit: input.limit,
         nextOffset:
-          raw.albums.next && input.offset + 10 <= 990
-            ? input.offset + 10
+          raw.albums.next && albums.length > 0 && next + input.limit <= 1000
+            ? next
             : null,
       });
     }

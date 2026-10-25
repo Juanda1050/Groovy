@@ -19,6 +19,11 @@
   "status": {
     "loading": "Cargando…"
   },
+  "notifications": {
+    "label": "Notificaciones",
+    "close": "Cerrar notificación",
+    "saved": "Cambios guardados"
+  },
   "language": {
     "label": "Idioma de la aplicación",
     "loading": "Cargando tu preferencia…",

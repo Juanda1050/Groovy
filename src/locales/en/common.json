@@ -19,6 +19,11 @@
   "status": {
     "loading": "Loading…"
   },
+  "notifications": {
+    "label": "Notifications",
+    "close": "Close notification",
+    "saved": "Changes saved"
+  },
   "language": {
     "label": "Application language",
     "loading": "Loading your preference…",
@@ -35,6 +40,6 @@
   },
   "session": {
     "loading": "Getting your space ready…",
-    "connectionError": "We couldn't check your session. Check your connection and try again."
+    "connectionError": "We couldn't verify your session. Check your connection and try again."
   }
 }

@@ -2,8 +2,12 @@
   "eyebrow": "Descubre música",
   "title": "Tu próximo álbum favorito.",
   "description": "Encuentra ese disco que tienes en mente y guárdalo para escucharlo después.",
+  "searchLabel": "Buscar álbumes o artistas",
   "searchPlaceholder": "Busca un álbum o artista",
   "results": "Álbumes",
+  "loading": "Buscando álbumes…",
+  "empty": "No encontramos álbumes para esta búsqueda.",
+  "signInRequired": "Inicia sesión para buscar álbumes.",
   "initial": {
     "title": "Todo empieza con un álbum",
     "description": "Busca por título o artista y empieza a construir tu colección."
@@ -20,9 +24,10 @@
   },
   "pagination": {
     "label": "Páginas de resultados",
-    "page": "Página {{count}}",
-    "previous": "Anterior",
-    "next": "Siguiente"
+    "position": "Página {{page}}",
+    "perPage": "Por página",
+    "previous": "Página anterior",
+    "next": "Página siguiente"
   },
   "errors": {
     "UNAUTHORIZED": "Tu sesión terminó. Vuelve a iniciar sesión.",

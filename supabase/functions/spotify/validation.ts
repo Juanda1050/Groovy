@@ -1,12 +1,25 @@
 import { z } from "zod";
+
 import type { CatalogAlbum } from "./models/spotify.ts";
 
-export const requestSchema = z.discriminatedUnion("action", [
-  z.object({
+const searchRequestSchema = z
+  .object({
     action: z.literal("search"),
     query: z.string().trim().min(1).max(120),
-    offset: z.number().int().min(0).max(990).default(0),
-  }),
+    offset: z.number().int().min(0).max(995).default(0),
+    limit: z.union([z.literal(5), z.literal(10)]).default(10),
+  })
+  .refine(
+    (input) =>
+      input.offset % input.limit === 0 && input.offset + input.limit <= 1000,
+    {
+      message: "INVALID_PAGINATION",
+      path: ["offset"],
+    },
+  );
+
+export const requestSchema = z.discriminatedUnion("action", [
+  searchRequestSchema,
   z.object({
     action: z.literal("save"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
@@ -59,6 +72,7 @@ export const catalogAlbumSchema = z.object({
 export const searchSchema = z.object({
   albums: z.object({
     items: z.array(rawAlbumSchema),
+    total: z.number().int().nonnegative(),
     next: z.string().nullable().optional(),
   }),
 });

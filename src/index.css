@@ -26,6 +26,8 @@
   --color-input: var(--input);
   --color-ring: var(--primary);
   --color-rating: var(--rating);
+  --color-like: var(--like);
+  --color-dislike: var(--dislike);
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -67,6 +69,8 @@
   --destructive: #a5283d;
   --destructive-foreground: #ffffff;
   --rating: #a66c00;
+  --like: #167443;
+  --dislike: #a34812;
 
   --glass: color-mix(in oklab, var(--card) 90%, transparent);
   --glass-border: color-mix(in oklab, var(--border) 75%, transparent);
@@ -112,6 +116,8 @@
   --destructive: #ffb0bb;
   --destructive-foreground: #39111b;
   --rating: #facc15;
+  --like: #80dbac;
+  --dislike: #ffb17a;
 
   --ambient: oklch(
     0.4 calc(var(--palette-chroma) * 0.7) var(--palette-hue) / 0.25

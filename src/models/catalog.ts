@@ -13,7 +13,11 @@ export type CatalogAlbum = z.infer<typeof catalogAlbumSchema> & {
 export type CatalogPage = z.infer<typeof catalogPageSchema>;
 export type CatalogErrorCode = z.infer<typeof catalogErrorCodeSchema>;
 export type SavedCatalogAlbum = z.infer<typeof savedCatalogAlbumSchema>;
+
 export type CatalogRatings = Record<string, number | null>;
+
+export type CatalogPageSize = 10 | 20 | 50;
+export type SpotifySearchPageSize = 5 | 10;
 
 export type ListeningStatus = "pending" | "listened";
 
@@ -23,10 +27,26 @@ export interface SaveCatalogAlbumInput {
 }
 
 export type CatalogRequest =
-  | { action: "search"; query: string; offset: number }
-  | { action: "save"; albumId: string; status: ListeningStatus }
-  | { action: "detail"; albumId: string }
-  | { action: "tracks"; albumId: string; offset: number };
+  | {
+      action: "search";
+      query: string;
+      offset: number;
+      limit?: SpotifySearchPageSize;
+    }
+  | {
+      action: "save";
+      albumId: string;
+      status: ListeningStatus;
+    }
+  | {
+      action: "detail";
+      albumId: string;
+    }
+  | {
+      action: "tracks";
+      albumId: string;
+      offset: number;
+    };
 
 export interface SearchAlbumCardLabels {
   save: string;

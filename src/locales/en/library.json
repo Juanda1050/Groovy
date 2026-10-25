@@ -1,9 +1,23 @@
 {
-  "title": "Your listening collection.",
-  "description": "The albums you've heard and those waiting for their moment.",
+  "title": "My library",
+  "description": "Your albums and music preferences.",
   "loading": "Loading your library…",
   "error": "We couldn't load your library. Please try again.",
-  "localPreview": "You're in preview mode. Sign in with a real account to access your library.",
+  "localPreview": "Sign in to access your library.",
+  "sections": {
+    "label": "Library content",
+    "albums": "Albums",
+    "likes": "Liked",
+    "dislikes": "Disliked"
+  },
+  "tracks": {
+    "loading": "Loading track information…",
+    "unavailable": "Unavailable track",
+    "openAlbum": "View album",
+    "metadataError": "We couldn't load information for some tracks.",
+    "emptyTitle": "No tracks in this section",
+    "emptyDescription": "Tracks you mark will appear here."
+  },
   "filters": {
     "label": "Filters",
     "all": "All",
@@ -22,16 +36,18 @@
     "rating": "Your rating"
   },
   "empty": {
-    "title": "No albums here yet.",
-    "description": "Albums you save will appear in this collection. If you selected a filter, try another."
+    "title": "No albums here yet",
+    "description": "Save an album or try another filter."
   },
   "actions": {
     "retry": "Try again",
-    "discover": "Go to discover"
+    "discover": "Discover"
   },
   "pagination": {
-    "page": "Page {{count}}",
-    "previous": "Previous",
-    "next": "Next"
+    "label": "Library pages",
+    "position": "{{page}} of {{total}}",
+    "perPage": "Per page",
+    "previous": "Previous page",
+    "next": "Next page"
   }
 }

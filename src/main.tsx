@@ -2,9 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
+
 import { i18nReady } from "./app/i18n";
 import { queryClient } from "./app/queryClient";
 import { router } from "./app/router";
+
 import "./index.css";
 
 async function bootstrap(): Promise<void> {

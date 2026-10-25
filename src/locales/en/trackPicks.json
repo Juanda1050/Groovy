@@ -1,0 +1,22 @@
+{
+  "favorite": "Favorite",
+  "leastFavorite": "Least favorite",
+  "removeFavorite": "Remove from favorites",
+  "removeLeastFavorite": "Remove from least favorites",
+  "trackAction": "{{action}}: {{track}}",
+  "hint": "Choose your favorite and least favorite tracks.",
+  "pending": "Mark the album as listened to choose tracks.",
+  "loading": "Loading selections…",
+  "saving": "Saving selection…",
+  "saved": "Selection saved.",
+  "readError": "We couldn't load your selections.",
+  "retry": "Try again",
+  "retryAfter": "You can try again in {{count}} s.",
+  "errors": {
+    "session": "Please sign in again.",
+    "rate": "Wait a moment before saving another selection.",
+    "limit": "You can choose up to 20 tracks of each type.",
+    "listened": "The album must be marked as listened.",
+    "save": "We couldn't confirm the change. Try selecting again."
+  }
+}

@@ -1,9 +1,23 @@
 {
-  "title": "Tu colección musical.",
-  "description": "Los álbumes que escuchaste y los que esperan su momento.",
+  "title": "Mi biblioteca",
+  "description": "Tus álbumes y preferencias musicales.",
   "loading": "Cargando tu biblioteca…",
   "error": "No pudimos cargar tu biblioteca. Inténtalo de nuevo.",
-  "localPreview": "Estás en modo de vista previa. Inicia sesión con una cuenta real para consultar tu biblioteca.",
+  "localPreview": "Inicia sesión para consultar tu biblioteca.",
+  "sections": {
+    "label": "Contenido de tu biblioteca",
+    "albums": "Álbumes",
+    "likes": "Me gusta",
+    "dislikes": "No me gusta"
+  },
+  "tracks": {
+    "loading": "Cargando información de las canciones…",
+    "unavailable": "Canción no disponible",
+    "openAlbum": "Ver álbum",
+    "metadataError": "No pudimos completar la información de algunas canciones.",
+    "emptyTitle": "No hay canciones en esta sección",
+    "emptyDescription": "Las canciones que marques aparecerán aquí."
+  },
   "filters": {
     "label": "Filtros",
     "all": "Todos",
@@ -22,16 +36,18 @@
     "rating": "Tu calificación"
   },
   "empty": {
-    "title": "Todavía no hay álbumes aquí.",
-    "description": "Los álbumes que guardes aparecerán en esta colección. Si elegiste un filtro, prueba con otro."
+    "title": "Todavía no hay álbumes aquí",
+    "description": "Guarda un álbum o prueba con otro filtro."
   },
   "actions": {
     "retry": "Reintentar",
-    "discover": "Ir a descubrir"
+    "discover": "Descubrir"
   },
   "pagination": {
-    "page": "Página {{count}}",
-    "previous": "Anterior",
-    "next": "Siguiente"
+    "label": "Páginas de tu biblioteca",
+    "position": "{{page}} de {{total}}",
+    "perPage": "Por página",
+    "previous": "Página anterior",
+    "next": "Página siguiente"
   }
 }

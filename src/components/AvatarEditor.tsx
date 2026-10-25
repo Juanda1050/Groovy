@@ -1,10 +1,12 @@
 import { useRef } from "react";
 import { Camera } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
 import { LoadingButton } from "@/components/LoadingButton";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useProfileAvatar } from "@/hooks/useProfile";
+
 import type { AvatarEditorProps } from "@/models/profile";
 
 export function AvatarEditor({
@@ -35,7 +37,10 @@ export function AvatarEditor({
             aria-label={t("avatar.choose")}
             title={t("avatar.choose")}
             disabled={blocked}
-            className="absolute -bottom-2 -right-2 size-9 rounded-full bg-background p-0 shadow-sm"
+            className="
+              absolute -bottom-2 -right-2 size-9
+              rounded-full bg-background p-0 shadow-sm
+            "
             onClick={() => inputRef.current?.click()}
           >
             <Camera aria-hidden="true" className="size-3.5" />
@@ -61,6 +66,7 @@ export function AvatarEditor({
           <p className="truncate text-base font-semibold">
             {name.trim() || t("preview.name")}
           </p>
+
           <p className="mt-1 truncate text-sm text-muted-foreground">
             @{username.trim() || t("preview.username")}
           </p>
@@ -107,12 +113,6 @@ export function AvatarEditor({
       {avatar.errorKey && (
         <p role="alert" className="text-xs leading-5 text-destructive">
           {t(avatar.errorKey)}
-        </p>
-      )}
-
-      {avatar.saved && !avatar.hasDraft && (
-        <p role="status" className="text-xs text-muted-foreground">
-          {t("avatar.saved")}
         </p>
       )}
     </div>

@@ -1,10 +1,12 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+
 import { AvatarEditor } from "@/components/AvatarEditor";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import type { ProfileFormProps } from "@/models/profile";
 
 export function ProfileForm({
@@ -24,6 +26,7 @@ export function ProfileForm({
 }: ProfileFormProps) {
   const { t } = useTranslation("profile");
   const id = useId();
+  const error = feedbackTone === "error" ? feedback : null;
 
   return (
     <form
@@ -46,6 +49,7 @@ export function ProfileForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor={`${id}Name`}>{labels.displayName}</Label>
+
             <Input
               id={`${id}Name`}
               name="displayName"
@@ -60,6 +64,7 @@ export function ProfileForm({
               onBlur={() => onBlur("displayName")}
               onChange={(event) => onChange("displayName", event.target.value)}
             />
+
             {fieldErrors.displayName && (
               <p id={`${id}NameError`} className="text-xs text-destructive">
                 {fieldErrors.displayName}
@@ -69,13 +74,18 @@ export function ProfileForm({
 
           <div className="space-y-2">
             <Label htmlFor={`${id}Username`}>{labels.username}</Label>
+
             <div className="relative">
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                className="
+                  pointer-events-none absolute left-3 top-1/2
+                  -translate-y-1/2 text-sm text-muted-foreground
+                "
               >
                 @
               </span>
+
               <Input
                 id={`${id}Username`}
                 name="username"
@@ -92,6 +102,7 @@ export function ProfileForm({
                 onChange={(event) => onChange("username", event.target.value)}
               />
             </div>
+
             <p
               id={`${id}UsernameHint`}
               className={`text-xs ${
@@ -108,10 +119,12 @@ export function ProfileForm({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor={`${id}Bio`}>{labels.bio}</Label>
+
             <span className="text-[11px] text-muted-foreground">
               {t("fields.optional")}
             </span>
           </div>
+
           <Textarea
             id={`${id}Bio`}
             name="bio"
@@ -124,8 +137,10 @@ export function ProfileForm({
             onBlur={() => onBlur("bio")}
             onChange={(event) => onChange("bio", event.target.value)}
           />
+
           <div id={`${id}BioFeedback`} className="flex justify-between gap-3">
             <span className="text-xs text-destructive">{fieldErrors.bio}</span>
+
             <span className="text-[11px] tabular-nums text-muted-foreground">
               {values.bio.length} / 500
             </span>
@@ -134,8 +149,9 @@ export function ProfileForm({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            {!dirty && !feedback ? t("feedback.noChanges") : ""}
+            {!dirty && !error ? t("feedback.noChanges") : ""}
           </p>
+
           <LoadingButton
             type="submit"
             loading={busy}
@@ -148,14 +164,9 @@ export function ProfileForm({
         </div>
       </fieldset>
 
-      {feedback && (
-        <p
-          role={feedbackTone === "error" ? "alert" : "status"}
-          className={`mt-4 text-sm ${
-            feedbackTone === "error" ? "text-destructive" : "text-primary"
-          }`}
-        >
-          {feedback}
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-destructive">
+          {error}
         </p>
       )}
     </form>

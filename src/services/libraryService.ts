@@ -1,12 +1,13 @@
 import { supabase } from "@/lib/supabaseClient";
+import { catalogAlbumSchema } from "@/lib/catalogSchemas";
 import {
   countReviewCharacters,
   normalizeReview,
   reviewMaxLength,
   validateReviewLanguage,
 } from "@/lib/reviewText";
-import { signOut } from "./authService";
 import { saveCatalogAlbum } from "./spotifyService";
+
 import type { CatalogRatings } from "@/models/catalog";
 import type {
   AlbumWriteRequest,
@@ -16,12 +17,10 @@ import type {
 } from "@/models/library";
 import type {
   GetLibraryInput,
-  LibraryItem,
+  LibraryFilter,
   LibraryPageResult,
-  LibraryRow,
 } from "@/models/libraryView";
 
-const pageSize = 24;
 const requestTimeout = 12_000;
 
 function createSignal(signal?: AbortSignal): AbortSignal {
@@ -62,22 +61,29 @@ function mapUserAlbum(
   return { ...row, status: row.status };
 }
 
-function mapLibraryItem(row: LibraryRow): LibraryItem {
-  if (row.status !== "pending" && row.status !== "listened") {
-    throw new Error("INVALID_STATUS");
+function libraryQuery(userId: string, filter: LibraryFilter, head = false) {
+  let query = supabase
+    .from("user_albums")
+    .select("*", head ? { count: "exact", head: true } : {})
+    .eq("user_id", userId);
+
+  switch (filter) {
+    case "pending":
+    case "listened":
+      query = query.eq("status", filter);
+      break;
+    case "rated":
+      query = query.not("rating", "is", null);
+      break;
+    case "unrated":
+      query = query.eq("status", "listened").is("rating", null);
+      break;
+    case "reviewed":
+      query = query.filter("review", "match", "[^ ]");
+      break;
   }
 
-  return {
-    id: row.id,
-    spotifyAlbumId: row.spotify_album_id,
-    status: row.status,
-    rating: row.rating ?? null,
-    hasReview: row.has_review,
-    title: row.album_name || null,
-    coverUrl: row.cover_url || null,
-    artists: row.artist_names ?? [],
-    metadataAvailable: row.metadata_available,
-  };
+  return query;
 }
 
 function validateRating(rating: number | null): void {
@@ -116,42 +122,102 @@ async function persistAlbum(
 }
 
 export async function getLibrary({
+  userId,
   filter,
-  cursor,
+  page,
+  pageSize,
   signal,
 }: GetLibraryInput): Promise<LibraryPageResult> {
-  const { data, error } = await supabase
-    .rpc("get_my_library", {
-      p_filter: filter,
-      p_limit: pageSize,
-      ...(cursor
-        ? {
-            p_before_created_at: cursor.createdAt,
-            p_before_id: cursor.id,
-          }
-        : {}),
-    })
-    .abortSignal(createSignal(signal));
-
-  if (error) {
-    if (error.code === "PT401") await signOut();
-
-    throw error;
+  if (
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    ![10, 20, 50].includes(pageSize)
+  ) {
+    throw new Error("INVALID_PAGINATION");
   }
 
+  await requireUser(userId);
+
+  const countResult = await libraryQuery(userId, filter, true).abortSignal(
+    createSignal(signal),
+  );
+
+  if (countResult.error) throw countResult.error;
+
+  const total = countResult.count ?? 0;
+  const lastPage = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, lastPage);
+
+  if (total === 0) {
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize,
+    };
+  }
+
+  const start = (currentPage - 1) * pageSize;
+
+  const { data, error } = await libraryQuery(userId, filter)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(start, start + pageSize - 1)
+    .abortSignal(createSignal(signal));
+
+  if (error) throw error;
+
   const rows = data ?? [];
-  const visibleRows = rows.slice(0, pageSize);
-  const lastRow = visibleRows.at(-1);
+
+  if (rows.length === 0) {
+    return {
+      items: [],
+      total,
+      page: currentPage,
+      pageSize,
+    };
+  }
+
+  const { data: metadata, error: metadataError } = await supabase
+    .from("album_cache")
+    .select("spotify_album_id, name, cover_url, artists")
+    .in(
+      "spotify_album_id",
+      rows.map((album) => album.spotify_album_id),
+    )
+    .abortSignal(createSignal(signal));
+
+  if (metadataError) throw metadataError;
+
+  const albums = new Map(
+    (metadata ?? []).map((album) => [album.spotify_album_id, album]),
+  );
 
   return {
-    items: visibleRows.map(mapLibraryItem),
-    nextCursor:
-      rows.length > pageSize && lastRow
-        ? {
-            createdAt: lastRow.created_at,
-            id: lastRow.id,
-          }
-        : null,
+    items: rows.map((row) => {
+      const album = mapUserAlbum(row, userId, row.spotify_album_id);
+      const cached = albums.get(row.spotify_album_id);
+      const artists = catalogAlbumSchema.shape.artists.safeParse(
+        cached?.artists,
+      );
+
+      return {
+        id: album.id,
+        spotifyAlbumId: album.spotify_album_id,
+        status: album.status,
+        rating: album.rating,
+        hasReview: Boolean(album.review?.trim()),
+        title: cached?.name ?? null,
+        coverUrl: cached?.cover_url ?? null,
+        artists: artists.success
+          ? artists.data.map((artist) => artist.name)
+          : [],
+        metadataAvailable: Boolean(cached),
+      };
+    }),
+    total,
+    page: currentPage,
+    pageSize,
   };
 }
 
@@ -232,8 +298,6 @@ export async function saveUserAlbum(
     const current = await getUserAlbum(userId, albumId);
 
     if (!current) throw new Error("ALBUM_NOT_SAVED");
-
-    // Repetir el mismo estado no debe borrar datos de escucha.
     if (current.status === request.status) return current;
 
     return persistAlbum(userId, albumId, {

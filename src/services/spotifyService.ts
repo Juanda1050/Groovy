@@ -1,4 +1,5 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
+
 import { supabase } from "@/lib/supabaseClient";
 import { CatalogError } from "@/lib/catalogError";
 import {
@@ -12,11 +13,13 @@ import {
 } from "@/lib/albumDetailSchemas";
 import { useSpotifyNetworkStore } from "@/stores/spotifyNetworkStore";
 import { signOut } from "./authService";
+
 import type {
   CatalogPage,
   CatalogRequest,
   SaveCatalogAlbumInput,
   SavedCatalogAlbum,
+  SpotifySearchPageSize,
 } from "@/models/catalog";
 import type { AlbumDetail, AlbumTracksPage } from "@/models/albumDetail";
 
@@ -108,9 +111,10 @@ export async function searchAlbums(
   query: string,
   offset: number,
   signal: AbortSignal,
+  limit: SpotifySearchPageSize = 10,
 ): Promise<CatalogPage> {
   return catalogPageSchema.parse(
-    await invokeSpotify({ action: "search", query, offset }, signal),
+    await invokeSpotify({ action: "search", query, offset, limit }, signal),
   );
 }
 

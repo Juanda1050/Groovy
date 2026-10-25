@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
 import { AccountMenu } from "@/components/AccountMenu";
 import { AppNavigation } from "@/components/AppNavigation";
 import { AppShell } from "@/components/AppShell";
@@ -9,7 +10,9 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/toast";
 import { PreferencesSection } from "@/pages/PreferencesSection";
+
 import { useAccountLanguage } from "@/hooks/useAccountLanguage";
 import { useAppearance } from "@/hooks/useAppearance";
 import { useAppLayout } from "@/hooks/useAppLayout";
@@ -17,6 +20,7 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
 import { useBlockingLoading } from "@/hooks/useBlockingLoading";
 import { useTheme } from "@/hooks/useTheme";
+
 import { isLocalAuthBypassEnabled } from "@/lib/localDevelopment";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -55,6 +59,7 @@ export default function App() {
           ) : (
             <>
               <PreferencesSection />
+
               <ThemeToggle
                 theme={theme}
                 label={themeLabel}
@@ -70,6 +75,7 @@ export default function App() {
               <AlertDescription>
                 {t("session.connectionError")}
               </AlertDescription>
+
               <Button
                 type="button"
                 variant="outline"
@@ -96,6 +102,8 @@ export default function App() {
       </AppShell>
 
       <LoadingOverlay {...loadingDialog} label={t("session.loading")} />
+
+      <Toaster />
     </>
   );
 }

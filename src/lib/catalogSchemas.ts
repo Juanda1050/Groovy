@@ -33,6 +33,9 @@ export const catalogAlbumSchema = z.object({
 
 export const catalogPageSchema = z.object({
   items: z.array(catalogAlbumSchema),
+  total: z.number().int().nonnegative(),
+  offset: z.number().int().nonnegative(),
+  limit: z.union([z.literal(5), z.literal(10), z.literal(20), z.literal(50)]),
   nextOffset: z.number().int().nonnegative().nullable(),
 });
 
