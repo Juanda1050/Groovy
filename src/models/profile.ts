@@ -1,5 +1,5 @@
-import type { Database } from "./database";
-import type { FeedProfile } from "./library";
+import type { Database } from "@/models/database";
+import type { FeedProfile } from "@/models/library";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 

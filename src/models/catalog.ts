@@ -1,10 +1,5 @@
+import type { catalogAlbumSchema,catalogErrorCodeSchema,catalogPageSchema,savedCatalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
 import type { z } from "zod";
-import type {
-  catalogAlbumSchema,
-  catalogErrorCodeSchema,
-  catalogPageSchema,
-  savedCatalogAlbumSchema,
-} from "@/lib/catalogSchemas";
 
 export type CatalogAlbum = z.infer<typeof catalogAlbumSchema> & {
   libraryRating?: number | null;

@@ -1,8 +1,8 @@
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
-import { MutationCache, QueryClient } from "@tanstack/react-query";
+import { MutationCache,QueryClient } from "@tanstack/react-query";
 
 import i18n from "@/app/i18n";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 
 import type { TrackPick } from "@/models/trackPicks";
 

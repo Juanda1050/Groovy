@@ -1,8 +1,8 @@
-import i18n, { type ReadCallback } from "i18next";
+import i18n,{ type ReadCallback } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
-import type { TranslationModule } from '@/models/translations'
+import type { TranslationModule } from "@/models/translations";
 
 const translationFiles = import.meta.glob<TranslationModule>('../locales/*/*.json')
 
