@@ -1,5 +1,5 @@
 import { Check, Clock3 } from "lucide-react";
-import type { AlbumStatusBadgeProps } from "@/models/albumBadges";
+import type { AlbumStatusBadgeProps } from "@/models/albumDetail";
 
 export function AlbumStatusBadge({ status, label }: AlbumStatusBadgeProps) {
   const pending = status === "pending";

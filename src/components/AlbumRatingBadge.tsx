@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toStars } from "@/lib/ratingScale";
-import type { AlbumRatingBadgeProps } from "@/models/albumBadges";
+import type { AlbumRatingBadgeProps } from "@/models/albumDetail";
 
 export function AlbumRatingBadge({ rating }: AlbumRatingBadgeProps) {
   const { t, i18n } = useTranslation("rating");

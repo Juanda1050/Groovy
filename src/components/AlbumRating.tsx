@@ -5,7 +5,7 @@ import { RecordLoader } from "@/components/RecordLoader";
 import { Button } from "@/components/ui/button";
 import { useAlbumRating } from "@/hooks/useAlbumRating";
 import { getStarSelection, toStars, toStoredRating } from "@/lib/ratingScale";
-import type { AlbumRatingProps } from "@/models/albumRating";
+import type { AlbumRatingProps } from "@/models/albumDetail";
 
 const stars = [1, 2, 3, 4, 5] as const;
 

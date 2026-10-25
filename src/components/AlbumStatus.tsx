@@ -3,7 +3,6 @@ import { BookmarkPlus, Check, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AlbumConfirmation } from "@/components/AlbumConfirmation";
 import { AlbumRating } from "@/components/AlbumRating";
-import { AlbumReview } from "@/components/AlbumReview";
 import { RecordLoader } from "@/components/RecordLoader";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +14,15 @@ import {
 } from "@/components/ui/select";
 import { useAlbumStatus } from "@/hooks/useAlbumStatus";
 import { useAuthStore } from "@/stores/authStore";
-import type { AlbumStatusProps } from "@/models/albumStatus";
+import type { AlbumStatusProps } from "@/models/albumDetail";
+import { AlbumReview } from '@/components/AlbumReview';
 
 export function AlbumStatus({ albumId }: AlbumStatusProps) {
   const { t } = useTranslation("rating");
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const status = useAlbumStatus(albumId);
   const labelId = useId();
+
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmationSubmitted, setConfirmationSubmitted] = useState(false);
 

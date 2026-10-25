@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { TextareaProps } from "@/models/albumReview";
+import type { TextareaProps } from "@/models/ui";
 
 export function Textarea({ className, ...props }: TextareaProps) {
   return (

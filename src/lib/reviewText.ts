@@ -1,4 +1,4 @@
-import type { ReviewLanguage } from "@/models/albumReview";
+import type { ReviewLanguage } from "@/models/library";
 
 export const reviewMaxLength = 144;
 

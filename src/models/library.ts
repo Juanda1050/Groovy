@@ -1,8 +1,5 @@
 import type { Database } from "./database";
 import type { ListeningStatus } from "./catalog";
-import type { SaveAlbumRatingInput } from "./albumRating";
-import type { SaveAlbumReviewInput } from "./albumReview";
-import type { AlbumStatusRequest } from "./albumStatus";
 
 export type AlbumRating =
   | 1
@@ -25,6 +22,20 @@ export type AlbumRating =
   | 9.5
   | 10;
 
+export type ReviewLanguage = "en" | "es";
+
+export type UserAlbumRow = Database["public"]["Tables"]["user_albums"]["Row"];
+
+export type UserTrackPickRow =
+  Database["public"]["Tables"]["user_track_picks"]["Row"];
+
+export type SaveUserAlbumArgs =
+  Database["public"]["Functions"]["save_user_album"]["Args"];
+
+export type LibraryAlbum = Omit<UserAlbumRow, "status"> & {
+  status: ListeningStatus;
+};
+
 export interface PendingAlbumInput {
   spotifyAlbumId: string;
   status: "pending";
@@ -45,19 +56,36 @@ export interface ListenedAlbumInput {
   leastFavoriteTrackIds: readonly string[];
 }
 
-export type UserAlbumRow = Database["public"]["Tables"]["user_albums"]["Row"];
-
-export type UserTrackPickRow =
-  Database["public"]["Tables"]["user_track_picks"]["Row"];
-
-export type SaveUserAlbumArgs =
-  Database["public"]["Functions"]["save_user_album"]["Args"];
-
 export type SaveAlbumInput = PendingAlbumInput | ListenedAlbumInput;
 
-export type LibraryAlbum = Omit<UserAlbumRow, "status"> & {
+export interface AlbumStatusRequest {
+  albumId: string;
+  userId: string;
   status: ListeningStatus;
-};
+  isNew: boolean;
+}
+
+export interface AlbumStatusResult {
+  spotifyAlbumId: string;
+  status: ListeningStatus;
+}
+
+export interface SaveAlbumRatingInput {
+  userId: string;
+  albumId: string;
+  rating: number | null;
+}
+
+export interface SaveAlbumReviewInput {
+  userId: string;
+  albumId: string;
+  review: string;
+  language: ReviewLanguage;
+}
+
+export type AlbumRatingRecord = Pick<LibraryAlbum, "rating" | "status">;
+
+export type AlbumReviewRecord = Pick<LibraryAlbum, "review" | "status">;
 
 export type AlbumWriteRequest =
   | (AlbumStatusRequest & { action: "status" })

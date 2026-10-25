@@ -2,7 +2,7 @@ import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useTranslation } from "react-i18next";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Button } from "@/components/ui/button";
-import type { AlbumConfirmationProps } from "@/models/albumConfirmation";
+import type { AlbumConfirmationProps } from "@/models/albumDetail";
 
 export function AlbumConfirmation({
   open,

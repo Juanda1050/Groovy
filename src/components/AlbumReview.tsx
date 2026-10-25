@@ -6,7 +6,7 @@ import { RecordLoader } from "@/components/RecordLoader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAlbumReview } from "@/hooks/useAlbumReview";
-import type { AlbumReviewProps } from "@/models/albumReview";
+import type { AlbumReviewProps } from "@/models/albumDetail";
 
 export function AlbumReview({ albumId }: AlbumReviewProps) {
   const { t } = useTranslation("review");
