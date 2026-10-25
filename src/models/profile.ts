@@ -1,4 +1,5 @@
 import type { Database } from "./database";
+import type { FeedProfile } from "./library";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -69,4 +70,13 @@ export interface AvatarUploadInput {
   userId: string;
   path: string;
   file: Blob;
+}
+
+export interface ProfileSearchResult extends FeedProfile {
+  following: boolean;
+}
+
+export interface ProfileSearchPage {
+  items: ProfileSearchResult[];
+  hasMore: boolean;
 }

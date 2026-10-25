@@ -49,18 +49,15 @@ async function loadTrackMetadata(
   signal: AbortSignal,
 ): Promise<Record<string, LibraryTrackMetadata>> {
   const result: Record<string, LibraryTrackMetadata> = {};
-
   const groups = new Map<string, Set<string>>();
 
   for (const row of rows) {
     const ids = groups.get(row.albumId) ?? new Set<string>();
-
     ids.add(row.trackId);
     groups.set(row.albumId, ids);
   }
 
   const entries = [...groups.entries()];
-
   let index = 0;
   let failed = false;
 
@@ -74,7 +71,6 @@ async function loadTrackMetadata(
         signal.throwIfAborted();
 
         const [albumId, requestedIds] = entry;
-
         const missing = new Set(requestedIds);
 
         const detail = await client.fetchQuery(
@@ -85,9 +81,7 @@ async function loadTrackMetadata(
 
         function collect(page: AlbumTracksPage): void {
           for (const track of page.items) {
-            if (!missing.has(track.id)) {
-              continue;
-            }
+            if (!missing.has(track.id)) continue;
 
             const seconds = Math.floor(track.durationMs / 1000);
 
@@ -125,16 +119,13 @@ async function loadTrackMetadata(
         }
 
         let offset = detail.tracks.nextOffset;
-
         const visited = new Set<number>();
 
         while (missing.size > 0 && offset !== null && !visited.has(offset)) {
           signal.throwIfAborted();
-
           visited.add(offset);
 
           const currentOffset: number = offset;
-
           const cached = cachedPages.get(currentOffset);
 
           const page: AlbumTracksPage =
@@ -175,9 +166,7 @@ async function loadTrackMetadata(
 
 export function useLibrary(active = true) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
-
   const [filter, setFilter] = useState<LibraryFilter>("all");
-
   const [pageSize, setPageSize] = useState<LibraryPageSize>(10);
 
   const [navigation, setNavigation] = useState({
@@ -191,14 +180,11 @@ export function useLibrary(active = true) {
     queryKey: ["library", userId, filter, requestedPage, pageSize],
 
     enabled: active && userId !== null,
-
     staleTime: 60_000,
     gcTime: 5 * 60_000,
 
     queryFn: ({ signal }) => {
-      if (!userId) {
-        throw new Error("AUTH_REQUIRED");
-      }
+      if (!userId) throw new Error("AUTH_REQUIRED");
 
       return getLibrary({
         userId,
@@ -211,7 +197,6 @@ export function useLibrary(active = true) {
   });
 
   const total = query.data?.total ?? 0;
-
   const pageCount = Math.ceil(total / pageSize);
 
   const pageNumber =
@@ -225,15 +210,10 @@ export function useLibrary(active = true) {
     (query.data?.items.length ?? 0) > 0;
 
   function onFilterChange(next: LibraryFilter): void {
-    if (next === filter || query.isFetching) {
-      return;
-    }
+    if (next === filter || query.isFetching) return;
 
     setFilter(next);
-    setNavigation({
-      userId,
-      page: 1,
-    });
+    setNavigation({ userId, page: 1 });
   }
 
   function onPageSizeChange(next: number): void {
@@ -242,16 +222,11 @@ export function useLibrary(active = true) {
     }
 
     setPageSize(next);
-    setNavigation({
-      userId,
-      page: 1,
-    });
+    setNavigation({ userId, page: 1 });
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) {
-      return;
-    }
+    if (query.isFetching || !hasPrevious) return;
 
     setNavigation({
       userId,
@@ -260,9 +235,7 @@ export function useLibrary(active = true) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) {
-      return;
-    }
+    if (query.isFetching || !hasNext) return;
 
     setNavigation({
       userId,
@@ -276,11 +249,9 @@ export function useLibrary(active = true) {
     pageCount,
     pageNumber,
     total,
-
     items: query.data?.items ?? [],
 
     needsSignIn: userId === null,
-
     isPending: query.isPending,
     isFetching: query.isFetching,
     isError: query.isError,
@@ -294,10 +265,7 @@ export function useLibrary(active = true) {
     onNext,
 
     onFirst: () => {
-      setNavigation({
-        userId,
-        page: 1,
-      });
+      setNavigation({ userId, page: 1 });
     },
 
     onRetry: () => {
@@ -308,9 +276,7 @@ export function useLibrary(active = true) {
 
 export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
-
   const client = useQueryClient();
-
   const [pageSize, setPageSize] = useState<LibraryPageSize>(10);
 
   const [navigation, setNavigation] = useState({
@@ -328,14 +294,11 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     queryKey: ["likedAlbums", userId, preference, requestedPage, pageSize],
 
     enabled: active && userId !== null,
-
     staleTime: 60_000,
     gcTime: 5 * 60_000,
 
     queryFn: ({ signal }) => {
-      if (!userId) {
-        throw new Error("AUTH_REQUIRED");
-      }
+      if (!userId) throw new Error("AUTH_REQUIRED");
 
       return getLibraryTracks({
         userId,
@@ -355,22 +318,18 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     queryKey: ["libraryTrackMetadata", userId, identifiers],
 
     enabled: active && userId !== null && rows.length > 0,
-
     staleTime: albumStaleTime,
     gcTime: albumGcTime,
     retry: false,
 
     queryFn: ({ signal }) => {
-      if (!userId) {
-        throw new Error("AUTH_REQUIRED");
-      }
+      if (!userId) throw new Error("AUTH_REQUIRED");
 
       return loadTrackMetadata(client, userId, rows, signal);
     },
   });
 
   const total = query.data?.total ?? 0;
-
   const pageCount = Math.ceil(total / pageSize);
 
   const pageNumber =
@@ -392,7 +351,6 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     }
 
     setPageSize(next);
-
     setNavigation({
       userId,
       preference,
@@ -401,9 +359,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) {
-      return;
-    }
+    if (query.isFetching || !hasPrevious) return;
 
     setNavigation({
       userId,
@@ -413,9 +369,7 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) {
-      return;
-    }
+    if (query.isFetching || !hasNext) return;
 
     setNavigation({
       userId,
@@ -432,7 +386,6 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     pageNumber,
 
     metadataLoading: rows.length > 0 && metadata.isFetching,
-
     metadataError: metadata.isError,
 
     isPending: query.isPending,
@@ -469,15 +422,22 @@ async function loadFeedPage(
   userId: string,
   cursor: AlbumFeedCursor | null,
   signal: AbortSignal,
+  profileId: string | null,
+  followingOnly: boolean,
 ): Promise<AlbumFeedPage> {
-  const page = await getAlbumFeed(userId, cursor, signal);
+  const page = await getAlbumFeed(
+    userId,
+    cursor,
+    signal,
+    profileId,
+    followingOnly,
+  );
 
   const profiles = [...new Set(page.items.map((post) => post.user_id))];
 
   const albums = [...new Set(page.items.map((post) => post.spotify_album_id))];
 
   const profileKey = (id: string) => ["feedProfile", userId, id];
-
   const albumKey = (id: string) => ["feedAlbum", userId, id];
 
   const now = Date.now();
@@ -543,12 +503,25 @@ async function loadFeedPage(
   };
 }
 
-export function useCommunityFeed() {
+export function useCommunityFeed(
+  profileId: string | null = null,
+  enabled = true,
+  followingOnly = false,
+) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
-
   const client = useQueryClient();
 
-  const [updates, setUpdates] = useState(false);
+  const [notices, setNotices] = useState<Record<string, boolean>>({});
+
+  const scope =
+    `${userId}:` +
+    (profileId
+      ? `profile:${profileId}`
+      : followingOnly
+        ? "following"
+        : "community");
+
+  const updates = notices[scope] ?? false;
 
   const [connection, setConnection] = useState<
     "connecting" | "live" | "offline"
@@ -556,20 +529,29 @@ export function useCommunityFeed() {
 
   const events = useRef(0);
 
-  const key = ["albumFeed", userId];
+  const key = profileId
+    ? ["albumFeed", userId, "profile", profileId]
+    : followingOnly
+      ? ["albumFeed", userId, "following"]
+      : ["albumFeed", userId];
 
   const query = useInfiniteQuery({
     queryKey: key,
-    enabled: Boolean(userId),
+    enabled: enabled && Boolean(userId),
 
     initialPageParam: null as AlbumFeedCursor | null,
 
     queryFn: ({ pageParam, signal }) => {
-      if (!userId) {
-        throw new Error("AUTH_REQUIRED");
-      }
+      if (!userId) throw new Error("AUTH_REQUIRED");
 
-      return loadFeedPage(client, userId, pageParam, signal);
+      return loadFeedPage(
+        client,
+        userId,
+        pageParam,
+        signal,
+        profileId,
+        followingOnly,
+      );
     },
 
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -582,12 +564,38 @@ export function useCommunityFeed() {
   });
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !enabled) return;
+
+    return client.getQueryCache().subscribe((event) => {
+      const eventKey = event.query.queryKey;
+
+      if (
+        event.type !== "updated" ||
+        event.action.type !== "success" ||
+        eventKey[0] !== "albumFeedSignal" ||
+        eventKey[1] !== userId ||
+        useAuthStore.getState().user?.id !== userId
+      ) {
+        return;
+      }
+
+      events.current += 1;
+
+      setNotices((previous) => ({
+        ...previous,
+        [`${userId}:community`]: true,
+        [`${userId}:following`]: true,
+        [scope]: true,
+      }));
+    });
+  }, [client, userId, enabled, scope]);
+
+  useEffect(() => {
+    // La página mantiene la conexión compartida.
+    if (!userId || profileId || !enabled) return;
 
     let active = true;
-
     let channel: ReturnType<typeof supabase.channel> | undefined;
-
     let lastResume = 0;
 
     const feedKey = ["albumFeed", userId];
@@ -602,9 +610,7 @@ export function useCommunityFeed() {
 
       const now = Date.now();
 
-      if (now - lastResume < 15_000) {
-        return;
-      }
+      if (now - lastResume < 15_000) return;
 
       lastResume = now;
 
@@ -646,17 +652,17 @@ export function useCommunityFeed() {
 
               const postId = payload.id;
 
-              events.current += 1;
-
               if (payload.kind === "removed") {
                 void client.cancelQueries({
                   queryKey: feedKey,
                 });
 
-                client.setQueryData<
+                client.setQueriesData<
                   InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>
                 >(
-                  feedKey,
+                  {
+                    queryKey: feedKey,
+                  },
 
                   (previous) =>
                     previous
@@ -680,14 +686,20 @@ export function useCommunityFeed() {
                   });
                 }
               } else {
-                setUpdates(true);
+                void client.invalidateQueries({
+                  queryKey: feedKey,
+                  refetchType: "none",
+                });
+
+                client.setQueryData<number>(
+                  ["albumFeedSignal", userId],
+                  (previous = 0) => previous + 1,
+                );
               }
             },
           )
           .subscribe((status) => {
-            if (!currentUser()) {
-              return;
-            }
+            if (!currentUser()) return;
 
             if (status === "SUBSCRIBED") {
               setConnection("live");
@@ -727,21 +739,96 @@ export function useCommunityFeed() {
     void subscribe();
 
     window.addEventListener("online", reconcile);
-
     document.addEventListener("visibilitychange", reconcile);
 
     return () => {
       active = false;
 
       window.removeEventListener("online", reconcile);
-
       document.removeEventListener("visibilitychange", reconcile);
 
       if (channel) {
         void supabase.removeChannel(channel);
       }
     };
-  }, [client, userId]);
+  }, [client, userId, profileId, enabled]);
+
+  useEffect(() => {
+    if (!userId || profileId || !enabled) return;
+
+    return client.getMutationCache().subscribe((event) => {
+      if (
+        event.type !== "updated" ||
+        (event.action.type !== "success" && event.action.type !== "error") ||
+        event.mutation.options.mutationKey?.[0] !== "communityWrite" ||
+        useAuthStore.getState().user?.id !== userId
+      ) {
+        return;
+      }
+
+      const request: unknown = event.mutation.state.variables;
+
+      if (
+        typeof request !== "object" ||
+        request === null ||
+        !("userId" in request) ||
+        request.userId !== userId ||
+        !("action" in request) ||
+        request.action !== "follow" ||
+        !("targetId" in request) ||
+        typeof request.targetId !== "string" ||
+        !("active" in request) ||
+        typeof request.active !== "boolean"
+      ) {
+        return;
+      }
+
+      const followingKey = ["albumFeed", userId, "following"];
+
+      const removeAuthor = event.action.type === "success" && !request.active;
+
+      const authorId = request.targetId;
+
+      void client
+        .cancelQueries({
+          queryKey: followingKey,
+        })
+        .then(() => {
+          if (useAuthStore.getState().user?.id !== userId) {
+            return;
+          }
+
+          if (removeAuthor) {
+            client.setQueriesData<
+              InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>
+            >(
+              {
+                queryKey: followingKey,
+              },
+
+              (previous) =>
+                previous
+                  ? {
+                      ...previous,
+
+                      pages: previous.pages.map((page) => ({
+                        ...page,
+
+                        items: page.items.filter(
+                          (post) => post.user_id !== authorId,
+                        ),
+                      })),
+                    }
+                  : previous,
+            );
+          }
+
+          void client.invalidateQueries({
+            queryKey: followingKey,
+          });
+        });
+    });
+  }, [client, userId, profileId, enabled]);
 
   const unique = new Map<string, AlbumFeedItem>();
 
@@ -756,14 +843,13 @@ export function useCommunityFeed() {
   }
 
   async function onRefresh(): Promise<void> {
-    if (!userId || query.isFetching) {
-      return;
-    }
+    if (!userId || query.isFetching) return;
 
     const revision = events.current;
 
     await client.cancelQueries({
       queryKey: key,
+      exact: true,
     });
 
     client.setQueryData<InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>>(
@@ -773,7 +859,6 @@ export function useCommunityFeed() {
         previous
           ? {
               pages: previous.pages.slice(0, 1),
-
               pageParams: previous.pageParams.slice(0, 1),
             }
           : previous,
@@ -786,7 +871,10 @@ export function useCommunityFeed() {
       events.current === revision &&
       useAuthStore.getState().user?.id === userId
     ) {
-      setUpdates(false);
+      setNotices((previous) => ({
+        ...previous,
+        [scope]: false,
+      }));
     }
   }
 
@@ -796,13 +884,9 @@ export function useCommunityFeed() {
     needsSignIn: !userId,
     pending: query.isPending,
     error: query.isError,
-
     nextError: query.isFetchNextPageError,
-
     fetching: query.isFetching,
-
     loadingMore: query.isFetchingNextPage,
-
     hasMore: Boolean(query.hasNextPage),
 
     updates,

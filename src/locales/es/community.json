@@ -55,5 +55,64 @@
     "saveShort": "Guardar",
     "savedShort": "Guardado",
     "openShort": "Ver"
+  },
+  "profile": {
+    "posts": "Publicaciones",
+    "empty": "Aún no hay publicaciones públicas.",
+    "back": "Volver a Comunidad"
+  },
+  "tabs": {
+    "label": "Publicaciones de la comunidad",
+    "community": "Comunidad",
+    "following": "Siguiendo"
+  },
+  "followingEmpty": {
+    "title": "Tu música, en compañía",
+    "description": "Sigue a otros oyentes para ver sus publicaciones aquí.",
+    "action": "Explorar comunidad"
+  },
+  "search": {
+    "label": "Buscar personas",
+    "placeholder": "Nombre o @usuario",
+    "clear": "Limpiar búsqueda",
+    "hint": "Escribe al menos 2 caracteres del inicio del nombre o usuario.",
+    "loading": "Buscando personas…",
+    "error": "No pudimos buscar personas. Inténtalo de nuevo.",
+    "empty": "No encontramos personas con ese nombre o usuario.",
+    "more": "Hay más coincidencias. Escribe algo más específico.",
+    "results": "Personas",
+    "own": "Tu perfil"
+  },
+  "comments": {
+    "title": "Comentarios",
+    "label": "Tu comentario",
+    "placeholder": "Comparte lo que piensas…",
+    "publish": "Publicar",
+    "loading": "Cargando comentarios…",
+    "empty": "Inicia la conversación.",
+    "error": "No pudimos cargar los comentarios.",
+    "writeError": "No pudimos confirmar el cambio. Inténtalo de nuevo.",
+    "unavailable": "La publicación o el comentario ya no está disponible.",
+    "sent": "Comentario publicado",
+    "deleted": "Comentario eliminado",
+    "delete": "Eliminar comentario",
+    "deleteTitle": "¿Eliminar tu comentario?",
+    "deleteDescription": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "confirmDelete": "Eliminar",
+    "length": "{{count}} / {{max}}",
+    "tooLong": "El comentario puede tener hasta {{max}} caracteres.",
+    "offline": "Sin actualizaciones en vivo. Puedes actualizar manualmente.",
+    "updates": "Hay comentarios nuevos · Actualizar",
+    "more": "Ver comentarios anteriores",
+    "remaining": "Podrás publicar en {{count}} s.",
+    "edit": "Editar comentario",
+    "editLabel": "Editar tu comentario",
+    "saveEdit": "Guardar",
+    "updated": "Comentario actualizado",
+    "edited": "editado",
+    "editConflict": "El comentario cambió en otra sesión. Revisa la versión actual antes de guardar.",
+    "keepChanges": "Conservar mis cambios",
+    "currentVersion": "Versión actual"
   }
 }

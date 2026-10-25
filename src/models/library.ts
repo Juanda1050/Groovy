@@ -183,3 +183,57 @@ export interface PublicProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+export interface AlbumPostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  edited_at: string | null;
+  revision: number;
+  display_name: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+export interface AlbumPostCommentPage {
+  items: AlbumPostComment[];
+  nextCursor: AlbumFeedCursor | null;
+}
+
+export type AlbumPostCommentWrite = {
+  userId: string;
+  postId: string;
+  commentId: string;
+} & (
+  | { action: "save"; body: string }
+  | {
+      action: "update";
+      body: string;
+      expectedRevision: number;
+    }
+  | { action: "delete" }
+);
+
+export type AlbumPostCommentEvent =
+  | { kind: "connected" | "offline" }
+  | {
+      kind: "new" | "changed" | "removed";
+      revision: number;
+      postId: string;
+      id: string;
+    };
+
+export interface AlbumPostCommentsProps {
+  postId: string;
+  open: boolean;
+}
+
+export interface AlbumPostCommentEdit {
+  userId: string;
+  id: string;
+  originalBody: string;
+  revision: number;
+  value: string;
+}

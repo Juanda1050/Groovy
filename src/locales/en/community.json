@@ -55,5 +55,64 @@
     "saveShort": "Save",
     "savedShort": "Saved",
     "openShort": "View"
+  },
+  "profile": {
+    "posts": "Posts",
+    "empty": "No public posts yet.",
+    "back": "Back to Community"
+  },
+  "tabs": {
+    "label": "Community feeds",
+    "community": "Community",
+    "following": "Following"
+  },
+  "followingEmpty": {
+    "title": "Music is better together",
+    "description": "Follow other listeners to see their posts here.",
+    "action": "Explore community"
+  },
+  "search": {
+    "label": "Find people",
+    "placeholder": "Name or @username",
+    "clear": "Clear search",
+    "hint": "Enter at least 2 characters from the start of a name or username.",
+    "loading": "Finding people…",
+    "error": "We couldn't find people. Please try again.",
+    "empty": "No people found with that name or username.",
+    "more": "There are more matches. Try a more specific search.",
+    "results": "People",
+    "own": "Your profile"
+  },
+  "comments": {
+    "title": "Comments",
+    "label": "Your comment",
+    "placeholder": "Share your thoughts…",
+    "publish": "Post",
+    "loading": "Loading comments…",
+    "empty": "Start the conversation.",
+    "error": "We couldn't load the comments.",
+    "writeError": "We couldn't confirm the change. Please try again.",
+    "unavailable": "This post or comment is no longer available.",
+    "sent": "Comment posted",
+    "deleted": "Comment deleted",
+    "delete": "Delete comment",
+    "deleteTitle": "Delete your comment?",
+    "deleteDescription": "This cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete",
+    "length": "{{count}} / {{max}}",
+    "tooLong": "Comments can contain up to {{max}} characters.",
+    "offline": "Live updates are unavailable. You can refresh manually.",
+    "updates": "New comments · Refresh",
+    "more": "See older comments",
+    "remaining": "You can post again in {{count}} s.",
+    "edit": "Edit comment",
+    "editLabel": "Edit your comment",
+    "saveEdit": "Save",
+    "updated": "Comment updated",
+    "edited": "edited",
+    "editConflict": "This comment changed in another session. Review the current version before saving.",
+    "keepChanges": "Keep my changes",
+    "currentVersion": "Current version"
   }
 }

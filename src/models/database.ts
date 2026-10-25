@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      album_post_comments: {
+        Row: {
+          body: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          post_id: string
+          revision: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          edited_at?: string | null
+          id: string
+          post_id: string
+          revision?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          post_id?: string
+          revision?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "album_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       album_post_reactions: {
         Row: {
           created_at: string
@@ -343,6 +388,10 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      delete_album_post_comment: {
+        Args: { p_comment_id: string; p_post_id: string }
+        Returns: boolean
+      }
       delete_user_album: { Args: { p_user_album_id: string }; Returns: boolean }
       get_album_feed: {
         Args: {
@@ -369,6 +418,26 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_album_post_comments: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_limit?: number
+          p_post_id: string
+        }
+        Returns: {
+          avatar_url: string
+          body: string
+          created_at: string
+          display_name: string
+          edited_at: string
+          id: string
+          post_id: string
+          revision: number
+          user_id: string
+          username: string
+        }[]
+      }
       get_community_social: {
         Args: { p_post_ids: string[] }
         Returns: {
@@ -378,6 +447,31 @@ export type Database = {
           reacted: boolean
           reaction_count: number
         }[]
+      }
+      get_following_album_feed: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_limit?: number
+        }
+        Returns: {
+          created_at: string
+          id: string
+          rating: number | null
+          review: string | null
+          revision: number
+          spotify_album_id: string
+          updated_at: string
+          user_album_id: string
+          user_id: string
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "album_posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_my_library: {
         Args: {
@@ -399,6 +493,32 @@ export type Database = {
           status: string
         }[]
       }
+      get_profile_album_feed: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_limit?: number
+          p_profile_id: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          rating: number | null
+          review: string | null
+          revision: number
+          spotify_album_id: string
+          updated_at: string
+          user_album_id: string
+          user_id: string
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "album_posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_public_profile: {
         Args: { p_profile_id: string }
         Returns: {
@@ -418,6 +538,10 @@ export type Database = {
           allowed: boolean
           retry_after_seconds: number
         }[]
+      }
+      save_album_post_comment: {
+        Args: { p_body: string; p_comment_id: string; p_post_id: string }
+        Returns: string
       }
       save_profile: {
         Args: { p_bio?: string; p_display_name: string; p_username: string }
@@ -481,6 +605,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      search_public_profiles: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          following: boolean
+          id: string
+          username: string
+        }[]
+      }
       set_community_action: {
         Args: { p_action: string; p_active: boolean; p_target_id: string }
         Returns: {
@@ -510,6 +644,29 @@ export type Database = {
         Returns: Database["public"]["Tables"]["user_track_picks"]["Row"][]
       }
       touch_groovy_session: { Args: never; Returns: boolean }
+      update_album_post_comment: {
+        Args: {
+          p_body: string
+          p_comment_id: string
+          p_expected_revision: number
+          p_post_id: string
+        }
+        Returns: {
+          body: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          post_id: string
+          revision: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "album_post_comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

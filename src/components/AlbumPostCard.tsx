@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { BookmarkCheck, BookmarkPlus, Disc3, Heart } from "lucide-react";
+import { useId, useState } from "react";
+import {
+  BookmarkCheck,
+  BookmarkPlus,
+  Disc3,
+  Heart,
+  MessageCircle,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { AlbumPostComments } from "@/components/AlbumPostComments";
 import { AlbumRatingBadge } from "@/components/AlbumRatingBadge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
@@ -20,8 +27,10 @@ export function AlbumPostCard({
   onSaveAlbum,
 }: AlbumFeedCardProps) {
   const { t, i18n } = useTranslation("community");
-
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsMounted, setCommentsMounted] = useState(false);
   const [failedCover, setFailedCover] = useState<string | null>(null);
+  const commentsId = useId();
 
   const name =
     item.author?.display_name || item.author?.username || t("post.author");
@@ -46,34 +55,25 @@ export function AlbumPostCard({
   }).format(social?.reaction_count ?? 0);
 
   const saved = Boolean(social?.library_status);
-
   const canFollow = Boolean(viewerId && viewerId !== item.user_id);
-
   const review = item.review?.trim();
 
   return (
     <article
       className="
-        min-w-0 rounded-2xl
-        border border-border/60
-        bg-card px-5 pb-3 pt-4
-        text-card-foreground
-        shadow-sm shadow-black/2.5
-        sm:px-6 sm:pt-5
+        min-w-0 rounded-2xl border border-border/60
+        bg-card px-5 pb-3 pt-4 text-card-foreground
+        shadow-sm shadow-black/2.5 sm:px-6 sm:pt-5
       "
     >
       <header className="flex min-w-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onProfile}
-          aria-label={t("social.openProfile", {
-            name,
-          })}
+          aria-label={t("social.openProfile", { name })}
           className="
-            shrink-0 rounded-full
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-ring
+            shrink-0 rounded-full focus-visible:outline-none
+            focus-visible:ring-2 focus-visible:ring-ring
           "
         >
           <UserAvatar name={name} src={item.author?.avatar_url ?? null} />
@@ -84,12 +84,9 @@ export function AlbumPostCard({
             type="button"
             onClick={onProfile}
             className="
-              block max-w-full truncate
-              rounded-sm text-left
-              text-sm font-semibold leading-5
-              hover:underline
-              focus-visible:outline-none
-              focus-visible:ring-2
+              block max-w-full truncate rounded-sm text-left
+              text-sm font-semibold leading-5 hover:underline
+              focus-visible:outline-none focus-visible:ring-2
               focus-visible:ring-ring
             "
           >
@@ -99,8 +96,7 @@ export function AlbumPostCard({
           <div
             className="
               flex min-w-0 items-center gap-2
-              text-[11px] leading-4
-              text-muted-foreground
+              text-[11px] leading-4 text-muted-foreground
             "
           >
             {item.author?.username && (
@@ -132,9 +128,8 @@ export function AlbumPostCard({
               social?.following_author ? "social.unfollow" : "social.follow",
             )}
             className={`
-              -mr-2 min-h-11 shrink-0
-              rounded-lg px-2 text-xs
-              hover:bg-primary/5
+              -mr-2 min-h-11 shrink-0 rounded-lg px-2
+              text-xs hover:bg-primary/5
               ${
                 social?.following_author
                   ? "text-muted-foreground"
@@ -149,27 +144,20 @@ export function AlbumPostCard({
 
       <Link
         to={`/albums/${item.spotify_album_id}`}
-        state={{
-          returnTo: "/community",
-        }}
+        state={{ returnTo: "/community" }}
         aria-label={t("post.openAlbum", {
           album: item.album?.name ?? t("post.album"),
         })}
         className="
-          group mt-3 flex min-w-0
-          items-center gap-3 rounded-lg
-          focus-visible:outline-none
-          focus-visible:ring-2
-          focus-visible:ring-ring
-          sm:gap-4
+          group mt-3 flex min-w-0 items-center gap-3 rounded-lg
+          focus-visible:outline-none focus-visible:ring-2
+          focus-visible:ring-ring sm:gap-4
         "
       >
         <div
           className="
-            flex size-24 shrink-0
-            items-center justify-center
-            overflow-hidden rounded-lg
-            bg-muted sm:size-32
+            flex size-24 shrink-0 items-center justify-center
+            overflow-hidden rounded-lg bg-muted sm:size-32
           "
         >
           {cover && failedCover !== cover ? (
@@ -181,8 +169,7 @@ export function AlbumPostCard({
               loading="lazy"
               decoding="async"
               className="
-                size-full object-cover
-                transition-opacity
+                size-full object-cover transition-opacity
                 group-hover:opacity-90
               "
               onError={() => setFailedCover(cover)}
@@ -198,11 +185,9 @@ export function AlbumPostCard({
         <div className="min-w-0 flex-1 space-y-1">
           <h2
             className="
-              line-clamp-2 wrap-break-word
-              text-[15px] font-semibold leading-5
-              transition-colors
-              group-hover:text-primary
-              sm:text-base
+              line-clamp-2 wrap-break-word text-[15px]
+              font-semibold leading-5 transition-colors
+              group-hover:text-primary sm:text-base
             "
           >
             {item.album?.name ?? t("post.album")}
@@ -231,9 +216,8 @@ export function AlbumPostCard({
       {review && (
         <p
           className="
-            mt-3 whitespace-pre-wrap
-            wrap-break-word text-[15px]
-            leading-6 text-foreground/90
+            mt-3 whitespace-pre-wrap wrap-break-word
+            text-[15px] leading-6 text-foreground/90
           "
         >
           {review}
@@ -242,11 +226,8 @@ export function AlbumPostCard({
 
       <footer
         className="
-          mt-3 grid
-          grid-cols-[auto_minmax(0,1fr)]
-          items-center gap-1
-          border-t border-border/45
-          pt-1.5
+          mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)]
+          items-center gap-1 border-t border-border/45 pt-1.5
         "
       >
         <Button
@@ -257,37 +238,47 @@ export function AlbumPostCard({
           disabled={busy || !social}
           onClick={onReaction}
           className="
-            -ml-2 min-h-11 gap-1.5
-            rounded-lg px-2
-            text-muted-foreground
-            hover:bg-primary/5
-            hover:text-primary
-            aria-pressed:text-primary
+            -ml-2 min-h-11 gap-1.5 rounded-lg px-2
+            text-muted-foreground hover:bg-primary/5
+            hover:text-primary aria-pressed:text-primary
           "
         >
           <Heart
             aria-hidden="true"
-            className={`
-              size-4
-              ${social?.reacted ? "fill-current" : ""}
-            `}
+            className={`size-4 ${social?.reacted ? "fill-current" : ""}`}
           />
-
           {social && <span className="text-xs tabular-nums">{count}</span>}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          aria-label={t("comments.title")}
+          title={t("comments.title")}
+          aria-expanded={commentsOpen}
+          aria-controls={commentsMounted ? commentsId : undefined}
+          onClick={() => {
+            setCommentsMounted(true);
+            setCommentsOpen((current) => !current);
+          }}
+          className="
+            min-h-11 rounded-lg px-2 text-muted-foreground
+            hover:bg-primary/5 hover:text-primary
+            aria-expanded:text-primary
+          "
+        >
+          <MessageCircle aria-hidden="true" className="size-4" />
         </Button>
 
         {saved ? (
           <span
             title={t("social.inLibrary")}
             className="
-              inline-flex min-h-11 min-w-0
-              items-center gap-1.5
-              justify-self-end
-              px-2 text-xs text-primary
+              inline-flex min-h-11 min-w-0 items-center gap-1.5
+              justify-self-end px-2 text-xs text-primary
             "
           >
             <BookmarkCheck aria-hidden="true" className="size-4 shrink-0" />
-
             <span className="truncate">{t("social.savedShort")}</span>
           </span>
         ) : (
@@ -299,20 +290,22 @@ export function AlbumPostCard({
             aria-label={t("social.saveAlbum")}
             title={t("social.saveAlbum")}
             className="
-              min-h-11 min-w-0 gap-1.5
-              justify-self-end
-              rounded-lg px-2 text-xs
-              text-muted-foreground
-              hover:bg-primary/5
-              hover:text-primary
+              min-h-11 min-w-0 gap-1.5 justify-self-end
+              rounded-lg px-2 text-xs text-muted-foreground
+              hover:bg-primary/5 hover:text-primary
             "
           >
             <BookmarkPlus aria-hidden="true" className="size-4 shrink-0" />
-
             <span className="truncate">{t("social.saveShort")}</span>
           </Button>
         )}
       </footer>
+
+      {commentsMounted && (
+        <div id={commentsId}>
+          <AlbumPostComments postId={item.id} open={commentsOpen} />
+        </div>
+      )}
     </article>
   );
 }

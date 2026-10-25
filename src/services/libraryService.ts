@@ -169,9 +169,7 @@ export async function getLibrary({
   }
 
   const total = countResult.count ?? 0;
-
   const lastPage = Math.max(1, Math.ceil(total / pageSize));
-
   const currentPage = Math.min(page, lastPage);
 
   if (total === 0) {
@@ -392,7 +390,6 @@ export async function saveUserAlbum(
   }
 
   const favoriteTrackIds: string[] = [];
-
   const leastFavoriteTrackIds: string[] = [];
 
   for (const pick of current.user_track_picks) {
@@ -412,11 +409,8 @@ export async function saveUserAlbum(
 
   return persistAlbum(userId, albumId, {
     p_spotify_album_id: albumId,
-
     p_status: "listened",
-
     p_favorite_track_ids: favoriteTrackIds,
-
     p_least_favorite_track_ids: leastFavoriteTrackIds,
 
     ...(rating !== null
@@ -443,7 +437,6 @@ export async function deleteUserAlbum(
   request: DeleteUserAlbumInput,
 ): Promise<boolean> {
   validateAlbumId(request.albumId);
-
   await requireUser(request.userId);
 
   const { data, error } = await supabase
@@ -487,24 +480,35 @@ export async function getAlbumFeed(
   userId: string,
   cursor: AlbumFeedCursor | null,
   signal: AbortSignal,
+  profileId: string | null = null,
+  followingOnly = false,
 ): Promise<{
   items: AlbumPost[];
   nextCursor: AlbumFeedCursor | null;
 }> {
   await requireUser(userId);
 
-  const { data, error } = await supabase
-    .rpc("get_album_feed", {
-      p_limit: 10,
+  const args = {
+    p_limit: 10,
 
-      ...(cursor
-        ? {
-            p_before_created_at: cursor.createdAt,
-            p_before_id: cursor.id,
-          }
-        : {}),
-    })
-    .abortSignal(createSignal(signal));
+    ...(cursor
+      ? {
+          p_before_created_at: cursor.createdAt,
+          p_before_id: cursor.id,
+        }
+      : {}),
+  };
+
+  const request = profileId
+    ? supabase.rpc("get_profile_album_feed", {
+        ...args,
+        p_profile_id: profileId,
+      })
+    : followingOnly
+      ? supabase.rpc("get_following_album_feed", args)
+      : supabase.rpc("get_album_feed", args);
+
+  const { data, error } = await request.abortSignal(createSignal(signal));
 
   if (error) throw error;
 
@@ -587,9 +591,7 @@ export async function getFeedMetadata(
 
       return {
         id: album.spotify_album_id,
-
         name: album.name,
-
         coverUrl: album.cover_url,
 
         artists: artists.success
