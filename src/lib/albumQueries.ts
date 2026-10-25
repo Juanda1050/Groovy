@@ -1,9 +1,21 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import { CatalogError } from "@/lib/catalogError";
 import { getAlbumDetail } from "@/services/spotifyService";
+import { getUserAlbum } from "@/services/libraryService";
+import type { CatalogPage, CatalogRatings } from "@/models/catalog";
+import type { LibraryAlbum } from "@/models/library";
+import type { LibraryPageResult } from "@/models/libraryView";
 
 export const albumStaleTime = 15 * 60_000;
 export const albumGcTime = 30 * 60_000;
+
+export function albumLibraryKey(userId: string | null, albumId: string) {
+  return ["userAlbum", userId, albumId] as const;
+}
+
+export function albumWriteKey(userId: string | null, albumId: string) {
+  return ["albumWrite", userId, albumId] as const;
+}
 
 export function shouldRetryAlbum(
   failureCount: number,
@@ -41,5 +53,82 @@ export function albumDetailOptions(userId: string | null, albumId: string) {
     retryDelay: albumRetryDelay,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+  });
+}
+
+export function albumLibraryOptions(userId: string | null, albumId: string) {
+  return queryOptions({
+    queryKey: albumLibraryKey(userId, albumId),
+    enabled: userId !== null && /^[A-Za-z0-9]{22}$/.test(albumId),
+    queryFn: ({ signal }) => {
+      if (!userId) throw new Error("AUTH_REQUIRED");
+
+      return getUserAlbum(userId, albumId, signal);
+    },
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+}
+
+export function syncAlbumLibrary(
+  queryClient: QueryClient,
+  album: LibraryAlbum,
+): void {
+  const userId = album.user_id;
+  const albumId = album.spotify_album_id;
+
+  queryClient.setQueryData<LibraryAlbum | null>(
+    albumLibraryKey(userId, albumId),
+    album,
+  );
+
+  queryClient.setQueriesData<CatalogPage>(
+    { queryKey: ["albumSearch", userId] },
+    (previous) =>
+      previous
+        ? {
+            ...previous,
+            items: previous.items.map((item) =>
+              item.id === albumId
+                ? { ...item, libraryStatus: album.status }
+                : item,
+            ),
+          }
+        : previous,
+  );
+
+  queryClient.setQueriesData<CatalogRatings>(
+    { queryKey: ["catalogRatings", userId] },
+    (previous) =>
+      previous && albumId in previous
+        ? { ...previous, [albumId]: album.rating }
+        : previous,
+  );
+
+  queryClient.setQueriesData<LibraryPageResult>(
+    { queryKey: ["library", userId] },
+    (previous) =>
+      previous
+        ? {
+            ...previous,
+            items: previous.items.map((item) =>
+              item.spotifyAlbumId === albumId
+                ? {
+                    ...item,
+                    status: album.status,
+                    rating: album.rating,
+                    hasReview: Boolean(album.review?.trim()),
+                  }
+                : item,
+            ),
+          }
+        : previous,
+  );
+
+  void queryClient.invalidateQueries({
+    queryKey: ["library", userId],
   });
 }

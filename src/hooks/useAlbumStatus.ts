@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useIsMutating,
   useMutation,
@@ -6,39 +6,28 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  albumLibraryKey,
+  albumLibraryOptions,
+  albumWriteKey,
+  syncAlbumLibrary,
+} from "@/lib/albumQueries";
+import {
   getLibraryErrorCode,
   getLibraryRetrySeconds,
 } from "@/lib/libraryErrors";
-import {
-  changeAlbumStatus,
-  getAlbumStatus,
-} from "@/services/albumStatusService";
+import { saveUserAlbum } from "@/services/libraryService";
 import { useAuthStore } from "@/stores/authStore";
-import type { CatalogPage, ListeningStatus } from "@/models/catalog";
+import type { ListeningStatus } from "@/models/catalog";
+import type { AlbumWriteRequest } from "@/models/library";
 
-export function useAlbumStatus(albumId: string) {
+export function useAlbumLibrary(albumId: string) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const queryClient = useQueryClient();
-  const lock = useRef(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
-  const writeKey = ["albumWrite", userId, albumId] as const;
+  const writeKey = albumWriteKey(userId, albumId);
   const writes = useIsMutating({ mutationKey: writeKey });
-
-  const status = useQuery({
-    queryKey: ["albumLibraryStatus", userId, albumId],
-    enabled: userId !== null && /^[A-Za-z0-9]{22}$/.test(albumId),
-    queryFn: ({ signal }) => {
-      if (!userId) throw new Error("AUTH_REQUIRED");
-
-      return getAlbumStatus(userId, albumId, signal);
-    },
-    staleTime: 0,
-    gcTime: 5 * 60_000,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const query = useQuery(albumLibraryOptions(userId, albumId));
 
   useEffect(() => {
     if (remainingSeconds <= 0) return;
@@ -52,120 +41,119 @@ export function useAlbumStatus(albumId: string) {
 
   const mutation = useMutation({
     mutationKey: writeKey,
-    mutationFn: changeAlbumStatus,
+    mutationFn: saveUserAlbum,
     retry: false,
     onMutate: async (request) => {
       await Promise.all([
         queryClient.cancelQueries({
+          queryKey: albumLibraryKey(request.userId, request.albumId),
+        }),
+        queryClient.cancelQueries({
+          queryKey: ["catalogRatings", request.userId],
+        }),
+        queryClient.cancelQueries({
           queryKey: ["albumSearch", request.userId],
-        }),
-        queryClient.cancelQueries({
-          queryKey: ["albumLibraryStatus", request.userId, request.albumId],
-        }),
-        queryClient.cancelQueries({
-          queryKey: ["albumRating", request.userId, request.albumId],
         }),
       ]);
     },
     onSuccess: (saved, request) => {
       if (useAuthStore.getState().user?.id !== request.userId) return;
 
-      queryClient.setQueryData<ListeningStatus | null>(
-        ["albumLibraryStatus", request.userId, request.albumId],
-        saved.status,
-      );
-
-      queryClient.setQueriesData<CatalogPage>(
-        { queryKey: ["albumSearch", request.userId] },
-        (previous) =>
-          previous
-            ? {
-                ...previous,
-                items: previous.items.map((album) =>
-                  album.id === saved.spotifyAlbumId
-                    ? { ...album, libraryStatus: saved.status }
-                    : album,
-                ),
-              }
-            : previous,
-      );
-
-      void queryClient.invalidateQueries({
-        queryKey: ["albumRating", request.userId, request.albumId],
-        refetchType: "none",
-      });
-
-      void queryClient.invalidateQueries({
-        queryKey: ["library", request.userId],
-      });
+      syncAlbumLibrary(queryClient, saved);
     },
     onError: (error) => {
       if (getLibraryErrorCode(error) === "RATE_LIMITED") {
         setRemainingSeconds(getLibraryRetrySeconds(error));
       }
     },
-    onSettled: () => {
-      lock.current = false;
-    },
   });
 
-  const currentStatus = status.data ?? null;
-  const code = getLibraryErrorCode(mutation.error);
+  const disabled =
+    !userId ||
+    !query.isSuccess ||
+    query.isFetching ||
+    writes > 0 ||
+    remainingSeconds > 0;
+
+  async function onWrite(request: AlbumWriteRequest): Promise<boolean> {
+    if (
+      disabled ||
+      request.userId !== userId ||
+      request.albumId !== albumId ||
+      useAuthStore.getState().user?.id !== userId ||
+      queryClient.isMutating({ mutationKey: writeKey }) > 0
+    ) {
+      return false;
+    }
+
+    try {
+      await mutation.mutateAsync(request);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return {
+    userId,
+    query,
+    mutation,
+    writes,
+    disabled,
+    remainingSeconds,
+    errorCode: getLibraryErrorCode(mutation.error),
+    onWrite,
+    onRetry: () => {
+      void query.refetch();
+    },
+  };
+}
+
+export function useAlbumStatus(albumId: string) {
+  const library = useAlbumLibrary(albumId);
+  const { query, mutation, userId, errorCode } = library;
+
+  const currentStatus = query.data?.status ?? null;
 
   const errorKey =
-    code === "AUTH_REQUIRED" ||
-    code === "UNAUTHORIZED" ||
-    code === "SESSION_EXPIRED"
+    errorCode === "AUTH_REQUIRED" ||
+    errorCode === "UNAUTHORIZED" ||
+    errorCode === "SESSION_EXPIRED"
       ? "status.sessionError"
-      : code === "RATE_LIMITED"
+      : errorCode === "RATE_LIMITED"
         ? "status.rateError"
-        : code === "SPOTIFY_QUOTA" || code === "SPOTIFY_UNAVAILABLE"
+        : errorCode === "SPOTIFY_QUOTA" || errorCode === "SPOTIFY_UNAVAILABLE"
           ? "status.spotifyError"
           : "status.saveError";
 
-  function onChange(nextStatus: ListeningStatus): void {
-    if (
-      !userId ||
-      lock.current ||
-      !status.isSuccess ||
-      status.isFetching ||
-      remainingSeconds > 0 ||
-      nextStatus === currentStatus ||
-      queryClient.isMutating({ mutationKey: writeKey }) > 0
-    ) {
-      return;
-    }
+  function onChange(status: ListeningStatus): void {
+    if (!userId || status === currentStatus) return;
 
-    lock.current = true;
-
-    mutation.mutate({
-      albumId,
+    void library.onWrite({
+      action: "status",
       userId,
-      status: nextStatus,
-      isNew: currentStatus === null,
+      albumId,
+      status,
+      isNew: query.data === null,
     });
   }
 
   return {
     currentStatus,
-    loading: status.isPending,
-    reading: status.isFetching,
-    readError: status.isError,
+    loading: query.isPending,
+    reading: query.isFetching,
+    readError: query.isError,
     saving: mutation.isPending,
-    savingStatus: mutation.isPending ? mutation.variables.status : null,
+    savingStatus:
+      mutation.isPending && mutation.variables.action === "status"
+        ? mutation.variables.status
+        : null,
     saved: mutation.isSuccess,
     saveError: mutation.isError,
     errorKey,
-    remainingSeconds,
-    disabled:
-      !userId ||
-      !status.isSuccess ||
-      status.isFetching ||
-      writes > 0 ||
-      remainingSeconds > 0,
+    remainingSeconds: library.remainingSeconds,
+    disabled: library.disabled,
     onChange,
-    onRetry: () => {
-      void status.refetch();
-    },
+    onRetry: library.onRetry,
   };
 }

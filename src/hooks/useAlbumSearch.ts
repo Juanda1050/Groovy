@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { albumLibraryKey } from "@/lib/albumQueries";
 import { CatalogError } from "@/lib/catalogError";
-import { getCatalogRatings } from "@/services/catalogRatingsService";
+import { getCatalogRatings } from "@/services/libraryService";
 import { saveCatalogAlbum, searchAlbums } from "@/services/spotifyService";
 import { useAuthStore } from "@/stores/authStore";
 import { useDebouncedValue } from "./useDebouncedValue";
@@ -43,9 +44,7 @@ export function useAlbumSearch() {
 
   const visibleData = enabled ? search.data : undefined;
 
-  const albumIds = (visibleData?.items ?? [])
-    .map((album) => album.id)
-    .sort();
+  const albumIds = (visibleData?.items ?? []).map((album) => album.id).sort();
 
   const ratings = useQuery({
     queryKey: ["catalogRatings", userId, albumIds],
@@ -82,6 +81,11 @@ export function useAlbumSearch() {
               }
             : previous,
       );
+
+      void queryClient.invalidateQueries({
+        queryKey: albumLibraryKey(userId, saved.spotifyAlbumId),
+        refetchType: "none",
+      });
 
       void queryClient.invalidateQueries({
         queryKey: ["library", userId],

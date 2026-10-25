@@ -1,4 +1,8 @@
 import type { Database } from "./database";
+import type { ListeningStatus } from "./catalog";
+import type { SaveAlbumRatingInput } from "./albumRating";
+import type { SaveAlbumReviewInput } from "./albumReview";
+import type { AlbumStatusRequest } from "./albumStatus";
 
 export type AlbumRating =
   | 1
@@ -50,3 +54,12 @@ export type SaveUserAlbumArgs =
   Database["public"]["Functions"]["save_user_album"]["Args"];
 
 export type SaveAlbumInput = PendingAlbumInput | ListenedAlbumInput;
+
+export type LibraryAlbum = Omit<UserAlbumRow, "status"> & {
+  status: ListeningStatus;
+};
+
+export type AlbumWriteRequest =
+  | (AlbumStatusRequest & { action: "status" })
+  | (SaveAlbumRatingInput & { action: "rating" })
+  | (SaveAlbumReviewInput & { action: "review" });

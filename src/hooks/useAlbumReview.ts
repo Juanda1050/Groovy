@@ -1,127 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  useIsMutating,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  getLibraryErrorCode,
-  getLibraryRetrySeconds,
-} from "@/lib/libraryErrors";
+import { useAlbumLibrary } from "@/hooks/useAlbumStatus";
 import {
   countReviewCharacters,
   normalizeReview,
   resolveReviewLanguage,
   reviewMaxLength,
 } from "@/lib/reviewText";
-import { getAlbumReview, saveAlbumReview } from "@/services/albumReviewService";
-import { useAuthStore } from "@/stores/authStore";
-import type { AlbumReviewRecord } from "@/models/albumReview";
-import type { LibraryPageResult } from "@/models/libraryView";
 
 export function useAlbumReview(albumId: string, active: boolean) {
   const { i18n } = useTranslation("review");
+  const library = useAlbumLibrary(albumId);
+  const { query, mutation, userId, errorCode } = library;
+  const [draft, setDraft] = useState<string | undefined>();
+
   const language = resolveReviewLanguage(
     i18n.resolvedLanguage ?? i18n.language,
   );
-
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<string | undefined>();
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-
-  const writeKey = ["albumWrite", userId, albumId] as const;
-  const writes = useIsMutating({ mutationKey: writeKey });
-
-  const query = useQuery({
-    queryKey: ["albumReview", userId, albumId],
-    enabled: active && userId !== null,
-    queryFn: ({ signal }) => {
-      if (!userId) throw new Error("AUTH_REQUIRED");
-
-      return getAlbumReview(userId, albumId, signal);
-    },
-    staleTime: 60_000,
-    gcTime: 5 * 60_000,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-
-  useEffect(() => {
-    if (remainingSeconds <= 0) return;
-
-    const timer = window.setTimeout(() => {
-      setRemainingSeconds((current) => Math.max(0, current - 1));
-    }, 1000);
-
-    return () => window.clearTimeout(timer);
-  }, [remainingSeconds]);
-
-  const mutation = useMutation({
-    mutationKey: writeKey,
-    mutationFn: saveAlbumReview,
-    retry: false,
-    onMutate: async (request) => {
-      await queryClient.cancelQueries({
-        queryKey: ["albumReview", request.userId, request.albumId],
-      });
-    },
-    onSuccess: (saved, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) return;
-
-      queryClient.setQueryData<AlbumReviewRecord>(
-        ["albumReview", request.userId, request.albumId],
-        saved,
-      );
-
-      queryClient.setQueriesData<LibraryPageResult>(
-        { queryKey: ["library", request.userId] },
-        (previous) =>
-          previous
-            ? {
-                ...previous,
-                items: previous.items.map((item) =>
-                  item.spotifyAlbumId === request.albumId
-                    ? { ...item, hasReview: Boolean(saved.review) }
-                    : item,
-                ),
-              }
-            : previous,
-      );
-
-      void queryClient.invalidateQueries({
-        queryKey: ["library", request.userId],
-      });
-
-      setDraft(undefined);
-    },
-    onError: (error) => {
-      if (getLibraryErrorCode(error) === "RATE_LIMITED") {
-        setRemainingSeconds(getLibraryRetrySeconds(error));
-      }
-    },
-  });
 
   const storedText = query.data?.review ?? "";
   const text = draft ?? storedText;
   const normalizedText = normalizeReview(text);
   const characterCount = countReviewCharacters(text);
   const tooLong = characterCount > reviewMaxLength;
-
   const dirty = normalizedText !== normalizeReview(storedText);
   const listened = query.data?.status === "listened";
 
   const editable =
+    active &&
     userId !== null &&
     query.isSuccess &&
     listened &&
     !query.isFetching &&
-    writes === 0;
-
-  const errorCode = getLibraryErrorCode(mutation.error);
+    library.writes === 0;
 
   const errorKey =
     errorCode === "RATE_LIMITED"
@@ -146,33 +57,23 @@ export function useAlbumReview(albumId: string, active: boolean) {
   }
 
   async function onSave(): Promise<boolean> {
-    if (
-      !userId ||
-      !editable ||
-      !dirty ||
-      tooLong ||
-      remainingSeconds > 0 ||
-      queryClient.isMutating({ mutationKey: writeKey }) > 0
-    ) {
-      return false;
-    }
+    if (!userId || !editable || !dirty || tooLong) return false;
 
-    try {
-      await mutation.mutateAsync({
-        userId,
-        albumId,
-        review: normalizedText,
-        language,
-      });
+    const saved = await library.onWrite({
+      action: "review",
+      userId,
+      albumId,
+      review: normalizedText,
+      language,
+    });
 
-      return true;
-    } catch {
-      return false;
-    }
+    if (saved) setDraft(undefined);
+
+    return saved;
   }
 
   function onDiscard(): void {
-    if (writes > 0) return;
+    if (library.writes > 0) return;
 
     setDraft(undefined);
     mutation.reset();
@@ -195,13 +96,11 @@ export function useAlbumReview(albumId: string, active: boolean) {
     saving: mutation.isPending,
     saveError: mutation.isError,
     errorKey,
-    remainingSeconds,
-    canSave: editable && dirty && !tooLong && remainingSeconds === 0,
+    remainingSeconds: library.remainingSeconds,
+    canSave: editable && dirty && !tooLong && library.remainingSeconds === 0,
     onChange,
     onSave,
     onDiscard,
-    onRetry: () => {
-      void query.refetch();
-    },
+    onRetry: library.onRetry,
   };
 }
