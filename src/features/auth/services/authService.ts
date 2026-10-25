@@ -1,5 +1,6 @@
 import {
   AuthError,
+  FunctionsFetchError,
   FunctionsHttpError,
   type User,
 } from "@supabase/supabase-js";
@@ -8,10 +9,12 @@ import { z } from "zod";
 import type {
   AuthCredentials,
   AuthFeedback,
+  AuthMode,
   AuthObserver,
   AuthUser,
 } from "@/models/auth";
 
+import { env } from "@/shared/lib/env";
 import { supabase } from "@/shared/lib/supabaseClient";
 
 function mapUser(user: User | null): AuthUser | null {
@@ -97,45 +100,126 @@ const sessionSchema = z.object({
   refresh_token: z.string().min(1),
 });
 
-export async function signIn(credentials: AuthCredentials): Promise<void> {
-  const identifier = credentials.email.trim();
+const failureSchema = z.object({
+  code: z.string(),
+});
 
-  if (identifier.includes("@") && !identifier.startsWith("@")) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: identifier,
-      password: credentials.password,
-    });
+function toBase64(bytes: Uint8Array): string {
+  return btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
+}
 
-    if (error) throw error;
-    return;
+async function encryptCredentials(
+  mode: AuthMode,
+  credentials: AuthCredentials,
+) {
+  if (!env.authPublicKey || !globalThis.crypto?.subtle) {
+    throw new Error("AUTH_ENCRYPTION_UNAVAILABLE");
   }
+
+  const publicKey = await crypto.subtle.importKey(
+    "spki",
+    Uint8Array.from(atob(env.authPublicKey), (character) =>
+      character.charCodeAt(0),
+    ),
+    {
+      name: "RSA-OAEP",
+      hash: "SHA-256",
+    },
+    false,
+    ["encrypt"],
+  );
+
+  const key = await crypto.subtle.generateKey(
+    {
+      name: "AES-GCM",
+      length: 256,
+    },
+    true,
+    ["encrypt"],
+  );
+
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const rawKey = await crypto.subtle.exportKey("raw", key);
+
+  const payload = new TextEncoder().encode(
+    JSON.stringify({
+      mode,
+      identifier: credentials.email.trim(),
+      password: credentials.password,
+      issuedAt: Date.now(),
+      nonce: crypto.randomUUID(),
+    }),
+  );
+
+  try {
+    const [encryptedKey, ciphertext] = await Promise.all([
+      crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, rawKey),
+      crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv,
+          additionalData: new TextEncoder().encode("groovy-auth:v1"),
+          tagLength: 128,
+        },
+        key,
+        payload,
+      ),
+    ]);
+
+    return {
+      version: 1,
+      encryptedKey: toBase64(new Uint8Array(encryptedKey)),
+      iv: toBase64(iv),
+      ciphertext: toBase64(new Uint8Array(ciphertext)),
+    };
+  } finally {
+    new Uint8Array(rawKey).fill(0);
+    payload.fill(0);
+  }
+}
+
+async function authenticate(
+  mode: AuthMode,
+  credentials: AuthCredentials,
+): Promise<void> {
+  const body = await encryptCredentials(mode, credentials);
 
   const { data, error } = await supabase.functions.invoke<unknown>(
     "usernameLogin",
     {
-      body: {
-        username: identifier.replace(/^@/, "").toLowerCase(),
-        password: credentials.password,
-      },
-      signal: AbortSignal.timeout(15_000),
+      body,
+      signal: AbortSignal.timeout(20_000),
     },
   );
 
   if (error) {
+    if (error instanceof FunctionsFetchError) {
+      throw new AuthError("Connection failed", 0);
+    }
+
     if (error instanceof FunctionsHttpError) {
-      const status = error.context.status;
+      const parsed = failureSchema.safeParse(
+        await error.context
+          .clone()
+          .json()
+          .catch(() => null),
+      );
 
-      if (status === 401 || status === 400) {
-        throw new AuthError("Invalid credentials", 400, "invalid_credentials");
-      }
+      const code = parsed.success ? parsed.data.code : "REQUEST_FAILED";
 
-      if (status === 429) {
-        throw new AuthError(
-          "Too many requests",
-          429,
-          "over_request_rate_limit",
-        );
-      }
+      const codes: Record<string, string> = {
+        INVALID_CREDENTIALS: "invalid_credentials",
+        EMAIL_NOT_CONFIRMED: "email_not_confirmed",
+        WEAK_PASSWORD: "weak_password",
+        REGISTRATION_UNAVAILABLE: "signup_session_missing",
+        RATE_LIMITED: "over_request_rate_limit",
+      };
+
+      throw new AuthError(
+        "Authentication failed",
+        error.context.status,
+        codes[code] ?? "request_failed",
+      );
     }
 
     throw error;
@@ -148,18 +232,12 @@ export async function signIn(credentials: AuthCredentials): Promise<void> {
   if (sessionError) throw sessionError;
 }
 
+export async function signIn(credentials: AuthCredentials): Promise<void> {
+  await authenticate("signIn", credentials);
+}
+
 export async function signUp(credentials: AuthCredentials): Promise<void> {
-  const { data, error } = await supabase.auth.signUp(credentials);
-
-  if (error) throw error;
-
-  if (!data.session) {
-    throw new AuthError(
-      "Sign-up did not return an active session.",
-      400,
-      "signup_session_missing",
-    );
-  }
+  await authenticate("signUp", credentials);
 }
 
 export async function signOut(): Promise<void> {

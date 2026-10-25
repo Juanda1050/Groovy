@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { decryptCredentials } from "./credentialEncryption.ts";
+
 const url = Deno.env.get("SUPABASE_URL")!;
 const publicKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -38,7 +40,7 @@ async function readBody(request: Request): Promise<unknown> {
 
       size += value.byteLength;
 
-      if (size > 8192) {
+      if (size > 16384) {
         await reader.cancel();
         throw new Error("INVALID_REQUEST");
       }
@@ -100,6 +102,35 @@ Deno.serve(async (request) => {
     return reply({ code: "INVALID_REQUEST" }, 405);
   }
 
+  async function consume(
+    bucket: string,
+    limit: number,
+    seconds = 60,
+  ): Promise<boolean> {
+    const { data, error } = await admin
+      .rpc("consume_request_budget", {
+        p_bucket_key: bucket,
+        p_limit: limit,
+        p_window_seconds: seconds,
+      })
+      .abortSignal(AbortSignal.timeout(10_000));
+
+    const budget = data?.[0];
+
+    if (error || !budget || typeof budget.allowed !== "boolean") {
+      throw new Error("REQUEST_FAILED");
+    }
+
+    if (!budget.allowed) {
+      headers.set(
+        "Retry-After",
+        String(Math.max(1, budget.retry_after_seconds ?? seconds)),
+      );
+    }
+
+    return budget.allowed;
+  }
+
   try {
     let body: unknown;
 
@@ -109,93 +140,113 @@ Deno.serve(async (request) => {
       return reply({ code: "INVALID_REQUEST" }, 400);
     }
 
+    if (!(await consume("encrypted-auth:global", 180))) {
+      return reply({ code: "RATE_LIMITED" }, 429);
+    }
+
+    let credentials: Awaited<ReturnType<typeof decryptCredentials>>;
+
+    try {
+      credentials = await decryptCredentials(body);
+    } catch {
+      return reply({ code: "INVALID_REQUEST" }, 400);
+    }
+
+    const { mode, identifier, password, nonce } = credentials;
+
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+    const username = identifier.replace(/^@/, "").toLowerCase();
+
     if (
-      typeof body !== "object" ||
-      !body ||
-      !("username" in body) ||
-      typeof body.username !== "string" ||
-      !("password" in body) ||
-      typeof body.password !== "string"
+      (!isEmail && !/^[a-z0-9_]{3,30}$/.test(username)) ||
+      (mode === "signUp" && !isEmail)
     ) {
       return reply({ code: "INVALID_REQUEST" }, 400);
     }
 
-    const username = body.username.trim().replace(/^@/, "").toLowerCase();
-
-    if (
-      !/^[a-z0-9_]{3,30}$/.test(username) ||
-      !body.password ||
-      body.password.length > 1024
-    ) {
-      return reply({ code: "INVALID_CREDENTIALS" }, 401);
+    if (!(await consume(`encrypted-auth:nonce:${nonce}`, 1, 300))) {
+      return reply({ code: "INVALID_REQUEST" }, 400);
     }
 
     const digest = await crypto.subtle.digest(
       "SHA-256",
-      new TextEncoder().encode(username),
+      new TextEncoder().encode(isEmail ? identifier.toLowerCase() : username),
     );
 
     const hash = Array.from(new Uint8Array(digest), (byte) =>
       byte.toString(16).padStart(2, "0"),
     ).join("");
 
-    const budgets = [
-      ["username-login:global", 180],
-      [`username-login:${hash}`, 8],
-    ] as const;
+    if (!(await consume(`encrypted-auth:${mode}:${hash}`, 8))) {
+      return reply({ code: "RATE_LIMITED" }, 429);
+    }
 
-    for (const [bucket, limit] of budgets) {
-      const { data, error } = await admin.rpc("consume_request_budget", {
-        p_bucket_key: bucket,
-        p_limit: limit,
-        p_window_seconds: 60,
-      });
+    let email = identifier;
+    let knownUser = true;
 
-      const budget = data?.[0];
+    if (!isEmail) {
+      const { data, error } = await admin
+        .rpc("get_username_login_email", {
+          p_username: username,
+        })
+        .abortSignal(AbortSignal.timeout(10_000));
 
-      if (error || !budget || typeof budget.allowed !== "boolean") {
+      if (error) {
         return reply({ code: "REQUEST_FAILED" }, 503);
       }
 
-      if (!budget.allowed) {
-        headers.set(
-          "Retry-After",
-          String(Math.max(1, budget.retry_after_seconds ?? 60)),
-        );
-
-        return reply({ code: "RATE_LIMITED" }, 429);
-      }
-    }
-
-    const { data: email, error: lookupError } = await admin.rpc(
-      "get_username_login_email",
-      {
-        p_username: username,
-      },
-    );
-
-    if (lookupError) {
-      return reply({ code: "REQUEST_FAILED" }, 503);
+      knownUser = typeof data === "string";
+      email = knownUser ? String(data) : `missing-${hash}@invalid.example`;
     }
 
     const auth = createClient(url, publicKey, options);
 
-    const { data, error } = await auth.auth.signInWithPassword({
-      email:
-        typeof email === "string" ? email : `missing-${hash}@invalid.example`,
-      password: body.password,
-    });
+    const result =
+      mode === "signUp"
+        ? await auth.auth.signUp({ email, password })
+        : await auth.auth.signInWithPassword({ email, password });
 
-    if (error || !data.session || typeof email !== "string") {
-      if (error?.status === 429) {
+    const { data, error } = result;
+
+    if (error) {
+      if (error.status === 429) {
         return reply({ code: "RATE_LIMITED" }, 429);
       }
 
-      if (error && (error.status === 0 || (error.status ?? 0) >= 500)) {
+      if (error.status === 0 || (error.status ?? 0) >= 500) {
         return reply({ code: "REQUEST_FAILED" }, 503);
       }
 
-      return reply({ code: "INVALID_CREDENTIALS" }, 401);
+      if (error.code === "email_not_confirmed") {
+        return reply({ code: "EMAIL_NOT_CONFIRMED" }, 400);
+      }
+
+      if (error.code === "weak_password") {
+        return reply({ code: "WEAK_PASSWORD" }, 400);
+      }
+
+      return reply(
+        {
+          code: mode === "signIn" ? "INVALID_CREDENTIALS" : "REQUEST_FAILED",
+        },
+        400,
+      );
+    }
+
+    if (!knownUser) {
+      return reply({ code: "INVALID_CREDENTIALS" }, 400);
+    }
+
+    if (!data.session) {
+      return reply(
+        {
+          code:
+            mode === "signUp"
+              ? "REGISTRATION_UNAVAILABLE"
+              : "INVALID_CREDENTIALS",
+        },
+        400,
+      );
     }
 
     return reply({
