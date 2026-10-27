@@ -1,9 +1,24 @@
-import { catalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
+import { getAlbumMetadata } from "@/features/catalog/services/albumMetadataService";
 import { saveCatalogAlbum } from "@/features/catalog/services/spotifyService";
-import { countReviewCharacters,normalizeReview,reviewMaxLength,validateReviewLanguage } from "@/features/library/lib/reviewText";
+import {
+  countReviewCharacters,
+  normalizeReview,
+  reviewMaxLength,
+  validateReviewLanguage,
+} from "@/features/library/lib/reviewText";
 import type { CatalogRatings } from "@/models/catalog";
-import type { AlbumWriteRequest,DeleteUserAlbumInput,LibraryAlbum,SaveUserAlbumArgs,UserAlbumRow } from "@/models/library";
-import type { GetLibraryInput,LibraryFilter,LibraryPageResult } from "@/models/libraryView";
+import type {
+  AlbumWriteRequest,
+  DeleteUserAlbumInput,
+  LibraryAlbum,
+  SaveUserAlbumArgs,
+  UserAlbumRow,
+} from "@/models/library";
+import type {
+  GetLibraryInput,
+  LibraryFilter,
+  LibraryPageResult,
+} from "@/models/libraryView";
 import { supabase } from "@/shared/lib/supabaseClient";
 
 const requestTimeout = 12_000;
@@ -186,32 +201,18 @@ export async function getLibrary({
     };
   }
 
-  const { data: metadata, error: metadataError } = await supabase
-    .from("album_cache")
-    .select("spotify_album_id, name, cover_url, artists")
-    .in(
-      "spotify_album_id",
-      rows.map((album) => album.spotify_album_id),
-    )
-    .abortSignal(createSignal(signal));
-
-  if (metadataError) {
-    throw metadataError;
-  }
-
-  const albums = new Map(
-    (metadata ?? []).map((album) => [album.spotify_album_id, album]),
+  const metadata = await getAlbumMetadata(
+    userId,
+    rows.map((album) => album.spotify_album_id),
+    signal,
   );
+
+  const albums = new Map(metadata.map((album) => [album.id, album]));
 
   return {
     items: rows.map((row) => {
       const album = mapUserAlbum(row, userId, row.spotify_album_id);
-
       const cached = albums.get(row.spotify_album_id);
-
-      const artists = catalogAlbumSchema.shape.artists.safeParse(
-        cached?.artists,
-      );
 
       return {
         id: album.id,
@@ -220,16 +221,11 @@ export async function getLibrary({
         rating: album.rating,
         hasReview: Boolean(album.review?.trim()),
         title: cached?.name ?? null,
-        coverUrl: cached?.cover_url ?? null,
-
-        artists: artists.success
-          ? artists.data.map((artist) => artist.name)
-          : [],
-
+        coverUrl: cached?.coverUrl ?? null,
+        artists: cached?.artists ?? [],
         metadataAvailable: Boolean(cached),
       };
     }),
-
     total,
     page: currentPage,
     pageSize,

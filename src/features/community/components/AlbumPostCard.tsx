@@ -249,8 +249,8 @@ export function AlbumPostCard({
       <footer
         className={
           profileLayout
-            ? "mt-2.5 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-1"
-            : "mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-1 border-t border-border/45 pt-1.5"
+            ? "mt-2.5 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-0"
+            : "mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-0 border-t border-border/45 pt-1.5"
         }
       >
         <div className="-ml-2 inline-flex items-center gap-0">
@@ -283,8 +283,8 @@ export function AlbumPostCard({
             aria-haspopup="dialog"
             onClick={() => setReactionsOpen(true)}
             className={`
-              min-h-11 min-w-6 justify-start rounded-md
-              p-0 pr-2 text-xs font-medium tabular-nums
+              min-h-11 min-w-5 justify-start rounded-md
+              p-0 pr-1 text-xs font-medium tabular-nums
               text-muted-foreground
               ${postActionHover}
             `}
@@ -308,7 +308,7 @@ export function AlbumPostCard({
             setCommentsOpen((current) => !current);
           }}
           className={`
-            min-h-11 rounded-lg px-2 text-muted-foreground
+            min-h-11 rounded-lg px-1 text-muted-foreground
             aria-expanded:text-primary
             ${postActionHover}
           `}

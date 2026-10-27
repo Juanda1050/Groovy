@@ -1,8 +1,9 @@
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
-import { MutationCache,QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
 
 import i18n from "@/app/i18n";
 import { useAuthStore } from "@/features/auth/stores/authStore";
+import { syncProfileCache } from "@/features/profile/lib/profileCache";
 
 import type { TrackPick } from "@/models/trackPicks";
 
@@ -24,6 +25,14 @@ export const queryClient = new QueryClient({
       const profileWrite = key[0] === "profileWrite";
 
       if (!albumWrite && !profileWrite) return;
+
+      if (profileWrite) {
+        await syncProfileCache(queryClient, userId, _data);
+
+        if (useAuthStore.getState().user?.id !== userId) {
+          return;
+        }
+      }
 
       const deleting =
         albumWrite &&

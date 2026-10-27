@@ -10,6 +10,7 @@ import {
 } from "./validation.ts";
 import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
 
+import type { CatalogAlbum } from "./models/spotify.ts";
 import type { Database } from "./models/database.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -31,6 +32,26 @@ const origins = new Set(
 );
 
 const market = Deno.env.get("SPOTIFY_MARKET") ?? "MX";
+
+async function cacheAlbum(album: CatalogAlbum): Promise<void> {
+  const now = Date.now();
+
+  const { error } = await admin.from("album_cache").upsert({
+    spotify_album_id: album.id,
+    name: album.name,
+    artists: album.artists,
+    cover_url: album.coverUrl,
+    release_date: album.releaseDate,
+    release_date_precision: album.releaseDatePrecision,
+    total_tracks: album.totalTracks,
+    fetched_at: new Date(now).toISOString(),
+    expires_at: new Date(now + 6 * 60 * 60_000).toISOString(),
+  });
+
+  if (error) {
+    throw new ApiError(503, "SERVER_ERROR");
+  }
+}
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
@@ -56,7 +77,10 @@ Deno.serve(async (request) => {
   }
 
   function reply(body: unknown, status = 200): Response {
-    return new Response(JSON.stringify(body), { status, headers });
+    return new Response(JSON.stringify(body), {
+      status,
+      headers,
+    });
   }
 
   try {
@@ -65,7 +89,10 @@ Deno.serve(async (request) => {
     }
 
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers });
+      return new Response(null, {
+        status: 204,
+        headers,
+      });
     }
 
     if (request.method !== "POST") {
@@ -80,7 +107,9 @@ Deno.serve(async (request) => {
 
     const userClient = createClient<Database>(url, publicKey, {
       global: {
-        headers: { Authorization: authorization },
+        headers: {
+          Authorization: authorization,
+        },
       },
       auth: {
         persistSession: false,
@@ -124,17 +153,23 @@ Deno.serve(async (request) => {
 
     if (!budget.allowed) {
       userRateLimited = true;
+
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
     }
 
     if (input.action === "detail") {
       const parameters = new URLSearchParams({ market });
+
       const raw = await getSpotifyJson(
         `albums/${input.albumId}?${parameters}`,
         admin,
       );
 
-      return reply(normalizeAlbumDetail(raw));
+      const detail = normalizeAlbumDetail(raw);
+
+      await cacheAlbum(detail.album);
+
+      return reply(detail);
     }
 
     if (input.action === "tracks") {
@@ -179,9 +214,14 @@ Deno.serve(async (request) => {
                 "spotify_album_id",
                 albums.map((album) => album.id),
               )
-          : { data: [], error: null };
+          : {
+              data: [],
+              error: null,
+            };
 
-      if (error) throw new ApiError(503, "SERVER_ERROR");
+      if (error) {
+        throw new ApiError(503, "SERVER_ERROR");
+      }
 
       const statuses = new Map(
         saved?.map((item) => [item.spotify_album_id, item.status]) ?? [],
@@ -228,7 +268,9 @@ Deno.serve(async (request) => {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
-    if (cacheError) throw new ApiError(503, "SERVER_ERROR");
+    if (cacheError) {
+      throw new ApiError(503, "SERVER_ERROR");
+    }
 
     const cachedAlbum = catalogAlbumSchema.safeParse(
       cached
@@ -255,21 +297,7 @@ Deno.serve(async (request) => {
         );
 
     if (!cachedAlbum.success) {
-      const now = Date.now();
-
-      const { error } = await admin.from("album_cache").upsert({
-        spotify_album_id: album.id,
-        name: album.name,
-        artists: album.artists,
-        cover_url: album.coverUrl,
-        release_date: album.releaseDate,
-        release_date_precision: album.releaseDatePrecision,
-        total_tracks: album.totalTracks,
-        fetched_at: new Date(now).toISOString(),
-        expires_at: new Date(now + 6 * 60 * 60_000).toISOString(),
-      });
-
-      if (error) throw new ApiError(503, "SERVER_ERROR");
+      await cacheAlbum(album);
     }
 
     const { data: saved, error: saveError } = await userClient.rpc(
@@ -286,6 +314,7 @@ Deno.serve(async (request) => {
 
     if (saveError?.message === "RATE_LIMITED") {
       userRateLimited = true;
+
       throw new ApiError(429, "RATE_LIMITED", 60);
     }
 
