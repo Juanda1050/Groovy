@@ -1,31 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
+import { useLibraryView } from "@/features/library/hooks/useLibraryView";
 import { getLibrary } from "@/features/library/services/libraryService";
 
 import type { LibraryFilter } from "@/models/libraryView";
 
 export function useLibrary(active = true) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const view = useLibraryView();
 
-  const [filter, setFilter] = useState<LibraryFilter>("all");
+  const filter = view.filter;
   const pageSize = 10;
-
-  const [navigation, setNavigation] = useState({
-    userId,
-    page: 1,
-  });
-
-  const requestedPage = navigation.userId === userId ? navigation.page : 1;
+  const requestedPage = view.albumPage;
 
   const query = useQuery({
     queryKey: ["library", userId, filter, requestedPage, pageSize],
-
     enabled: active && userId !== null,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
-
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -55,36 +48,27 @@ export function useLibrary(active = true) {
     (query.data?.items.length ?? 0) > 0;
 
   function onFilterChange(next: LibraryFilter): void {
-    if (next === filter || query.isFetching) {
-      return;
-    }
+    if (next === filter || query.isFetching) return;
 
-    setFilter(next);
-    setNavigation({
-      userId,
-      page: 1,
+    view.onChange({
+      filter: next,
+      albumPage: 1,
     });
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) {
-      return;
-    }
+    if (query.isFetching || !hasPrevious) return;
 
-    setNavigation({
-      userId,
-      page: pageNumber - 1,
+    view.onChange({
+      albumPage: pageNumber - 1,
     });
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) {
-      return;
-    }
+    if (query.isFetching || !hasNext) return;
 
-    setNavigation({
-      userId,
-      page: pageNumber + 1,
+    view.onChange({
+      albumPage: pageNumber + 1,
     });
   }
 
@@ -109,9 +93,8 @@ export function useLibrary(active = true) {
     onNext,
 
     onFirst: () => {
-      setNavigation({
-        userId,
-        page: 1,
+      view.onChange({
+        albumPage: 1,
       });
     },
 

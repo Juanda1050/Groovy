@@ -5,8 +5,6 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 
-import { useState } from "react";
-
 import { useAuthStore } from "@/features/auth/stores/authStore";
 
 import {
@@ -16,6 +14,7 @@ import {
 } from "@/features/catalog/lib/albumQueries";
 
 import { getAlbumTracks } from "@/features/catalog/services/spotifyService";
+import { useLibraryView } from "@/features/library/hooks/useLibraryView";
 import { getLibraryTracks } from "@/features/library/services/trackPicksService";
 
 import type { AlbumTracksPage } from "@/models/albumDetail";
@@ -74,10 +73,8 @@ async function loadTrackMetadata(
             result[`${albumId}:${track.id}`] = {
               albumName: detail.album.name,
               coverUrl: detail.album.coverUrl,
-
               track: {
                 ...track,
-
                 durationLabel:
                   `${Math.floor(seconds / 60)}:` +
                   String(seconds % 60).padStart(2, "0"),
@@ -118,10 +115,8 @@ async function loadTrackMetadata(
             cached ??
             (await client.fetchQuery({
               queryKey: ["albumTracksPage", userId, albumId, currentOffset],
-
               queryFn: ({ signal: pageSignal }) =>
                 getAlbumTracks(albumId, currentOffset, pageSignal),
-
               staleTime: albumStaleTime,
               gcTime: albumGcTime,
               retry: false,
@@ -152,28 +147,19 @@ async function loadTrackMetadata(
 
 export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
-
   const client = useQueryClient();
+  const view = useLibraryView();
+
   const pageSize = 10;
+  const pageField = preference === "favorite" ? "likesPage" : "dislikesPage";
 
-  const [navigation, setNavigation] = useState({
-    userId,
-    preference,
-    page: 1,
-  });
-
-  const requestedPage =
-    navigation.userId === userId && navigation.preference === preference
-      ? navigation.page
-      : 1;
+  const requestedPage = view[pageField];
 
   const query = useQuery({
     queryKey: ["likedAlbums", userId, preference, requestedPage, pageSize],
-
     enabled: active && userId !== null,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
-
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -195,13 +181,10 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
 
   const metadata = useQuery({
     queryKey: ["libraryTrackMetadata", userId, identifiers],
-
     enabled: active && userId !== null && rows.length > 0,
-
     staleTime: albumStaleTime,
     gcTime: albumGcTime,
     retry: false,
-
     queryFn: ({ signal }) => {
       if (!userId) {
         throw new Error("AUTH_REQUIRED");
@@ -227,26 +210,18 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
   const hasNext = pageNumber > 0 && pageNumber < pageCount && rows.length > 0;
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) {
-      return;
-    }
+    if (query.isFetching || !hasPrevious) return;
 
-    setNavigation({
-      userId,
-      preference,
-      page: pageNumber - 1,
+    view.onChange({
+      [pageField]: pageNumber - 1,
     });
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) {
-      return;
-    }
+    if (query.isFetching || !hasNext) return;
 
-    setNavigation({
-      userId,
-      preference,
-      page: pageNumber + 1,
+    view.onChange({
+      [pageField]: pageNumber + 1,
     });
   }
 
@@ -258,7 +233,6 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     pageNumber,
 
     metadataLoading: rows.length > 0 && metadata.isFetching,
-
     metadataError: metadata.isError,
 
     isPending: query.isPending,
@@ -272,10 +246,8 @@ export function useLibraryTracks(preference: TrackPreference, active: boolean) {
     onNext,
 
     onFirst: () => {
-      setNavigation({
-        userId,
-        preference,
-        page: 1,
+      view.onChange({
+        [pageField]: 1,
       });
     },
 

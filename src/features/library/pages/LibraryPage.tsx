@@ -19,6 +19,7 @@ import { TrackRow } from "@/features/library/components/TrackRow";
 import { useAlbumRemoval } from "@/features/library/hooks/useAlbumStatus";
 import { useLibrary } from "@/features/library/hooks/useLibrary";
 import { useLibraryTracks } from "@/features/library/hooks/useLibraryTracks";
+import { useLibraryView } from "@/features/library/hooks/useLibraryView";
 
 import { RecordLoader } from "@/shared/components/RecordLoader";
 import { Button } from "@/shared/components/ui/button";
@@ -33,10 +34,8 @@ import type {
 export default function LibraryPage() {
   const { t, i18n } = useTranslation("library");
 
-  const [section, setSection] = useState<LibrarySection>("albums");
-
-  const [trackSection, setTrackSection] =
-    useState<Exclude<LibrarySection, "albums">>("likes");
+  const view = useLibraryView();
+  const { section, trackSection } = view;
 
   const [albumToRemove, setAlbumToRemove] = useState<LibraryItem | null>(null);
 
@@ -77,14 +76,10 @@ export default function LibraryPage() {
   function onSectionChange(next: LibrarySection): void {
     if (next === section) return;
 
-    library.onFirst();
-    tracks.onFirst();
-
-    if (next !== "albums") {
-      setTrackSection(next);
-    }
-
-    setSection(next);
+    view.onChange({
+      section: next,
+      ...(next !== "albums" ? { trackSection: next } : {}),
+    });
   }
 
   function onRequestRemove(item: LibraryItem) {
@@ -289,11 +284,9 @@ export default function LibraryPage() {
       {!library.needsSignIn && !current.isPending && !current.isError && (
         <nav
           aria-label={t("pagination.label")}
-          className={`
-              flex min-w-0 items-center justify-center
-              gap-2 pt-3
-              ${showingTracks ? "" : "border-t border-border/40"}
-            `}
+          className={`flex min-w-0 items-center justify-center gap-2 pt-3 ${
+            showingTracks ? "" : "border-t border-border/40"
+          }`}
         >
           <div className="flex items-center gap-1">
             <Button

@@ -1,6 +1,14 @@
-import { catalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
-import { createSignal,requireUser } from "@/features/library/services/libraryService";
-import type { AlbumFeedCursor,AlbumPost,FeedAlbum,FeedProfile } from "@/models/library";
+import { getAlbumMetadata } from "@/features/catalog/services/albumMetadataService";
+import {
+  createSignal,
+  requireUser,
+} from "@/features/library/services/libraryService";
+import type {
+  AlbumFeedCursor,
+  AlbumPost,
+  FeedAlbum,
+  FeedProfile,
+} from "@/models/library";
 import { supabase } from "@/shared/lib/supabaseClient";
 
 export async function getAlbumFeed(
@@ -56,7 +64,6 @@ export async function getAlbumFeed(
 
   return {
     items,
-
     nextCursor:
       rows.length > 10 && last
         ? {
@@ -90,41 +97,15 @@ export async function getFeedMetadata(
           error: null,
         }),
 
-    albumIds.length
-      ? supabase
-          .from("album_cache")
-          .select("spotify_album_id, name, cover_url, artists")
-          .in("spotify_album_id", albumIds)
-          .abortSignal(createSignal(signal))
-      : Promise.resolve({
-          data: [],
-          error: null,
-        }),
+    getAlbumMetadata(userId, albumIds, signal),
   ]);
 
   if (profiles.error) {
     throw profiles.error;
   }
 
-  if (albums.error) {
-    throw albums.error;
-  }
-
   return {
     profiles: profiles.data ?? [],
-
-    albums: (albums.data ?? []).map((album) => {
-      const artists = catalogAlbumSchema.shape.artists.safeParse(album.artists);
-
-      return {
-        id: album.spotify_album_id,
-        name: album.name,
-        coverUrl: album.cover_url,
-
-        artists: artists.success
-          ? artists.data.map((artist) => artist.name)
-          : [],
-      };
-    }),
+    albums,
   };
 }

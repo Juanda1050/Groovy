@@ -80,11 +80,14 @@ export interface LibraryCardProps {
   item: LibraryItem;
   ratingLabel: string | null;
   labels: LibraryCardLabels;
+  onRemove: (item: LibraryItem) => void;
 }
 
-export interface LibraryCardProps {
-  item: LibraryItem;
-  ratingLabel: string | null;
-  labels: LibraryCardLabels;
-  onRemove: (item: LibraryItem) => void;
+export interface LibraryViewState {
+  section: LibrarySection;
+  trackSection: Exclude<LibrarySection, "albums">;
+  filter: LibraryFilter;
+  albumPage: number;
+  likesPage: number;
+  dislikesPage: number;
 }
