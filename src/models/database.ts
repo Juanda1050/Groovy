@@ -182,6 +182,71 @@ export type Database = {
           },
         ]
       }
+      artist_cache: {
+        Row: {
+          expires_at: string
+          fetched_at: string
+          image_height: number
+          image_url: string
+          image_width: number
+          name: string
+          spotify_artist_id: string
+        }
+        Insert: {
+          expires_at: string
+          fetched_at?: string
+          image_height: number
+          image_url: string
+          image_width: number
+          name: string
+          spotify_artist_id: string
+        }
+        Update: {
+          expires_at?: string
+          fetched_at?: string
+          image_height?: number
+          image_url?: string
+          image_width?: number
+          name?: string
+          spotify_artist_id?: string
+        }
+        Relationships: []
+      }
+      music_onboarding: {
+        Row: {
+          album_ids: string[]
+          artist_ids: string[]
+          completed_at: string
+          known_album_ids: string[]
+          track_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          album_ids?: string[]
+          artist_ids: string[]
+          completed_at?: string
+          known_album_ids?: string[]
+          track_ids?: string[]
+          user_id: string
+        }
+        Update: {
+          album_ids?: string[]
+          artist_ids?: string[]
+          completed_at?: string
+          known_album_ids?: string[]
+          track_ids?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_onboarding_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_follows: {
         Row: {
           created_at: string
@@ -286,6 +351,47 @@ export type Database = {
           },
         ]
       }
+      user_music_preferences: {
+        Row: {
+          created_at: string
+          entity_type: string
+          is_favorite: boolean
+          revision: number
+          sentiment: string | null
+          spotify_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          is_favorite?: boolean
+          revision?: number
+          sentiment?: string | null
+          spotify_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          is_favorite?: boolean
+          revision?: number
+          sentiment?: string | null
+          spotify_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_music_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
           locale: string
@@ -376,6 +482,28 @@ export type Database = {
         Returns: undefined
       }
       cleanup_expired_resources: { Args: never; Returns: Json }
+      complete_music_onboarding: {
+        Args: {
+          p_album_ids?: string[]
+          p_artist_ids: string[]
+          p_known_album_ids?: string[]
+          p_track_ids?: string[]
+        }
+        Returns: {
+          album_ids: string[]
+          artist_ids: string[]
+          completed_at: string
+          known_album_ids: string[]
+          track_ids: string[]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "music_onboarding"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       consume_request_budget: {
         Args: {
           p_bucket_key: string
@@ -650,6 +778,31 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "user_albums"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_music_preference: {
+        Args: {
+          p_action: string
+          p_active: boolean
+          p_entity_type: string
+          p_expected_revision: number
+          p_spotify_id: string
+        }
+        Returns: {
+          created_at: string
+          entity_type: string
+          is_favorite: boolean
+          revision: number
+          sentiment: string | null
+          spotify_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_music_preferences"
           isOneToOne: true
           isSetofReturn: false
         }

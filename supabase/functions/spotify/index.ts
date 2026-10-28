@@ -9,12 +9,15 @@ import {
   searchSchema,
 } from "./validation.ts";
 import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
+import { getArtists } from "./artists.ts";
 
 import type { CatalogAlbum } from "./models/spotify.ts";
 import type { Database } from "./models/database.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
+
 const publicKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const admin = createClient<Database>(url, serviceKey, {
@@ -55,6 +58,7 @@ async function cacheAlbum(album: CatalogAlbum): Promise<void> {
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
+
   let userRateLimited = false;
 
   const headers = new Headers({
@@ -65,11 +69,14 @@ Deno.serve(async (request) => {
 
   if (origin && origins.has(origin)) {
     headers.set("Access-Control-Allow-Origin", origin);
+
     headers.set(
       "Access-Control-Allow-Headers",
       "authorization, apikey, content-type, x-client-info",
     );
+
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+
     headers.set(
       "Access-Control-Expose-Headers",
       "Retry-After, X-Groovy-Rate-Limit",
@@ -138,7 +145,7 @@ Deno.serve(async (request) => {
 
     const { data: authorizationData, error: authorizationError } =
       await userClient.rpc("authorize_spotify_action", {
-        p_action: input.action,
+        p_action: input.action === "artists" ? "search" : input.action,
       });
 
     if (authorizationError?.code === "PT401") {
@@ -157,8 +164,14 @@ Deno.serve(async (request) => {
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
     }
 
+    if (input.action === "artists") {
+      return reply(await getArtists(input, admin, market));
+    }
+
     if (input.action === "detail") {
-      const parameters = new URLSearchParams({ market });
+      const parameters = new URLSearchParams({
+        market,
+      });
 
       const raw = await getSpotifyJson(
         `albums/${input.albumId}?${parameters}`,
@@ -201,7 +214,9 @@ Deno.serve(async (request) => {
       );
 
       const albums = raw.albums.items.map(normalizeAlbum);
+
       const total = Math.min(raw.albums.total, 1000);
+
       const next = input.offset + input.limit;
 
       const { data: saved, error } =
@@ -232,9 +247,11 @@ Deno.serve(async (request) => {
           ...album,
           libraryStatus: statuses.get(album.id) ?? null,
         })),
+
         total,
         offset: input.offset,
         limit: input.limit,
+
         nextOffset:
           raw.albums.next && albums.length > 0 && next + input.limit <= 1000
             ? next

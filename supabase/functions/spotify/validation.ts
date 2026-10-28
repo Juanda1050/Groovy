@@ -20,15 +20,26 @@ const searchRequestSchema = z
 
 export const requestSchema = z.discriminatedUnion("action", [
   searchRequestSchema,
+
+  z.object({
+    action: z.literal("artists"),
+    query: z.string().trim().min(1).max(120).optional(),
+    offset: z.number().int().min(0).max(990).multipleOf(10).default(0),
+    seed: z.number().int().min(0).max(4294967295).default(0),
+    batch: z.number().int().min(0).max(5).default(0),
+  }),
+
   z.object({
     action: z.literal("save"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
     status: z.enum(["pending", "listened"]),
   }),
+
   z.object({
     action: z.literal("detail"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
   }),
+
   z.object({
     action: z.literal("tracks"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),

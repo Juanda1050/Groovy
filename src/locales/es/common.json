@@ -41,5 +41,14 @@
   "session": {
     "loading": "Preparando tu espacio…",
     "connectionError": "No pudimos comprobar tu sesión. Revisa tu conexión e inténtalo de nuevo."
+  },
+  "musicPreferences": {
+    "errors": {
+      "session": "Inicia sesión nuevamente para guardar tus preferencias.",
+      "conflict": "La preferencia cambió en otra pestaña o dispositivo. Actualizamos los datos; revisa tu selección antes de reintentar.",
+      "favoriteRequiresLike": "Quita la canción de favoritas antes de retirar su like.",
+      "rate": "Espera un momento antes de guardar otra preferencia.",
+      "save": "No pudimos confirmar el cambio. Revisa el estado actualizado antes de reintentar."
+    }
   }
 }

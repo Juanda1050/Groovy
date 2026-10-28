@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
 import { ApiError } from "./http.ts";
 import type { Database } from "./models/database.ts";
 import type { CachedSpotifyToken } from "./models/spotify.ts";
@@ -9,6 +10,7 @@ let token: CachedSpotifyToken | null = null;
 let tokenRequest: Promise<string> | null = null;
 
 const cache = new Map<string, SpotifyCacheEntry>();
+
 const pending = new Map<string, Promise<unknown>>();
 
 const cacheTtl = 10 * 60_000;
@@ -25,7 +27,9 @@ const tokenSchema = z.object({
 function removeCached(path: string): void {
   const entry = cache.get(path);
 
-  if (!entry) return;
+  if (!entry) {
+    return;
+  }
 
   cacheBytes -= entry.bytes;
   cache.delete(path);
@@ -34,7 +38,9 @@ function removeCached(path: string): void {
 function readCached(path: string): SpotifyCacheEntry | undefined {
   const entry = cache.get(path);
 
-  if (!entry) return undefined;
+  if (!entry) {
+    return undefined;
+  }
 
   if (entry.expiresAt <= Date.now()) {
     removeCached(path);
@@ -50,7 +56,9 @@ function readCached(path: string): SpotifyCacheEntry | undefined {
 function storeCached(path: string, value: unknown): void {
   const bytes = new TextEncoder().encode(JSON.stringify(value)).byteLength;
 
-  if (bytes > maxBytes) return;
+  if (bytes > maxBytes) {
+    return;
+  }
 
   for (const [key, entry] of cache) {
     if (entry.expiresAt <= Date.now()) {
@@ -63,7 +71,9 @@ function storeCached(path: string, value: unknown): void {
   while (cache.size >= maxEntries || cacheBytes + bytes > maxBytes) {
     const oldest = cache.keys().next().value;
 
-    if (oldest === undefined) break;
+    if (oldest === undefined) {
+      break;
+    }
 
     removeCached(oldest);
   }
@@ -79,6 +89,7 @@ function storeCached(path: string, value: unknown): void {
 
 async function reserve(admin: SupabaseClient<Database>): Promise<void> {
   const { data, error } = await admin.rpc("reserve_spotify_request");
+
   const budget = data?.[0];
 
   if (error || !budget) {
@@ -121,7 +132,9 @@ async function checkResponse(
       p_seconds: Math.min(86400, seconds),
     });
 
-    if (error) throw new ApiError(503, "SERVER_ERROR");
+    if (error) {
+      throw new ApiError(503, "SERVER_ERROR");
+    }
 
     throw new ApiError(429, quota ? "SPOTIFY_QUOTA" : "RATE_LIMITED", seconds);
   }
@@ -140,10 +153,13 @@ async function getToken(admin: SupabaseClient<Database>): Promise<string> {
     return token.value;
   }
 
-  if (tokenRequest) return tokenRequest;
+  if (tokenRequest) {
+    return tokenRequest;
+  }
 
   tokenRequest = (async () => {
     const id = Deno.env.get("SPOTIFY_CLIENT_ID");
+
     const secret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
 
     if (!id || !secret) {
@@ -189,6 +205,7 @@ async function fetchSpotifyJson(
 ): Promise<unknown> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const accessToken = await getToken(admin);
+
     await reserve(admin);
 
     const response = await fetch(`https://api.spotify.com/v1/${path}`, {
@@ -215,7 +232,10 @@ export async function getSpotifyJson(
   path: string,
   admin: SupabaseClient<Database>,
 ): Promise<unknown> {
-  const cacheable = /^albums\/[A-Za-z0-9]{22}(?:\/tracks)?\?/.test(path);
+  const cacheable =
+    /^albums\/[A-Za-z0-9]{22}(?:\/tracks)?\?/.test(path) ||
+    (path.startsWith("search?") &&
+      new URLSearchParams(path.slice(7)).get("type") === "artist");
 
   if (!cacheable) {
     return fetchSpotifyJson(path, admin);
@@ -223,21 +243,29 @@ export async function getSpotifyJson(
 
   const cached = readCached(path);
 
-  if (cached) return cached.value;
+  if (cached) {
+    return cached.value;
+  }
 
   const existing = pending.get(path);
 
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
 
   const request = (async () => {
     const value = await fetchSpotifyJson(path, admin);
+
     storeCached(path, value);
+
     return value;
   })();
 
   const tracked = pending.size < 32;
 
-  if (tracked) pending.set(path, request);
+  if (tracked) {
+    pending.set(path, request);
+  }
 
   try {
     return await request;
