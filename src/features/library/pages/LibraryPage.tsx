@@ -26,6 +26,7 @@ import type {
   LibraryItem,
   LibrarySection,
 } from "@/models/libraryView";
+import { PageSkeleton } from "@/shared/components/PageSkeleton";
 import { RecordLoader } from "@/shared/components/RecordLoader";
 import { Button } from "@/shared/components/ui/button";
 
@@ -48,6 +49,7 @@ export default function LibraryPage() {
 
   const options: readonly LibraryFilterOption[] = [
     { value: "all", label: t("filters.all") },
+    { value: "favorites", label: t("filters.favorites") },
     { value: "pending", label: t("filters.pending") },
     { value: "listened", label: t("filters.listened") },
     { value: "rated", label: t("filters.rated") },
@@ -80,7 +82,7 @@ export default function LibraryPage() {
   }
 
   function onRequestRemove(item: LibraryItem) {
-    if (removal.saving) return;
+    if (removal.saving || item.status === null) return;
     removal.onReset();
     setAlbumToRemove(item);
   }
@@ -94,7 +96,6 @@ export default function LibraryPage() {
   async function onConfirmRemoval() {
     const removed = await removal.onRemove();
     if (!removed) return;
-
     setAlbumToRemove(null);
     removal.onReset();
   }
@@ -110,7 +111,6 @@ export default function LibraryPage() {
             {t("description")}
           </p>
         </div>
-
         <Link
           to="/"
           className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 px-4 text-xs font-medium text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -201,15 +201,34 @@ export default function LibraryPage() {
             />
           )}
 
+          {!showingTracks && library.preferenceError && (
+            <div role="alert" className="flex flex-wrap items-center gap-2">
+              <p className="text-xs text-destructive">
+                {t("favorites.loadError")}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={library.onPreferenceRetry}
+              >
+                {t("actions.retry")}
+              </Button>
+            </div>
+          )}
+
           {library.needsSignIn ? (
             <p className="text-sm text-muted-foreground">{t("localPreview")}</p>
           ) : current.isPending ? (
-            <div
-              role="status"
-              className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground"
-            >
-              <RecordLoader size="sm" />
-              {t("loading")}
+            <div role="status" aria-live="polite">
+              {showingTracks ? (
+                <div className="flex justify-center py-12">
+                  <RecordLoader size="sm" />
+                </div>
+              ) : (
+                <PageSkeleton variant="albums" />
+              )}
+              <span className="sr-only">{t("loading")}</span>
             </div>
           ) : current.isError ? (
             <div role="alert" className="space-y-3 py-6">
@@ -221,13 +240,21 @@ export default function LibraryPage() {
           ) : current.items.length === 0 ? (
             <div className="px-4 py-12 text-center">
               <h2 className="text-base font-medium">
-                {t(showingTracks ? "tracks.emptyTitle" : "empty.title")}
+                {t(
+                  showingTracks
+                    ? "tracks.emptyTitle"
+                    : library.filter === "favorites"
+                      ? "favorites.emptyTitle"
+                      : "empty.title",
+                )}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {t(
                   showingTracks
                     ? "tracks.emptyDescription"
-                    : "empty.description",
+                    : library.filter === "favorites"
+                      ? "favorites.emptyDescription"
+                      : "empty.description",
                 )}
               </p>
             </div>
@@ -251,7 +278,6 @@ export default function LibraryPage() {
                   </Button>
                 </div>
               )}
-
               <ul className="divide-y divide-border/40">
                 {tracks.items.map((item) => (
                   <TrackRow
@@ -275,6 +301,12 @@ export default function LibraryPage() {
                   ratingLabel={
                     item.rating === null ? null : formatter.format(item.rating)
                   }
+                  favorite={
+                    library.preferences?.[item.spotifyAlbumId]?.is_favorite ??
+                    library.filter === "favorites"
+                  }
+                  favoriteDisabled={library.favoriteDisabled}
+                  onFavoriteChange={library.onFavoriteChange}
                   onRemove={onRequestRemove}
                 />
               ))}
@@ -300,7 +332,6 @@ export default function LibraryPage() {
                 >
                   <ChevronLeft aria-hidden="true" className="size-4" />
                 </Button>
-
                 <span
                   role="status"
                   aria-live="polite"
@@ -312,7 +343,6 @@ export default function LibraryPage() {
                     total: current.pageCount,
                   })}
                 </span>
-
                 <Button
                   type="button"
                   variant="ghost"

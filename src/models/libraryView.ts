@@ -2,6 +2,7 @@ import type { Database } from "@/models/database";
 
 export type LibraryFilter =
   | "all"
+  | "favorites"
   | "pending"
   | "listened"
   | "rated"
@@ -27,7 +28,7 @@ export interface LibraryCursor {
 export interface LibraryItem {
   id: string;
   spotifyAlbumId: string;
-  status: "pending" | "listened";
+  status: "pending" | "listened" | null;
   rating: number | null;
   hasReview: boolean;
   title: string | null;
@@ -83,6 +84,9 @@ export interface LibraryCardProps {
   ratingLabel: string | null;
   labels: LibraryCardLabels;
   onRemove: (item: LibraryItem) => void;
+  favorite: boolean;
+  favoriteDisabled: boolean;
+  onFavoriteChange: (spotifyId: string, active: boolean) => void;
 }
 
 export interface LibraryViewState {

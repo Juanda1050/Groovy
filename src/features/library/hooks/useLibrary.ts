@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { useLibraryView } from "@/features/library/hooks/useLibraryView";
+import { getFavoriteLibraryAlbums } from "@/features/library/services/libraryFavoriteAlbumsService";
 import { getLibrary } from "@/features/library/services/libraryService";
-
+import { useMusicPreferences } from "@/features/preferences/hooks/useMusicPreferences";
 import type { LibraryFilter } from "@/models/libraryView";
 
 export function useLibrary(active = true) {
@@ -19,57 +20,59 @@ export function useLibrary(active = true) {
     enabled: active && userId !== null,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    retry: false,
     queryFn: ({ signal }) => {
-      if (!userId) {
-        throw new Error("AUTH_REQUIRED");
-      }
+      if (!userId) throw new Error("AUTH_REQUIRED");
 
-      return getLibrary({
+      const input = {
         userId,
         filter,
         page: requestedPage,
         pageSize,
         signal,
-      });
+      } as const;
+
+      return filter === "favorites"
+        ? getFavoriteLibraryAlbums(input)
+        : getLibrary(input);
     },
   });
 
+  const items = query.data?.items ?? [];
+  const preferences = useMusicPreferences(
+    "album",
+    active ? items.map((item) => item.spotifyAlbumId) : [],
+  );
+
   const total = query.data?.total ?? 0;
   const pageCount = Math.ceil(total / pageSize);
-
   const pageNumber =
     total === 0 ? 0 : Math.min(query.data?.page ?? requestedPage, pageCount);
 
   const hasPrevious = pageNumber > 1;
+  const hasNext = pageNumber > 0 && pageNumber < pageCount && items.length > 0;
 
-  const hasNext =
-    pageNumber > 0 &&
-    pageNumber < pageCount &&
-    (query.data?.items.length ?? 0) > 0;
+  function canNavigate(): boolean {
+    return (
+      !query.isFetching &&
+      !preferences.saving &&
+      useAuthStore.getState().user?.id === userId
+    );
+  }
 
   function onFilterChange(next: LibraryFilter): void {
-    if (next === filter || query.isFetching) return;
-
-    view.onChange({
-      filter: next,
-      albumPage: 1,
-    });
+    if (next === filter || !canNavigate()) return;
+    view.onChange({ filter: next, albumPage: 1 });
   }
 
   function onPrevious(): void {
-    if (query.isFetching || !hasPrevious) return;
-
-    view.onChange({
-      albumPage: pageNumber - 1,
-    });
+    if (!hasPrevious || !canNavigate()) return;
+    view.onChange({ albumPage: pageNumber - 1 });
   }
 
   function onNext(): void {
-    if (query.isFetching || !hasNext) return;
-
-    view.onChange({
-      albumPage: pageNumber + 1,
-    });
+    if (!hasNext || !canNavigate()) return;
+    view.onChange({ albumPage: pageNumber + 1 });
   }
 
   return {
@@ -78,28 +81,34 @@ export function useLibrary(active = true) {
     pageCount,
     pageNumber,
     total,
-    items: query.data?.items ?? [],
-
+    items,
     needsSignIn: userId === null,
     isPending: query.isPending,
-    isFetching: query.isFetching,
+    isFetching: query.isFetching || preferences.saving,
     isError: query.isError,
-
     hasPrevious,
     hasNext,
-
+    preferences: preferences.preferences,
+    preferenceError: preferences.readError,
+    favoriteDisabled: preferences.disabled,
     onFilterChange,
     onPrevious,
     onNext,
 
+    onFavoriteChange: (spotifyId: string, next: boolean) => {
+      preferences.onChange(spotifyId, "favorite", next);
+    },
+
+    onPreferenceRetry: preferences.onRetry,
+
     onFirst: () => {
-      view.onChange({
-        albumPage: 1,
-      });
+      if (canNavigate()) view.onChange({ albumPage: 1 });
     },
 
     onRetry: () => {
-      void query.refetch();
+      if (useAuthStore.getState().user?.id === userId) {
+        void query.refetch();
+      }
     },
   };
 }

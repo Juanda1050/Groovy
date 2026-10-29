@@ -20,6 +20,13 @@
     "emptyTitle": "Tus artistas favoritos tendrán su lugar aquí",
     "emptyDescription": "Los artistas que elijas como favoritos aparecerán en esta sección."
   },
+  "favorites": {
+    "add": "Marcar {{name}} como favorito",
+    "remove": "Quitar {{name}} de favoritos",
+    "loadError": "No pudimos cargar tus preferencias. Reintenta para modificar favoritos.",
+    "emptyTitle": "Hay discos que merecen su estrella",
+    "emptyDescription": "Marca un álbum como favorito y aparecerá aquí, aunque todavía no lo hayas guardado como pendiente o escuchado."
+  },
   "tracks": {
     "loading": "Cargando información de las canciones…",
     "unavailable": "Canción no disponible",
@@ -31,6 +38,7 @@
   "filters": {
     "label": "Filtros",
     "all": "Todos",
+    "favorites": "Favoritos",
     "pending": "Pendientes",
     "listened": "Escuchados",
     "rated": "Calificados",

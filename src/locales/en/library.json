@@ -20,6 +20,13 @@
     "emptyTitle": "A home for your favorite artists",
     "emptyDescription": "Artists you choose as favorites will appear here."
   },
+  "favorites": {
+    "add": "Mark {{name}} as a favorite",
+    "remove": "Remove {{name}} from favorites",
+    "loadError": "We couldn't load your preferences. Try again to change favorites.",
+    "emptyTitle": "Some albums deserve a star",
+    "emptyDescription": "Mark an album as a favorite to find it here, even if you haven't saved it as pending or listened yet."
+  },
   "tracks": {
     "loading": "Loading track information…",
     "unavailable": "Unavailable track",
@@ -31,6 +38,7 @@
   "filters": {
     "label": "Filters",
     "all": "All",
+    "favorites": "Favorites",
     "pending": "Pending",
     "listened": "Listened",
     "rated": "Rated",
