@@ -212,6 +212,39 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_page_cache: {
+        Row: {
+          blocked_until: string | null
+          cache_key: string
+          created_at: string
+          expires_at: string | null
+          fetched_at: string | null
+          lease_token: string | null
+          lease_until: string | null
+          payload: Json | null
+        }
+        Insert: {
+          blocked_until?: string | null
+          cache_key: string
+          created_at?: string
+          expires_at?: string | null
+          fetched_at?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          payload?: Json | null
+        }
+        Update: {
+          blocked_until?: string | null
+          cache_key?: string
+          created_at?: string
+          expires_at?: string | null
+          fetched_at?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          payload?: Json | null
+        }
+        Relationships: []
+      }
       music_onboarding: {
         Row: {
           album_ids: string[]
@@ -481,7 +514,17 @@ export type Database = {
         Args: { p_seconds: number }
         Returns: undefined
       }
+      claim_artist_page_cache: { Args: { p_cache_key: string }; Returns: Json }
       cleanup_expired_resources: { Args: never; Returns: Json }
+      complete_artist_page_cache: {
+        Args: {
+          p_cache_key: string
+          p_lease_token: string
+          p_payload: Json
+          p_ttl_seconds: number
+        }
+        Returns: boolean
+      }
       complete_music_onboarding: {
         Args: {
           p_album_ids?: string[]
@@ -521,6 +564,14 @@ export type Database = {
         Returns: boolean
       }
       delete_user_album: { Args: { p_user_album_id: string }; Returns: boolean }
+      fail_artist_page_cache: {
+        Args: {
+          p_cache_key: string
+          p_lease_token: string
+          p_retry_seconds: number
+        }
+        Returns: undefined
+      }
       get_album_feed: {
         Args: {
           p_before_created_at?: string

@@ -1,20 +1,45 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
 import { signOut } from "@/features/auth/services/authService";
-import { albumDetailSchema,albumTracksPageSchema } from "@/features/catalog/lib/albumDetailSchemas";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import {
+  albumDetailSchema,
+  albumTracksPageSchema,
+} from "@/features/catalog/lib/albumDetailSchemas";
 import { CatalogError } from "@/features/catalog/lib/catalogError";
-import { catalogErrorSchema,catalogPageSchema,savedCatalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
+import {
+  catalogErrorSchema,
+  catalogPageSchema,
+  savedCatalogAlbumSchema,
+} from "@/features/catalog/lib/catalogSchemas";
 import { useSpotifyNetworkStore } from "@/features/catalog/stores/spotifyNetworkStore";
 import { supabase } from "@/shared/lib/supabaseClient";
 
-import type { AlbumDetail,AlbumTracksPage } from "@/models/albumDetail";
-import type { CatalogPage,CatalogRequest,SaveCatalogAlbumInput,SavedCatalogAlbum,SpotifySearchPageSize } from "@/models/catalog";
+import type { AlbumDetail, AlbumTracksPage } from "@/models/albumDetail";
+import type {
+  CatalogPage,
+  CatalogRequest,
+  SaveCatalogAlbumInput,
+  SavedCatalogAlbum,
+  SpotifySearchPageSize,
+} from "@/models/catalog";
+import type { ArtistCatalogRequest } from "@/models/musicOnboarding";
 
-async function invokeSpotify(
-  body: CatalogRequest,
+export async function invokeSpotify(
+  body: CatalogRequest | ArtistCatalogRequest,
   signal?: AbortSignal,
 ): Promise<unknown> {
   signal?.throwIfAborted();
+
+  const requestedUserId = useAuthStore.getState().user?.id ?? null;
+
+  function assertCurrent(): void {
+    signal?.throwIfAborted();
+
+    if ((useAuthStore.getState().user?.id ?? null) !== requestedUserId) {
+      throw new CatalogError("UNAUTHORIZED");
+    }
+  }
 
   const network = useSpotifyNetworkStore.getState();
   const remaining = network.blockedUntil - Date.now();
@@ -24,6 +49,7 @@ async function invokeSpotify(
   }
 
   const timeout = AbortSignal.timeout(12_000);
+
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
 
   const { data, error } = await supabase.functions.invoke<unknown>("spotify", {
@@ -31,7 +57,7 @@ async function invokeSpotify(
     signal: requestSignal,
   });
 
-  signal?.throwIfAborted();
+  assertCurrent();
 
   if (error instanceof FunctionsHttpError) {
     const response: unknown = error.context;
@@ -47,6 +73,8 @@ async function invokeSpotify(
         : null;
 
     const parsed = catalogErrorSchema.safeParse(payload);
+
+    assertCurrent();
 
     const header =
       response instanceof Response
@@ -101,7 +129,15 @@ export async function searchAlbums(
   limit: SpotifySearchPageSize = 10,
 ): Promise<CatalogPage> {
   return catalogPageSchema.parse(
-    await invokeSpotify({ action: "search", query, offset, limit }, signal),
+    await invokeSpotify(
+      {
+        action: "search",
+        query,
+        offset,
+        limit,
+      },
+      signal,
+    ),
   );
 }
 
@@ -109,7 +145,10 @@ export async function saveCatalogAlbum(
   input: SaveCatalogAlbumInput,
 ): Promise<SavedCatalogAlbum> {
   return savedCatalogAlbumSchema.parse(
-    await invokeSpotify({ action: "save", ...input }),
+    await invokeSpotify({
+      action: "save",
+      ...input,
+    }),
   );
 }
 
@@ -118,7 +157,13 @@ export async function getAlbumDetail(
   signal: AbortSignal,
 ): Promise<AlbumDetail> {
   return albumDetailSchema.parse(
-    await invokeSpotify({ action: "detail", albumId }, signal),
+    await invokeSpotify(
+      {
+        action: "detail",
+        albumId,
+      },
+      signal,
+    ),
   );
 }
 
@@ -128,6 +173,13 @@ export async function getAlbumTracks(
   signal: AbortSignal,
 ): Promise<AlbumTracksPage> {
   return albumTracksPageSchema.parse(
-    await invokeSpotify({ action: "tracks", albumId, offset }, signal),
+    await invokeSpotify(
+      {
+        action: "tracks",
+        albumId,
+        offset,
+      },
+      signal,
+    ),
   );
 }
