@@ -1,8 +1,13 @@
 {
   "eyebrow": "Descubre música",
-  "title": "Tu próximo álbum favorito.",
-  "description": "Encuentra ese disco que tienes en mente y guárdalo para escucharlo después.",
-  "searchLabel": "Buscar álbumes o artistas",
+  "title": "Tu mundo musical sigue creciendo.",
+  "description": "Encuentra discos para escuchar y artistas que merecen un lugar entre tus favoritos.",
+  "sections": {
+    "label": "Qué quieres descubrir",
+    "albums": "Álbumes",
+    "artists": "Artistas"
+  },
+  "searchLabel": "Buscar álbumes por título o artista",
   "searchPlaceholder": "Busca un álbum o artista",
   "results": "Álbumes",
   "loading": "Buscando álbumes…",
@@ -11,6 +16,16 @@
   "initial": {
     "title": "Todo empieza con un álbum",
     "description": "Busca por título o artista y empieza a construir tu colección."
+  },
+  "artists": {
+    "add": "Añadir artistas",
+    "search": "Buscar artistas",
+    "placeholder": "¿Qué artista tienes en mente?",
+    "loading": "Buscando artistas…",
+    "empty": "No encontramos artistas con una fotografía disponible para esta búsqueda. Prueba otro nombre.",
+    "signInRequired": "Inicia sesión para buscar artistas.",
+    "initialTitle": "Siempre hay espacio para otro favorito",
+    "initialDescription": "Busca un artista y toca su estrella para añadirlo a tus favoritos."
   },
   "actions": {
     "save": "Guardar como pendiente",

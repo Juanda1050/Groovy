@@ -120,4 +120,7 @@ export interface GetLibraryArtistsInput {
 
 export interface LibraryArtistCardProps {
   artist: LibraryArtist;
+  favorite: boolean;
+  disabled: boolean;
+  onFavoriteChange: (id: string, active: boolean) => void;
 }

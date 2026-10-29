@@ -667,6 +667,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_album_collection: {
+        Args: { p_filter?: string; p_page?: number }
+        Returns: Json
+      }
       get_my_library: {
         Args: {
           p_before_created_at?: string

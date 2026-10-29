@@ -1,8 +1,13 @@
 {
   "eyebrow": "Discover music",
-  "title": "Your next favorite album.",
-  "description": "Find the record on your mind and save it for your next listening session.",
-  "searchLabel": "Search albums or artists",
+  "title": "Your musical world keeps growing.",
+  "description": "Find albums to listen to and artists who deserve a place among your favorites.",
+  "sections": {
+    "label": "What would you like to discover?",
+    "albums": "Albums",
+    "artists": "Artists"
+  },
+  "searchLabel": "Search albums by title or artist",
   "searchPlaceholder": "Search albums or artists",
   "results": "Albums",
   "loading": "Searching albums…",
@@ -11,6 +16,16 @@
   "initial": {
     "title": "It starts with an album",
     "description": "Search by title or artist and start building your collection."
+  },
+  "artists": {
+    "add": "Add artists",
+    "search": "Search artists",
+    "placeholder": "Which artist is on your mind?",
+    "loading": "Searching artists…",
+    "empty": "We couldn't find artists with an available photo for this search. Try another name.",
+    "signInRequired": "Sign in to search artists.",
+    "initialTitle": "There’s always room for another favorite",
+    "initialDescription": "Search for an artist and tap their star to add them to your favorites."
   },
   "actions": {
     "save": "Save for later",

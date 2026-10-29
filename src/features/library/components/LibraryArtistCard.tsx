@@ -3,8 +3,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { LibraryArtistCardProps } from "@/models/libraryView";
+import { Button } from "@/shared/components/ui/button";
 
-export function LibraryArtistCard({ artist }: LibraryArtistCardProps) {
+export function LibraryArtistCard({
+  artist,
+  favorite,
+  disabled,
+  onFavoriteChange,
+}: LibraryArtistCardProps) {
   const { t } = useTranslation("library");
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
@@ -13,43 +19,71 @@ export function LibraryArtistCard({ artist }: LibraryArtistCardProps) {
   const name = artist.name ?? t("artists.unavailable");
 
   return (
-    <a
-      href={`https://open.spotify.com/artist/${artist.id}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={t("artists.open", { name })}
-      className="group mx-auto flex w-full max-w-44 flex-col items-center gap-3 rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
-    >
-      <span className="relative block aspect-square w-full">
-        {imageVisible && artist.imageUrl ? (
-          <img
-            src={artist.imageUrl}
-            alt=""
-            width={300}
-            height={300}
-            loading="lazy"
-            decoding="async"
-            onError={() => setFailedUrl(artist.imageUrl)}
-            className="size-full rounded-full object-cover ring-1 ring-border transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transition-none"
+    <article className="mx-auto flex w-full max-w-44 flex-col items-center gap-3 text-center">
+      <div className="relative aspect-square w-full">
+        <a
+          href={`https://open.spotify.com/artist/${artist.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("artists.open", { name })}
+          className="group block size-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+        >
+          {imageVisible && artist.imageUrl ? (
+            <img
+              src={artist.imageUrl}
+              alt=""
+              width={300}
+              height={300}
+              loading="lazy"
+              decoding="async"
+              onError={() => setFailedUrl(artist.imageUrl)}
+              className="size-full rounded-full object-cover ring-1 ring-border transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transition-none"
+            />
+          ) : (
+            <span className="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <UserRound aria-hidden="true" className="size-10" />
+            </span>
+          )}
+        </a>
+
+        <Button
+          type="button"
+          variant={favorite ? "default" : "outline"}
+          size="icon"
+          disabled={disabled}
+          aria-pressed={favorite}
+          aria-label={t(favorite ? "favorites.remove" : "favorites.add", {
+            name,
+          })}
+          title={t(favorite ? "favorites.remove" : "favorites.add", { name })}
+          data-artist-favorite={artist.id}
+          onClick={() => onFavoriteChange(artist.id, !favorite)}
+          className={
+            favorite
+              ? "absolute right-0 bottom-0 size-11 rounded-full ring-4 ring-background"
+              : "absolute right-0 bottom-0 size-11 rounded-full bg-background text-muted-foreground ring-4 ring-background hover:text-primary"
+          }
+        >
+          <Star
+            aria-hidden="true"
+            className={favorite ? "size-4 fill-current" : "size-4"}
           />
-        ) : (
-          <span className="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <UserRound aria-hidden="true" className="size-10" />
-          </span>
-        )}
+        </Button>
+      </div>
 
-        <span className="absolute right-1 bottom-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground ring-4 ring-background">
-          <Star aria-hidden="true" className="size-3.5 fill-current" />
-        </span>
-      </span>
-
-      <span className="flex min-h-10 max-w-full items-start justify-center gap-1.5 px-1 text-sm font-medium leading-5">
+      <a
+        href={`https://open.spotify.com/artist/${artist.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={t("artists.open", { name })}
+        className="flex min-h-10 max-w-full items-start justify-center gap-1.5 rounded-sm px-1 text-sm font-medium leading-5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <span className="line-clamp-2">{name}</span>
         <ExternalLink
           aria-hidden="true"
           className="mt-1 size-3 shrink-0 text-muted-foreground"
         />
-      </span>
-    </a>
+      </a>
+    </article>
   );
 }

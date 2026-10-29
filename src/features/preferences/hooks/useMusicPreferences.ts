@@ -30,12 +30,17 @@ export function useMusicPreferences(
   const { t } = useTranslation("common");
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const client = useQueryClient();
+
   const ids = [...new Set(spotifyIds)].sort();
   const prefix = ["musicPreferences", userId, entityType];
   const writeKey = ["musicPreferenceWrite", userId];
   const writes = useIsMutating({ mutationKey: writeKey });
 
-  const [cooldown, setCooldown] = useState({ userId, until: 0 });
+  const [cooldown, setCooldown] = useState({
+    userId,
+    until: 0,
+  });
+
   const blockedUntil = cooldown.userId === userId ? cooldown.until : 0;
 
   useEffect(() => {
@@ -75,21 +80,44 @@ export function useMusicPreferences(
     refetchOnReconnect: true,
   });
 
+  async function invalidateLists(
+    ownerId: string,
+    entity: MusicEntityType,
+  ): Promise<void> {
+    if (useAuthStore.getState().user?.id !== ownerId) return;
+
+    if (entity === "album") {
+      await client.invalidateQueries({
+        queryKey: ["library", ownerId],
+      });
+    } else if (entity === "artist") {
+      await client.invalidateQueries({
+        queryKey: ["musicPreferences", ownerId, "artist", "libraryPage"],
+      });
+    }
+  }
+
   const mutation = useMutation({
     mutationKey: writeKey,
     mutationFn: setMusicPreference,
     retry: false,
 
     onMutate: async (request) => {
-      await client.cancelQueries({
-        queryKey: ["musicPreferences", request.userId, request.entityType],
-      });
+      const cancellations = [
+        client.cancelQueries({
+          queryKey: ["musicPreferences", request.userId, request.entityType],
+        }),
+      ];
 
       if (request.entityType === "album") {
-        await client.cancelQueries({
-          queryKey: ["library", request.userId, "favorites"],
-        });
+        cancellations.push(
+          client.cancelQueries({
+            queryKey: ["library", request.userId],
+          }),
+        );
       }
+
+      await Promise.all(cancellations);
     },
 
     onSuccess: async (saved, request) => {
@@ -97,7 +125,9 @@ export function useMusicPreferences(
 
       await client.cancelQueries({ queryKey });
 
-      if (useAuthStore.getState().user?.id !== request.userId) return;
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
 
       client.setQueriesData<MusicPreferenceBatch>({ queryKey }, (previous) => {
         if (!previous || !Object.hasOwn(previous, saved.spotify_id)) {
@@ -106,7 +136,9 @@ export function useMusicPreferences(
 
         const current = previous[saved.spotify_id];
 
-        if (current && current.revision > saved.revision) return previous;
+        if (current && current.revision > saved.revision) {
+          return previous;
+        }
 
         return {
           ...previous,
@@ -120,15 +152,13 @@ export function useMusicPreferences(
         timeout: 2600,
       });
 
-      if (request.entityType === "album") {
-        await client.invalidateQueries({
-          queryKey: ["library", request.userId, "favorites"],
-        });
-      }
+      await invalidateLists(request.userId, request.entityType);
     },
 
     onError: async (error, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) return;
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
 
       const code = getLibraryErrorCode(error);
       const limited = code === "RATE_LIMITED";
@@ -162,18 +192,12 @@ export function useMusicPreferences(
 
       await client.cancelQueries({ queryKey });
 
-      if (useAuthStore.getState().user?.id !== request.userId) return;
+      if (useAuthStore.getState().user?.id !== request.userId) {
+        return;
+      }
 
       await client.invalidateQueries({ queryKey });
-
-      if (
-        request.entityType === "album" &&
-        useAuthStore.getState().user?.id === request.userId
-      ) {
-        await client.invalidateQueries({
-          queryKey: ["library", request.userId, "favorites"],
-        });
-      }
+      await invalidateLists(request.userId, request.entityType);
     },
   });
 

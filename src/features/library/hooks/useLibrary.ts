@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { useLibraryView } from "@/features/library/hooks/useLibraryView";
-import { getFavoriteLibraryAlbums } from "@/features/library/services/libraryFavoriteAlbumsService";
+import { getLibraryAlbumCollection } from "@/features/library/services/libraryAlbumCollectionService";
 import { getLibrary } from "@/features/library/services/libraryService";
 import { useMusicPreferences } from "@/features/preferences/hooks/useMusicPreferences";
 import type { LibraryFilter } from "@/models/libraryView";
@@ -16,7 +16,14 @@ export function useLibrary(active = true) {
   const requestedPage = view.albumPage;
 
   const query = useQuery({
-    queryKey: ["library", userId, filter, requestedPage, pageSize],
+    queryKey: [
+      "library",
+      userId,
+      filter,
+      requestedPage,
+      pageSize,
+      "albumCollectionV1",
+    ],
     enabled: active && userId !== null,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
@@ -32,13 +39,14 @@ export function useLibrary(active = true) {
         signal,
       } as const;
 
-      return filter === "favorites"
-        ? getFavoriteLibraryAlbums(input)
+      return filter === "all" || filter === "favorites"
+        ? getLibraryAlbumCollection(input)
         : getLibrary(input);
     },
   });
 
   const items = query.data?.items ?? [];
+
   const preferences = useMusicPreferences(
     "album",
     active ? items.map((item) => item.spotifyAlbumId) : [],
@@ -62,7 +70,11 @@ export function useLibrary(active = true) {
 
   function onFilterChange(next: LibraryFilter): void {
     if (next === filter || !canNavigate()) return;
-    view.onChange({ filter: next, albumPage: 1 });
+
+    view.onChange({
+      filter: next,
+      albumPage: 1,
+    });
   }
 
   function onPrevious(): void {
@@ -102,7 +114,9 @@ export function useLibrary(active = true) {
     onPreferenceRetry: preferences.onRetry,
 
     onFirst: () => {
-      if (canNavigate()) view.onChange({ albumPage: 1 });
+      if (canNavigate()) {
+        view.onChange({ albumPage: 1 });
+      }
     },
 
     onRetry: () => {
