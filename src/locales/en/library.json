@@ -1,16 +1,24 @@
 {
   "title": "My library",
-  "description": "Your albums and music preferences.",
+  "description": "Your artists, albums and music preferences.",
   "loading": "Loading your library…",
   "error": "We couldn't load your library. Please try again.",
   "localPreview": "Sign in to access your library.",
   "sections": {
     "label": "Library content",
+    "artists": "Artists",
     "albums": "Albums",
     "likes": "Liked",
     "dislikes": "Disliked",
-    "tracks": "Tracks",
+    "tracks": "Songs",
     "trackPreferences": "Track preference"
+  },
+  "artists": {
+    "unavailable": "Saved artist",
+    "open": "Open {{name}} on Spotify in a new tab",
+    "metadataError": "Some artist details are missing. Your favorites are still saved.",
+    "emptyTitle": "A home for your favorite artists",
+    "emptyDescription": "Artists you choose as favorites will appear here."
   },
   "tracks": {
     "loading": "Loading track information…",

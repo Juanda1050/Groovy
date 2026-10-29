@@ -1,16 +1,24 @@
 {
   "title": "Mi biblioteca",
-  "description": "Tus álbumes y preferencias musicales.",
+  "description": "Tus artistas, álbumes y preferencias musicales.",
   "loading": "Cargando tu biblioteca…",
   "error": "No pudimos cargar tu biblioteca. Inténtalo de nuevo.",
   "localPreview": "Inicia sesión para consultar tu biblioteca.",
   "sections": {
     "label": "Contenido de tu biblioteca",
+    "artists": "Artistas",
     "albums": "Álbumes",
     "likes": "Me gusta",
     "dislikes": "No me gusta",
     "tracks": "Canciones",
     "trackPreferences": "Preferencia de canciones"
+  },
+  "artists": {
+    "unavailable": "Artista guardado",
+    "open": "Abrir {{name}} en Spotify en una nueva pestaña",
+    "metadataError": "Faltan los datos de algunos artistas. Tus favoritos siguen guardados.",
+    "emptyTitle": "Tus artistas favoritos tendrán su lugar aquí",
+    "emptyDescription": "Los artistas que elijas como favoritos aparecerán en esta sección."
   },
   "tracks": {
     "loading": "Cargando información de las canciones…",

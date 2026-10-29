@@ -8,7 +8,9 @@ export type LibraryFilter =
   | "unrated"
   | "reviewed";
 
-export type LibrarySection = "albums" | "likes" | "dislikes";
+export type LibrarySection = "artists" | "albums" | "likes" | "dislikes";
+
+export type LibraryTrackSection = "likes" | "dislikes";
 
 export type LibraryPageSize = 10 | 20 | 50;
 
@@ -85,9 +87,33 @@ export interface LibraryCardProps {
 
 export interface LibraryViewState {
   section: LibrarySection;
-  trackSection: Exclude<LibrarySection, "albums">;
+  trackSection: LibraryTrackSection;
   filter: LibraryFilter;
+  artistPage: number;
   albumPage: number;
   likesPage: number;
   dislikesPage: number;
+}
+
+export interface LibraryArtist {
+  id: string;
+  name: string | null;
+  imageUrl: string | null;
+}
+
+export interface LibraryArtistPage {
+  items: LibraryArtist[];
+  total: number;
+  page: number;
+  metadataError: boolean;
+}
+
+export interface GetLibraryArtistsInput {
+  userId: string;
+  page: number;
+  signal: AbortSignal;
+}
+
+export interface LibraryArtistCardProps {
+  artist: LibraryArtist;
 }
