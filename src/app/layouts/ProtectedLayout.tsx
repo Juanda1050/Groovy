@@ -13,16 +13,14 @@ import { isLocalAuthBypassEnabled } from "@/shared/lib/localDevelopment";
 
 export default function ProtectedLayout() {
   const status = useAuthStore((state) => state.status);
-
   const profile = useProfile();
 
   const onboardingRoute = useMatch("/onboarding");
-
   const musicRoute = useMatch("/musicOnboarding");
 
   const { t } = useTranslation("profile");
-
   const { t: common } = useTranslation("common");
+  const { t: onboarding } = useTranslation("onboarding");
 
   const complete =
     profile.isSuccess &&
@@ -84,7 +82,7 @@ export default function ProtectedLayout() {
     return (
       <Alert className="max-w-lg">
         <AlertDescription>
-          {common("musicOnboarding.errors.load")}
+          {onboarding("musicOnboarding.errors.load")}
         </AlertDescription>
 
         <Button

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ArtistBubbleProps } from "@/models/musicOnboarding";
@@ -11,7 +11,8 @@ export function ArtistBubble({
   onSelect,
   onUnavailable,
 }: ArtistBubbleProps) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation("onboarding");
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [loadedUrl, setLoadedUrl] = useState("");
   const [failedUrl, setFailedUrl] = useState("");
@@ -27,25 +28,65 @@ export function ArtistBubble({
   const loaded = loadedUrl === artist.imageUrl;
 
   useEffect(() => {
-    if (
-      !loaded ||
-      selected ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    const element = buttonRef.current;
+
+    if (!element || !loaded || selected) {
       return;
     }
 
-    const delay = identity % 500;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const timers = [
-      window.setTimeout(() => setFloatingStep(1), 80 + delay),
-      window.setTimeout(() => setFloatingStep(2), 2100 + delay),
-      window.setTimeout(() => setFloatingStep(3), 4200 + delay),
-      window.setTimeout(() => setFloatingStep(0), 6300 + delay),
-    ];
+    let visible = false;
+    let interval: number | undefined;
+    let delay: number | undefined;
+
+    function stop(): void {
+      window.clearInterval(interval);
+      window.clearTimeout(delay);
+      interval = undefined;
+      delay = undefined;
+    }
+
+    function synchronize(): void {
+      stop();
+
+      if (
+        !visible ||
+        motion.matches ||
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
+
+      delay = window.setTimeout(
+        () => {
+          setFloatingStep((current) => (current + 1) % 4);
+
+          interval = window.setInterval(() => {
+            setFloatingStep((current) => (current + 1) % 4);
+          }, 2400);
+        },
+        100 + (identity % 600),
+      );
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry?.isIntersecting ?? false;
+        synchronize();
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(element);
+    motion.addEventListener("change", synchronize);
+    document.addEventListener("visibilitychange", synchronize);
 
     return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
+      stop();
+      observer.disconnect();
+      motion.removeEventListener("change", synchronize);
+      document.removeEventListener("visibilitychange", synchronize);
     };
   }, [loaded, selected, identity]);
 
@@ -93,7 +134,7 @@ export function ArtistBubble({
 
   const baseClass = [
     "relative flex w-full max-w-44 flex-col items-center gap-3",
-    "transition-transform duration-[1800ms] ease-in-out",
+    "transition-transform duration-[2300ms] ease-in-out",
     "motion-reduce:transform-none motion-reduce:transition-none",
     movementClass,
   ].join(" ");
@@ -137,6 +178,7 @@ export function ArtistBubble({
 
   return (
     <Button
+      ref={buttonRef}
       type="button"
       variant="ghost"
       data-artist={artist.id}
@@ -171,7 +213,6 @@ export function ArtistBubble({
           );
 
           const index = buttons.indexOf(button);
-
           const next = buttons[index + 1] ?? buttons[index - 1];
 
           if (next) {
@@ -195,7 +236,6 @@ export function ArtistBubble({
             onLoad={() => setLoadedUrl(artist.imageUrl)}
             onError={() => {
               setFailedUrl(artist.imageUrl);
-
               onUnavailable(artist.id, artist.imageUrl);
             }}
           />

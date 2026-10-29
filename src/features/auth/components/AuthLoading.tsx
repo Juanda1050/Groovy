@@ -6,10 +6,8 @@ export function AuthLoading({ label }: AuthLoadingProps) {
     <div
       role="status"
       aria-live="polite"
-      className="
-        flex min-h-64 w-full items-center
-        justify-center px-6 py-10 sm:min-h-80
-      "
+      aria-atomic="true"
+      className="flex min-h-48 w-full items-center justify-center"
     >
       <RecordLoader size="lg" />
       <span className="sr-only">{label}</span>

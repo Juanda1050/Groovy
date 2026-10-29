@@ -9,36 +9,29 @@ export function SelectedArtists({
   disabled,
   onRemove,
 }: SelectedArtistsProps) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation("onboarding");
 
-  if (artists.length === 0) {
-    return null;
-  }
+  if (artists.length === 0) return null;
 
   return (
     <section
-      aria-labelledby="selectedArtistsTitle"
+      aria-label={t("musicOnboarding.selectedLabel")}
       className="mx-auto max-w-3xl"
     >
-      <h2
-        id="selectedArtistsTitle"
-        className="mb-4 text-center text-sm font-medium text-foreground"
-      >
-        {t("musicOnboarding.selectedLabel")}
-      </h2>
-
-      <ul className="flex max-h-44 flex-wrap justify-center gap-x-4 gap-y-3 overflow-y-auto px-2 py-2 sm:gap-x-5">
+      <ul className="flex max-h-32 flex-wrap justify-center gap-2 overflow-y-auto p-1">
         {artists.map((artist) => (
-          <li key={artist.id} className="w-20">
+          <li key={artist.id} className="min-w-0 max-w-full">
             <Button
               type="button"
               variant="ghost"
               disabled={disabled}
-              aria-label={t("musicOnboarding.remove", { name: artist.name })}
-              className="group h-auto! min-h-0! w-full flex-col gap-2 border-0! p-0! text-foreground outline-none hover:bg-transparent! focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label={t("musicOnboarding.remove", {
+                name: artist.name,
+              })}
+              title={artist.name}
+              className="h-10! min-h-10! max-w-48 gap-2 rounded-full bg-muted/60 py-1! pr-3! pl-1! text-foreground hover:bg-accent"
               onClick={(event) => {
                 const button = event.currentTarget;
-
                 const buttons = Array.from(
                   button
                     .closest("ul")
@@ -46,9 +39,7 @@ export function SelectedArtists({
                       "button:not(:disabled)",
                     ) ?? [],
                 );
-
                 const index = buttons.indexOf(button);
-
                 const next = buttons[index + 1] ?? buttons[index - 1];
 
                 onRemove(artist.id);
@@ -62,23 +53,21 @@ export function SelectedArtists({
                 }
               }}
             >
-              <span className="relative block size-14 sm:size-16">
-                <img
-                  src={artist.imageUrl}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="size-full rounded-full object-cover ring-2 ring-primary/40 ring-offset-2 ring-offset-background group-hover:ring-primary"
-                />
-
-                <span className="absolute -right-1 top-0 grid size-5 place-items-center rounded-full bg-background text-foreground shadow-sm ring-1 ring-border">
-                  <X aria-hidden="true" />
-                </span>
-              </span>
-
-              <span className="line-clamp-2 min-h-8 w-full whitespace-normal text-center text-xs font-medium leading-4 text-foreground">
+              <img
+                src={artist.imageUrl}
+                alt=""
+                width={32}
+                height={32}
+                decoding="async"
+                className="size-8 shrink-0 rounded-full object-cover"
+              />
+              <span className="truncate text-xs font-medium">
                 {artist.name}
               </span>
+              <X
+                aria-hidden="true"
+                className="size-3.5! shrink-0 text-muted-foreground"
+              />
             </Button>
           </li>
         ))}

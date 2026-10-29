@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useState } from "react";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
@@ -8,39 +12,67 @@ import {
   getAlbumTracks,
   searchAlbums,
 } from "@/features/catalog/services/spotifyService";
+import {
+  mixArtistAlbums,
+  orderBySeed,
+} from "@/features/preferences/lib/albumSelection";
 import type { AlbumDetail, AlbumTrack } from "@/models/albumDetail";
+import type { CatalogAlbum } from "@/models/catalog";
 import type { OptionalMusicFavoritesProps } from "@/models/musicOnboarding";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 
 type Album = AlbumDetail["album"];
 
+interface FavoritesDraft {
+  userId: string | null;
+  albums: Album[];
+  tracks: AlbumTrack[];
+  knownAlbums: Album[];
+}
+
+interface ArtistAlbumGroup {
+  id: string;
+  items: CatalogAlbum[];
+}
+
+const ARTISTS_PER_BATCH = 3;
+
+function toggleItem<T extends { id: string }>(
+  items: readonly T[],
+  item: T,
+): T[] {
+  if (items.some((current) => current.id === item.id)) {
+    return items.filter((current) => current.id !== item.id);
+  }
+
+  return items.length < 100 ? [...items, item] : [...items];
+}
+
 export function useOptionalMusicFavorites({
   active,
+  artists,
   saving,
   catalogBlocked,
   onCatalogError,
 }: Pick<
   OptionalMusicFavoritesProps,
-  "active" | "saving" | "catalogBlocked" | "onCatalogError"
+  "active" | "artists" | "saving" | "catalogBlocked" | "onCatalogError"
 >) {
+  const client = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const [shuffleSeed] = useState(() => crypto.randomUUID());
 
   const [search, setSearch] = useState("");
   const normalized = search.trim().replace(/\s+/g, " ");
   const debounced = useDebouncedValue(normalized, 400);
   const settling = normalized !== debounced;
+  const searching = normalized.length > 0;
 
   const [page, setPage] = useState({ query: "", offset: 0 });
   const offset = page.query === debounced ? page.offset : 0;
-
   const [albumId, setAlbumId] = useState<string | null>(null);
 
-  const [draft, setDraft] = useState<{
-    userId: string | null;
-    albums: Album[];
-    tracks: AlbumTrack[];
-    knownAlbums: Album[];
-  }>({
+  const [draft, setDraft] = useState<FavoritesDraft>({
     userId,
     albums: [],
     tracks: [],
@@ -53,6 +85,12 @@ export function useOptionalMusicFavorites({
   const knownAlbums = owned ? draft.knownAlbums : [];
 
   const enabled = active && Boolean(userId) && !saving;
+
+  const sourceArtists = orderBySeed(
+    [...new Map(artists.map((artist) => [artist.id, artist])).values()],
+    `${shuffleSeed}:${userId ?? "anonymous"}`,
+  );
+  const sourceIds = sourceArtists.map((artist) => artist.id);
 
   function assertCurrent(signal?: AbortSignal): void {
     signal?.throwIfAborted();
@@ -70,18 +108,97 @@ export function useOptionalMusicFavorites({
 
     try {
       const result = await load();
-
       assertCurrent(signal);
-
       return result;
     } catch (error: unknown) {
-      if (!signal.aborted) {
+      if (!signal.aborted && useAuthStore.getState().user?.id === userId) {
         onCatalogError(error);
       }
 
       throw error;
     }
   }
+
+  const suggestions = useInfiniteQuery({
+    queryKey: [
+      "onboardingAlbumSuggestions",
+      userId,
+      "mixedArtistBatches",
+      sourceIds,
+    ],
+    enabled:
+      enabled &&
+      !searching &&
+      albumId === null &&
+      sourceArtists.length > 0 &&
+      !catalogBlocked,
+    initialPageParam: 0,
+
+    queryFn: ({ pageParam, signal }) =>
+      request(signal, async () => {
+        const batch = sourceArtists.slice(
+          pageParam,
+          pageParam + ARTISTS_PER_BATCH,
+        );
+
+        if (batch.length === 0) {
+          throw new Error("INVALID_ONBOARDING_SELECTION");
+        }
+
+        const groups: ArtistAlbumGroup[] = [];
+
+        for (const artist of batch) {
+          assertCurrent(signal);
+
+          const artistName = artist.name
+            .replace(/["\\]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          const query = `artist:"${artistName.slice(0, 110)}"`;
+
+          const result = await client.fetchQuery({
+            queryKey: ["albumSearch", userId, query, "scroll-chunk", 0],
+            staleTime: 2 * 60_000,
+            gcTime: 5 * 60_000,
+            retry: false,
+            queryFn: ({ signal: cachedSignal }) =>
+              searchAlbums(
+                query,
+                0,
+                AbortSignal.any([signal, cachedSignal]),
+                10,
+              ),
+          });
+
+          assertCurrent(signal);
+
+          groups.push({
+            id: artist.id,
+            items: result.items.filter((album) =>
+              album.artists.some((item) => item.id === artist.id),
+            ),
+          });
+        }
+
+        return {
+          nextArtistIndex: pageParam + batch.length,
+          groups,
+        };
+      }),
+
+    getNextPageParam: (last) =>
+      last.nextArtistIndex < sourceArtists.length
+        ? last.nextArtistIndex
+        : undefined,
+
+    maxPages: Math.max(1, Math.ceil(sourceArtists.length / ARTISTS_PER_BATCH)),
+    staleTime: 5 * 60_000,
+    gcTime: 5 * 60_000,
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
   const results = useQuery({
     queryKey: ["albumSearch", userId, debounced, "scroll-chunk", offset],
@@ -91,10 +208,8 @@ export function useOptionalMusicFavorites({
       debounced.length > 0 &&
       !settling &&
       !catalogBlocked,
-
     queryFn: ({ signal }) =>
       request(signal, () => searchAlbums(debounced, offset, signal, 10)),
-
     staleTime: 2 * 60_000,
     gcTime: 5 * 60_000,
     retry: false,
@@ -107,7 +222,6 @@ export function useOptionalMusicFavorites({
     ...albumDetailOptions(userId, albumId ?? ""),
     enabled: enabled && albumId !== null && !catalogBlocked,
     retry: false,
-
     queryFn: ({ signal }) =>
       request(signal, () => {
         if (!albumId) {
@@ -127,9 +241,7 @@ export function useOptionalMusicFavorites({
       albumId !== null &&
       firstTracks !== undefined &&
       !catalogBlocked,
-
     initialPageParam: 0,
-
     queryFn: ({ pageParam, signal }) =>
       request(signal, async () => {
         if (pageParam === 0 && firstTracks) {
@@ -142,7 +254,6 @@ export function useOptionalMusicFavorites({
 
         return getAlbumTracks(albumId, pageParam, signal);
       }),
-
     getNextPageParam: (last, pages) => {
       const next = last.nextOffset;
 
@@ -156,7 +267,6 @@ export function useOptionalMusicFavorites({
 
       return next;
     },
-
     maxPages: 6,
     staleTime: 15 * 60_000,
     gcTime: 30 * 60_000,
@@ -165,6 +275,11 @@ export function useOptionalMusicFavorites({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  const suggestedAlbums = mixArtistAlbums(
+    suggestions.data?.pages.flatMap((item) => item.groups) ?? [],
+    `${shuffleSeed}:${userId ?? "anonymous"}`,
+  );
 
   const availableTracks = [
     ...new Map(
@@ -185,85 +300,53 @@ export function useOptionalMusicFavorites({
     );
   }
 
+  function ownedDraft(current: FavoritesDraft): FavoritesDraft {
+    return current.userId === userId
+      ? current
+      : { userId, albums: [], tracks: [], knownAlbums: [] };
+  }
+
   function toggleAlbum(album: Album): void {
-    if (!canChange()) {
-      return;
-    }
+    if (!canChange()) return;
 
     setDraft((current) => {
-      const base =
-        current.userId === userId
-          ? current
-          : { userId, albums: [], tracks: [], knownAlbums: [] };
-
-      const exists = base.albums.some((item) => item.id === album.id);
-
-      return {
-        ...base,
-        albums: exists
-          ? base.albums.filter((item) => item.id !== album.id)
-          : base.albums.length < 100
-            ? [...base.albums, album]
-            : base.albums,
-      };
+      const base = ownedDraft(current);
+      return { ...base, albums: toggleItem(base.albums, album) };
     });
   }
 
   function toggleTrack(track: AlbumTrack): void {
-    if (!canChange()) {
-      return;
-    }
+    if (!canChange()) return;
 
     setDraft((current) => {
-      const base =
-        current.userId === userId
-          ? current
-          : { userId, albums: [], tracks: [], knownAlbums: [] };
-
-      const exists = base.tracks.some((item) => item.id === track.id);
-
-      return {
-        ...base,
-        tracks: exists
-          ? base.tracks.filter((item) => item.id !== track.id)
-          : base.tracks.length < 100
-            ? [...base.tracks, track]
-            : base.tracks,
-      };
+      const base = ownedDraft(current);
+      return { ...base, tracks: toggleItem(base.tracks, track) };
     });
   }
 
   function toggleKnownAlbum(album: Album): void {
-    if (!canChange()) {
-      return;
-    }
+    if (!canChange()) return;
 
     setDraft((current) => {
-      const base =
-        current.userId === userId
-          ? current
-          : { userId, albums: [], tracks: [], knownAlbums: [] };
-
-      const exists = base.knownAlbums.some((item) => item.id === album.id);
-
+      const base = ownedDraft(current);
       return {
         ...base,
-        knownAlbums: exists
-          ? base.knownAlbums.filter((item) => item.id !== album.id)
-          : base.knownAlbums.length < 100
-            ? [...base.knownAlbums, album]
-            : base.knownAlbums,
+        knownAlbums: toggleItem(base.knownAlbums, album),
       };
     });
   }
 
   const loading = albumId
     ? detail.isFetching || tracks.isFetching
-    : settling || results.isFetching;
+    : searching
+      ? settling || results.isFetching
+      : suggestions.isFetching;
 
   const readError = albumId
     ? detail.isError || tracks.isError
-    : !settling && results.isError;
+    : searching
+      ? !settling && results.isError
+      : suggestions.isError;
 
   return {
     search,
@@ -272,15 +355,20 @@ export function useOptionalMusicFavorites({
     knownAlbums,
     albumId,
     album: detail.data?.album,
-    items: !settling ? (results.data?.items ?? []) : [],
+    items: searching
+      ? !settling
+        ? (results.data?.items ?? [])
+        : []
+      : suggestedAlbums,
     availableTracks,
     loading,
     readError,
-    hasSearched: normalized.length > 0,
+    hasSearched: searching,
     previousOffset: Math.max(0, offset - 10),
-    nextOffset: results.data?.nextOffset ?? null,
+    nextOffset: searching ? (results.data?.nextOffset ?? null) : null,
     offset,
     hasMoreTracks: Boolean(tracks.hasNextPage),
+    hasMoreSuggestions: Boolean(suggestions.hasNextPage),
     toggleAlbum,
     toggleTrack,
     toggleKnownAlbum,
@@ -293,25 +381,36 @@ export function useOptionalMusicFavorites({
 
     onSearch: (value: string) => {
       if (canChange()) {
+        setAlbumId(null);
         setSearch(value.slice(0, 120));
       }
     },
 
     onOpenAlbum: (id: string) => {
-      if (canChange()) {
-        setAlbumId(id);
-      }
+      if (canChange()) setAlbumId(id);
     },
 
     onCloseAlbum: () => {
-      if (canChange()) {
-        setAlbumId(null);
-      }
+      if (canChange()) setAlbumId(null);
     },
 
     onPage: (nextOffset: number) => {
       if (canChange() && !loading && !catalogBlocked) {
         setPage({ query: debounced, offset: nextOffset });
+      }
+    },
+
+    onMoreSuggestions: () => {
+      if (
+        canChange() &&
+        !catalogBlocked &&
+        !suggestions.isFetching &&
+        suggestions.hasNextPage &&
+        client.isFetching({
+          queryKey: ["onboardingAlbumSuggestions", userId],
+        }) === 0
+      ) {
+        void suggestions.fetchNextPage({ cancelRefetch: false });
       }
     },
 
@@ -322,11 +421,15 @@ export function useOptionalMusicFavorites({
     },
 
     onRetry: () => {
-      if (!canChange() || loading || catalogBlocked) {
-        return;
-      }
+      if (!canChange() || loading || catalogBlocked) return;
 
-      if (!albumId) {
+      if (!albumId && !searching) {
+        if (suggestions.isFetchNextPageError) {
+          void suggestions.fetchNextPage({ cancelRefetch: false });
+        } else {
+          void suggestions.refetch();
+        }
+      } else if (!albumId) {
         void results.refetch();
       } else if (detail.isError) {
         void detail.refetch();

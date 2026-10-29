@@ -64,7 +64,7 @@ export function useArtistOnboarding() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const sharedDeadline = useSpotifyNetworkStore((state) => state.blockedUntil);
 
-  const { t } = useTranslation("common");
+  const { t } = useTranslation("onboarding");
   const client = useQueryClient();
   const navigate = useNavigate();
 

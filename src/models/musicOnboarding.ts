@@ -43,8 +43,10 @@ export interface SelectedArtistsProps {
 
 export interface OptionalMusicFavoritesProps {
   active: boolean;
+  artists: readonly OnboardingArtist[];
   saving: boolean;
   canSubmit: boolean;
+  saveError: string | null;
   catalogBlocked: boolean;
   retrySeconds: number;
   onBack: () => void;
