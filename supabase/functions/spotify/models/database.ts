@@ -132,36 +132,42 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          post_kind: string
+          published_at: string
           rating: number | null
           review: string | null
           revision: number
           spotify_album_id: string
           updated_at: string
-          user_album_id: string
+          user_album_id: string | null
           user_id: string
           visibility: string
         }
         Insert: {
           created_at?: string
           id?: string
+          post_kind?: string
+          published_at?: string
           rating?: number | null
           review?: string | null
           revision?: number
           spotify_album_id: string
           updated_at?: string
-          user_album_id: string
+          user_album_id?: string | null
           user_id: string
           visibility?: string
         }
         Update: {
           created_at?: string
           id?: string
+          post_kind?: string
+          published_at?: string
           rating?: number | null
           review?: string | null
           revision?: number
           spotify_album_id?: string
           updated_at?: string
-          user_album_id?: string
+          user_album_id?: string | null
           user_id?: string
           visibility?: string
         }
@@ -772,12 +778,14 @@ export type Database = {
         Returns: {
           created_at: string
           id: string
+          post_kind: string
+          published_at: string
           rating: number | null
           review: string | null
           revision: number
           spotify_album_id: string
           updated_at: string
-          user_album_id: string
+          user_album_id: string | null
           user_id: string
           visibility: string
         }[]
@@ -851,12 +859,14 @@ export type Database = {
         Returns: {
           created_at: string
           id: string
+          post_kind: string
+          published_at: string
           rating: number | null
           review: string | null
           revision: number
           spotify_album_id: string
           updated_at: string
-          user_album_id: string
+          user_album_id: string | null
           user_id: string
           visibility: string
         }[]
@@ -937,12 +947,14 @@ export type Database = {
         Returns: {
           created_at: string
           id: string
+          post_kind: string
+          published_at: string
           rating: number | null
           review: string | null
           revision: number
           spotify_album_id: string
           updated_at: string
-          user_album_id: string
+          user_album_id: string | null
           user_id: string
           visibility: string
         }[]

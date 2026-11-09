@@ -3,6 +3,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type InfiniteData,
 } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,7 @@ import {
   getMusicPreferences,
   setMusicPreference,
 } from "@/features/preferences/services/musicPreferenceService";
+import type { AlbumFeedCursor, AlbumFeedPage } from "@/models/library";
 import type {
   MusicEntityType,
   MusicPreferenceAction,
@@ -88,6 +90,20 @@ export function useMusicPreferences(
     });
   }
 
+  function notifyAlbumFeed(ownerId: string): void {
+    if (useAuthStore.getState().user?.id !== ownerId) return;
+
+    void client.invalidateQueries({
+      queryKey: ["albumFeed", ownerId],
+      refetchType: "none",
+    });
+
+    client.setQueryData<number>(
+      ["albumFeedSignal", ownerId],
+      (previous = 0) => previous + 1,
+    );
+  }
+
   const mutation = useMutation({
     mutationKey: writeKey,
     mutationFn: setMusicPreference,
@@ -102,7 +118,12 @@ export function useMusicPreferences(
 
       if (request.entityType === "album") {
         cancellations.push(
-          client.cancelQueries({ queryKey: ["library", request.userId] }),
+          client.cancelQueries({
+            queryKey: ["library", request.userId],
+          }),
+          client.cancelQueries({
+            queryKey: ["albumFeed", request.userId],
+          }),
         );
       }
 
@@ -127,6 +148,37 @@ export function useMusicPreferences(
 
         return { ...previous, [saved.spotify_id]: saved };
       });
+
+      if (request.entityType === "album") {
+        await client.cancelQueries({
+          queryKey: ["albumFeed", request.userId],
+        });
+
+        if (useAuthStore.getState().user?.id !== request.userId) return;
+
+        if (!saved.is_favorite) {
+          client.setQueriesData<
+            InfiniteData<AlbumFeedPage, AlbumFeedCursor | null>
+          >({ queryKey: ["albumFeed", request.userId] }, (previous) =>
+            previous
+              ? {
+                  ...previous,
+                  pages: previous.pages.map((page) => ({
+                    ...page,
+                    items: page.items.filter(
+                      (post) =>
+                        post.user_id !== request.userId ||
+                        post.spotify_album_id !== saved.spotify_id ||
+                        post.post_kind !== "favorite",
+                    ),
+                  })),
+                }
+              : previous,
+          );
+        }
+
+        notifyAlbumFeed(request.userId);
+      }
 
       toast.add({
         type: "success",
@@ -169,12 +221,17 @@ export function useMusicPreferences(
       });
 
       const queryKey = ["musicPreferences", request.userId, request.entityType];
+
       await client.cancelQueries({ queryKey });
 
       if (useAuthStore.getState().user?.id !== request.userId) return;
 
       await client.invalidateQueries({ queryKey });
       await invalidateLists(request.userId, request.entityType);
+
+      if (request.entityType === "album") {
+        notifyAlbumFeed(request.userId);
+      }
     },
   });
 
@@ -221,7 +278,6 @@ export function useMusicPreferences(
     disabled,
     blockedUntil,
     onChange,
-
     onRetry: () => {
       if (
         userId &&

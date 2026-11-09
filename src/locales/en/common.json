@@ -13,7 +13,6 @@
   },
   "actions": {
     "save": "Save",
-    "cancel": "Cancel",
     "retry": "Try again"
   },
   "status": {
@@ -33,10 +32,6 @@
     "accountHint": "Changes are saved automatically to your account.",
     "deviceHint": "Your choice is saved in this browser. Sign in to sync it with your account.",
     "error": "We couldn't load or save your preference. Check your connection and try again."
-  },
-  "preferences": {
-    "title": "Make Groovy yours",
-    "description": "Choose your language. Your music stays the same."
   },
   "session": {
     "loading": "Getting your space ready…",

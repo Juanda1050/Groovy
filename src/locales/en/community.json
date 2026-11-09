@@ -1,6 +1,4 @@
 {
-  "title": "Good music travels.",
-  "description": "Discover what other listeners are enjoying and reviewing.",
   "loading": "Loading posts…",
   "error": "We couldn't refresh the posts. Please try again.",
   "signInRequired": "Sign in to see posts.",
@@ -12,34 +10,30 @@
     "library": "Go to my library"
   },
   "connection": {
-    "connecting": "Connecting to updates…",
-    "live": "Live updates",
     "offline": "Live updates are unavailable. You can refresh manually."
   },
   "empty": {
     "title": "No posts yet",
-    "description": "Mark an album as listened to see it here. Your changes are published automatically."
+    "description": "Albums you mark as listened and new album favorites appear here."
   },
   "post": {
     "author": "Groovy listener",
     "album": "View album",
     "openAlbum": "Open {{album}}",
-    "listened": "Listened to this album."
+    "listened": "Listened to this album.",
+    "favorite": "Favorite album",
+    "favoriteDescription": "A record with a special place among their favorites."
   },
   "social": {
     "openProfile": "View {{name}}’s profile",
     "follow": "Follow",
     "following": "Following",
     "unfollow": "Unfollow",
-    "viewAlbum": "View album",
     "react": "Like this post",
     "unreact": "Unlike this post",
     "saveAlbum": "Add to my library",
     "inLibrary": "Already in your library",
     "saved": "Album added to your library",
-    "openPost": "View post",
-    "postTitle": "Post",
-    "postDescription": "Album rating and review.",
     "profileTitle": "Profile",
     "profileDescription": "Public profile information.",
     "profileLoading": "Loading profile…",
@@ -53,8 +47,7 @@
     "rateError": "You've made several changes in a row. Please wait a moment.",
     "retryAfter": "You can try again in {{count}} s.",
     "saveShort": "Save",
-    "savedShort": "Saved",
-    "openShort": "View"
+    "savedShort": "Saved"
   },
   "profile": {
     "posts": "Posts",
@@ -89,7 +82,6 @@
     "placeholder": "Share your thoughts…",
     "publish": "Post",
     "loading": "Loading comments…",
-    "empty": "Start the conversation.",
     "error": "We couldn't load the comments.",
     "writeError": "We couldn't confirm the change. Please try again.",
     "unavailable": "This post or comment is no longer available.",
@@ -125,7 +117,6 @@
     "loading": "Loading likes…",
     "empty": "No likes yet.",
     "error": "We couldn't load the likes.",
-    "more": "See more",
-    "refresh": "Refresh likes"
+    "more": "See more"
   }
 }

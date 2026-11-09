@@ -13,7 +13,6 @@
   },
   "actions": {
     "save": "Guardar",
-    "cancel": "Cancelar",
     "retry": "Reintentar"
   },
   "status": {
@@ -33,10 +32,6 @@
     "accountHint": "Los cambios se guardan automáticamente en tu cuenta.",
     "deviceHint": "Tu elección se guarda en este navegador. Inicia sesión para sincronizarla con tu cuenta.",
     "error": "No pudimos cargar o guardar tu preferencia. Revisa tu conexión e inténtalo de nuevo."
-  },
-  "preferences": {
-    "title": "Haz Groovy tuyo",
-    "description": "Elige tu idioma. Tu música sigue siendo la misma."
   },
   "session": {
     "loading": "Preparando tu espacio…",

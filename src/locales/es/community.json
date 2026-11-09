@@ -1,90 +1,122 @@
 {
-  "navigation": {
-    "label": "Navegación principal",
-    "discover": "Descubrir",
-    "library": "Mi biblioteca",
-    "community": "Comunidad",
-    "profile": "Perfil",
-    "skip": "Ir al contenido"
-  },
-  "appearance": {
-    "switchToLight": "Activar modo claro",
-    "switchToDark": "Activar modo oscuro"
-  },
+  "loading": "Cargando publicaciones…",
+  "error": "No pudimos actualizar las publicaciones. Reintenta.",
+  "signInRequired": "Inicia sesión para ver las publicaciones.",
   "actions": {
-    "save": "Guardar",
+    "refresh": "Actualizar publicaciones",
+    "updates": "Hay novedades · Actualizar",
+    "retry": "Reintentar",
+    "more": "Ver más",
+    "library": "Ir a mi biblioteca"
+  },
+  "connection": {
+    "offline": "Las novedades en directo no están disponibles. Puedes actualizar manualmente."
+  },
+  "empty": {
+    "title": "Todavía no hay publicaciones",
+    "description": "Los álbumes que marques como escuchados y tus nuevos favoritos aparecerán aquí."
+  },
+  "post": {
+    "author": "Melómano de Groovy",
+    "album": "Ver álbum",
+    "openAlbum": "Abrir {{album}}",
+    "listened": "Escuchó este álbum.",
+    "favorite": "Álbum favorito",
+    "favoriteDescription": "Un disco con un lugar especial entre sus favoritos."
+  },
+  "social": {
+    "openProfile": "Ver el perfil de {{name}}",
+    "follow": "Seguir",
+    "following": "Siguiendo",
+    "unfollow": "Dejar de seguir",
+    "react": "Me gusta esta publicación",
+    "unreact": "Quitar me gusta",
+    "saveAlbum": "Añadir a mi biblioteca",
+    "inLibrary": "Ya está en tu biblioteca",
+    "saved": "Álbum añadido a tu biblioteca",
+    "profileTitle": "Perfil",
+    "profileDescription": "Información pública del perfil.",
+    "profileLoading": "Cargando perfil…",
+    "profileError": "No pudimos cargar este perfil.",
+    "followingCount": "seguidos",
+    "followersCount": "seguidores",
+    "close": "Cerrar",
+    "readError": "No pudimos cargar las reacciones y los seguimientos.",
+    "error": "No pudimos confirmar el cambio. Reintenta.",
+    "sessionError": "Tu sesión terminó. Vuelve a iniciar sesión.",
+    "rateError": "Has realizado varios cambios seguidos. Espera un momento.",
+    "retryAfter": "Podrás reintentar en {{count}} s.",
+    "saveShort": "Guardar",
+    "savedShort": "Guardado"
+  },
+  "profile": {
+    "posts": "Publicaciones",
+    "empty": "Todavía no hay publicaciones públicas.",
+    "back": "Volver a Comunidad"
+  },
+  "tabs": {
+    "label": "Listados de Comunidad",
+    "community": "Comunidad",
+    "following": "Siguiendo"
+  },
+  "followingEmpty": {
+    "title": "La música se disfruta en compañía",
+    "description": "Sigue a otras personas para encontrar sus publicaciones aquí.",
+    "action": "Explorar Comunidad"
+  },
+  "search": {
+    "label": "Buscar personas",
+    "placeholder": "Nombre o @username",
+    "clear": "Limpiar búsqueda",
+    "hint": "Escribe al menos 2 caracteres del inicio de un nombre o username.",
+    "loading": "Buscando personas…",
+    "error": "No pudimos buscar personas. Reintenta.",
+    "empty": "No encontramos personas con ese nombre o username.",
+    "more": "Hay más coincidencias. Prueba una búsqueda más específica.",
+    "results": "Personas",
+    "own": "Tu perfil"
+  },
+  "comments": {
+    "title": "Comentarios",
+    "label": "Tu comentario",
+    "placeholder": "¿Qué te parece este disco?",
+    "publish": "Publicar",
+    "loading": "Cargando comentarios…",
+    "error": "No pudimos cargar los comentarios.",
+    "writeError": "No pudimos confirmar el cambio. Reintenta.",
+    "unavailable": "Esta publicación o comentario ya no está disponible.",
+    "sent": "Comentario publicado",
+    "deleted": "Comentario eliminado",
+    "delete": "Eliminar comentario",
+    "deleteTitle": "¿Eliminar tu comentario?",
+    "deleteDescription": "Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
-    "retry": "Reintentar"
+    "confirmDelete": "Eliminar",
+    "length": "{{count}} / {{max}}",
+    "tooLong": "Los comentarios pueden tener hasta {{max}} caracteres.",
+    "offline": "Las novedades en directo no están disponibles. Se reanudarán cuando vuelva la conexión.",
+    "updates": "Mostrar comentarios nuevos",
+    "more": "Ver comentarios anteriores",
+    "remaining": "Podrás volver a publicar en {{count}} s.",
+    "edit": "Editar comentario",
+    "editLabel": "Editar tu comentario",
+    "saveEdit": "Guardar",
+    "updated": "Comentario actualizado",
+    "edited": "editado",
+    "editConflict": "Este comentario cambió en otra sesión. Revisa la versión actual antes de guardar.",
+    "keepChanges": "Conservar mis cambios",
+    "currentVersion": "Versión actual",
+    "options": "Opciones del comentario",
+    "openComposer": "Escribir un comentario y ver más",
+    "closeComposer": "Cerrar el campo de comentarios"
   },
-  "status": {
-    "loading": "Cargando…"
-  },
-  "notifications": {
-    "label": "Notificaciones",
-    "close": "Cerrar notificación",
-    "saved": "Cambios guardados"
-  },
-  "language": {
-    "label": "Idioma de la aplicación",
-    "loading": "Cargando tu preferencia…",
-    "saving": "Guardando tu preferencia…",
-    "savedAccount": "Idioma guardado en tu cuenta.",
-    "savedDevice": "Idioma guardado en este navegador.",
-    "accountHint": "Los cambios se guardan automáticamente en tu cuenta.",
-    "deviceHint": "Tu elección se guarda en este navegador. Inicia sesión para sincronizarla con tu cuenta.",
-    "error": "No pudimos cargar o guardar tu preferencia. Revisa tu conexión e inténtalo de nuevo."
-  },
-  "preferences": {
-    "title": "Haz Groovy tuyo",
-    "description": "Elige tu idioma. Tu música sigue siendo la misma."
-  },
-  "session": {
-    "loading": "Preparando tu espacio…",
-    "connectionError": "No pudimos comprobar tu sesión. Revisa tu conexión e inténtalo de nuevo."
-  },
-  "musicPreferences": {
-    "errors": {
-      "session": "Inicia sesión nuevamente para guardar tus preferencias.",
-      "conflict": "La preferencia cambió en otra pestaña o dispositivo. Actualizamos los datos; revisa tu selección antes de reintentar.",
-      "favoriteRequiresLike": "Quita la canción de favoritas antes de retirar su like.",
-      "rate": "Espera un momento antes de guardar otra preferencia.",
-      "save": "No pudimos confirmar el cambio. Revisa el estado actualizado antes de reintentar."
-    }
-  },
-  "musicOnboarding": {
-    "eyebrow": "Tu música, tu espacio",
-    "title": "¿Qué artistas te gustan?",
-    "description": "Elige al menos 3 artistas.",
-    "progress": "{{count}} seleccionados · Mínimo 3",
-    "selectedLabel": "Seleccionados",
-    "minimum": "Mínimo {{count}}",
-    "selectedTitle": "Artistas seleccionados ({{count}})",
-    "selectedEmpty": "Tus elecciones aparecerán aquí.",
-    "search": "Buscar artistas",
-    "searchPlaceholder": "Busca un artista",
-    "available": "Artistas disponibles",
-    "select": "Seleccionar a {{name}}",
-    "remove": "Retirar a {{name}}",
-    "selected": "{{name}} seleccionado. {{count}} artistas seleccionados.",
-    "removed": "{{name}} retirado. {{count}} artistas seleccionados.",
-    "loading": "Buscando artistas…",
-    "empty": "Busca otro artista o carga más.",
-    "more": "Más artistas",
-    "exhausted": "Busca otros artistas por su nombre.",
-    "photoHint": "Fotografías de artistas de Spotify.",
-    "spotify": "Spotify",
-    "private": "Tus elecciones iniciales no generan publicaciones.",
-    "continue": "Continuar",
-    "saving": "Guardando…",
-    "saved": "Artistas guardados.",
-    "errors": {
-      "load": "No pudimos comprobar tu onboarding musical. Reintenta para continuar.",
-      "artists": "No pudimos cargar los artistas.",
-      "catalogRate": "Podrás cargar más artistas en {{count}} s.",
-      "session": "Inicia sesión nuevamente para guardar tus artistas.",
-      "metadata": "Las fotos de tu selección caducaron. Busca nuevamente a esos artistas para actualizarlas y vuelve a guardar.",
-      "rate": "Espera un momento antes de volver a guardar.",
-      "save": "No pudimos confirmar el guardado. Tus seleccionados se conservan; vuelve a intentarlo."
-    }
+  "reactions": {
+    "title": "Me gusta",
+    "description": "Personas a las que les gustó esta publicación.",
+    "open": "Ver a quién le gustó esta publicación",
+    "loading": "Cargando reacciones…",
+    "empty": "Todavía no hay reacciones.",
+    "error": "No pudimos cargar las reacciones.",
+    "more": "Ver más"
   }
 }

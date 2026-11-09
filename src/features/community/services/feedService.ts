@@ -31,18 +31,32 @@ const albumSchema = z.object({
   artists: z.array(z.string()),
 });
 
-const postSchema = z.object({
-  id: uuid,
-  user_id: uuid,
-  user_album_id: uuid,
-  spotify_album_id: spotifyId,
-  rating: z.number().finite().nullable(),
-  review: z.string().nullable(),
-  visibility: z.literal("community"),
-  created_at: timestamp,
-  updated_at: timestamp,
-  revision: z.number().int().positive(),
-});
+const postSchema = z
+  .object({
+    id: uuid,
+    user_id: uuid,
+    user_album_id: uuid.nullable(),
+    spotify_album_id: spotifyId,
+    post_kind: z.enum(["listened", "favorite"]).default("listened"),
+    rating: z.number().finite().nullable(),
+    review: z.string().nullable(),
+    visibility: z.literal("community"),
+    created_at: timestamp,
+    updated_at: timestamp,
+    published_at: timestamp.optional(),
+    revision: z.number().int().positive(),
+  })
+  .refine((post) =>
+    post.post_kind === "favorite"
+      ? post.user_album_id === null &&
+        post.rating === null &&
+        post.review === null
+      : post.user_album_id !== null,
+  )
+  .transform((post) => ({
+    ...post,
+    published_at: post.published_at ?? post.updated_at,
+  }));
 
 const socialSchema = z.object({
   post_id: uuid,

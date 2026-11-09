@@ -93,13 +93,15 @@ export interface DeleteUserAlbumInput {
 export interface AlbumPost {
   id: string;
   user_id: string;
-  user_album_id: string;
+  user_album_id: string | null;
   spotify_album_id: string;
+  post_kind: "listened" | "favorite";
   rating: number | null;
   review: string | null;
   visibility: "community" | "private";
   created_at: string;
   updated_at: string;
+  published_at: string;
   revision: number;
 }
 
