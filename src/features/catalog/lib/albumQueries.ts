@@ -111,6 +111,11 @@ export function syncCatalogAlbumStatus(
         ? { ...previous, pages: previous.pages.map(updatePage) }
         : previous,
   );
+
+  void client.invalidateQueries({
+    queryKey: ["artistAlbums", userId],
+    refetchType: "none",
+  });
 }
 
 export function syncAlbumLibrary(

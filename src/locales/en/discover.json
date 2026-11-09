@@ -37,7 +37,9 @@
     "favorite": "Add to favorites",
     "favorited": "Among your favorites",
     "spotify": "Open in Spotify",
-    "albums": "Explore albums"
+    "albums": "Albums",
+    "albumsError": "We couldn't load this artist's albums. Try again in a moment.",
+    "noAlbums": "We couldn't find available albums from this artist right now."
   },
   "actions": {
     "save": "Save for later",

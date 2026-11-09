@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import type {
+  artistAlbumPageSchema,
   artistDetailSchema,
   catalogAlbumSchema,
   catalogErrorCodeSchema,
@@ -13,6 +14,7 @@ export type CatalogAlbum = z.infer<typeof catalogAlbumSchema> & {
 };
 
 export type ArtistDetail = z.infer<typeof artistDetailSchema>;
+export type ArtistAlbumPage = z.infer<typeof artistAlbumPageSchema>;
 export type CatalogPage = z.infer<typeof catalogPageSchema>;
 export type CatalogErrorCode = z.infer<typeof catalogErrorCodeSchema>;
 export type SavedCatalogAlbum = z.infer<typeof savedCatalogAlbumSchema>;
@@ -21,7 +23,6 @@ export type CatalogRatings = Record<string, number | null>;
 
 export type CatalogPageSize = 10 | 20 | 50;
 export type SpotifySearchPageSize = 5 | 10;
-
 export type ListeningStatus = "pending" | "listened";
 
 export interface SaveCatalogAlbumInput {
@@ -39,6 +40,11 @@ export type CatalogRequest =
   | {
       action: "artist";
       artistId: string;
+    }
+  | {
+      action: "artistAlbums";
+      artistId: string;
+      offset: number;
     }
   | {
       action: "save";

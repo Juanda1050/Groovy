@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Disc3, ExternalLink, Star, UserRound } from "lucide-react";
+import { ArrowLeft, ExternalLink, Star, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { z } from "zod";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
+import { ArtistAlbums } from "@/features/catalog/components/ArtistAlbums";
 import { getArtistDetail } from "@/features/catalog/services/artistService";
 import { useMusicPreferences } from "@/features/preferences/hooks/useMusicPreferences";
 import { Button } from "@/shared/components/ui/button";
@@ -32,11 +33,9 @@ export default function ArtistPage() {
   const navigationState: unknown = location.state;
   const parsedSource = sourceSchema.safeParse(navigationState);
   const source = parsedSource.success ? parsedSource.data.artistSource : null;
-
   const returnTo = source
     ? `${source.pathname}${source.search}`
     : "/?catalog=artists";
-
   const validId = /^[A-Za-z0-9]{22}$/.test(artistId);
 
   const artist = useQuery({
@@ -59,22 +58,8 @@ export default function ArtistPage() {
   );
 
   const favorite = preferences.preferences?.[artistId]?.is_favorite ?? false;
-
   const data = artist.data;
   const imageVisible = data?.imageUrl && data.imageUrl !== failedImage;
-
-  const albumQuery = data
-    ? `artist:"${data.name
-        .replace(/["\\]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 110)}"`
-    : "";
-
-  const albumSearch = new URLSearchParams({
-    catalog: "albums",
-    q: albumQuery,
-  });
 
   return (
     <section className="min-w-0 space-y-6 pb-6">
@@ -99,7 +84,7 @@ export default function ArtistPage() {
         <div role="status" aria-live="polite">
           <div
             aria-hidden="true"
-            className="flex flex-col items-center gap-6 sm:flex-row sm:items-center"
+            className="flex flex-col items-center gap-6 sm:flex-row"
           >
             <Skeleton className="size-32 shrink-0 rounded-full sm:size-40" />
             <div className="w-full max-w-sm space-y-4">
@@ -205,15 +190,7 @@ export default function ArtistPage() {
             </div>
           )}
 
-          <div className="border-t border-border/40 pt-5">
-            <Link
-              to={`/?${albumSearch}`}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Disc3 aria-hidden="true" className="size-4" />
-              {t("artistDetail.albums")}
-            </Link>
-          </div>
+          <ArtistAlbums key={artistId} artistId={artistId} />
         </>
       )}
     </section>

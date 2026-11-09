@@ -32,6 +32,9 @@ export default function AlbumDetailPage() {
   );
 
   const waiting = detail.waitingSeconds > 0;
+  const backLabel = t(recovery.returnLabelKey, {
+    ns: recovery.returnLabelNamespace,
+  });
 
   if (detail.loading) {
     return (
@@ -101,11 +104,12 @@ export default function AlbumDetailPage() {
 
         <Link
           to={recovery.returnTo}
+          state={recovery.returnState}
           replace
           className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
-          {t(recovery.returnLabelKey)}
+          {backLabel}
         </Link>
       </section>
     );
@@ -115,11 +119,12 @@ export default function AlbumDetailPage() {
     <section className="min-w-0 space-y-8 pb-6 sm:space-y-10">
       <Link
         to={recovery.returnTo}
+        state={recovery.returnState}
         replace
         className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
-        {t(recovery.returnLabelKey)}
+        {backLabel}
       </Link>
 
       <header className="grid min-w-0 items-start gap-6 sm:grid-cols-[13rem_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10">
@@ -232,7 +237,6 @@ export default function AlbumDetailPage() {
             >
               {t("partialTracks")} {t(detail.tracksErrorKey)}
             </p>
-
             <LoadingButton
               type="button"
               variant="outline"
@@ -243,7 +247,6 @@ export default function AlbumDetailPage() {
             >
               {t("retryTracks")}
             </LoadingButton>
-
             {waiting && (
               <p className="text-xs text-muted-foreground">
                 {t("retryAvailable", { count: detail.waitingSeconds })}

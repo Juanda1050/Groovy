@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
+import { getArtistAlbums } from "./artistAlbums.ts";
 import { getArtistDetail } from "./artistDetails.ts";
 import { getArtists } from "./artists.ts";
 import { ApiError, readBody } from "./http.ts";
@@ -130,7 +131,7 @@ Deno.serve(async (request) => {
     const { data: authorizationData, error: authorizationError } =
       await userClient.rpc("authorize_spotify_action", {
         p_action:
-          input.action === "artists"
+          input.action === "artists" || input.action === "artistAlbums"
             ? "search"
             : input.action === "artist"
               ? "detail"
@@ -150,6 +151,19 @@ Deno.serve(async (request) => {
     if (!budget.allowed) {
       userRateLimited = true;
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
+    }
+
+    if (input.action === "artistAlbums") {
+      return reply(
+        await getArtistAlbums(
+          input.artistId,
+          input.offset,
+          market,
+          budget.user_id,
+          userClient,
+          admin,
+        ),
+      );
     }
 
     if (input.action === "artist") {

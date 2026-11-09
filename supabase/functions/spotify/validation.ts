@@ -35,6 +35,12 @@ export const requestSchema = z.discriminatedUnion("action", [
   }),
 
   z.object({
+    action: z.literal("artistAlbums"),
+    artistId: z.string().regex(/^[A-Za-z0-9]{22}$/),
+    offset: z.number().int().min(0).max(100_000).multipleOf(10).default(0),
+  }),
+
+  z.object({
     action: z.literal("save"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
     status: z.enum(["pending", "listened"]),

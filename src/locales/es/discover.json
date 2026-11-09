@@ -37,7 +37,9 @@
     "favorite": "Añadir a favoritos",
     "favorited": "Entre tus favoritos",
     "spotify": "Abrir en Spotify",
-    "albums": "Explorar álbumes"
+    "albums": "Álbumes",
+    "albumsError": "No pudimos cargar los álbumes de este artista. Reintenta dentro de un momento.",
+    "noAlbums": "No encontramos álbumes disponibles de este artista en este momento."
   },
   "actions": {
     "save": "Guardar como pendiente",
