@@ -1,8 +1,14 @@
 {
   "eyebrow": "Descubre música",
-  "title": "Tu próximo álbum favorito.",
-  "description": "Encuentra ese disco que tienes en mente y guárdalo para escucharlo después.",
-  "searchLabel": "Buscar álbumes o artistas",
+  "title": "Tu mundo musical sigue creciendo.",
+  "description": "Encuentra discos para escuchar y artistas que merecen un lugar entre tus favoritos.",
+  "sections": {
+    "label": "Qué quieres descubrir",
+    "albums": "Álbumes",
+    "artists": "Artistas",
+    "forYou": "Para ti"
+  },
+  "searchLabel": "Buscar álbumes por título o artista",
   "searchPlaceholder": "Busca un álbum o artista",
   "results": "Álbumes",
   "loading": "Buscando álbumes…",
@@ -11,6 +17,75 @@
   "initial": {
     "title": "Todo empieza con un álbum",
     "description": "Busca por título o artista y empieza a construir tu colección."
+  },
+  "artists": {
+    "add": "Añadir artistas",
+    "search": "Buscar artistas",
+    "placeholder": "¿Qué artista tienes en mente?",
+    "loading": "Buscando artistas…",
+    "empty": "No encontramos artistas con una fotografía disponible para esta búsqueda. Prueba otro nombre.",
+    "signInRequired": "Inicia sesión para buscar artistas.",
+    "initialTitle": "Siempre hay espacio para otro favorito",
+    "initialDescription": "Busca un artista y toca su estrella para añadirlo a tus favoritos."
+  },
+  "artistDetail": {
+    "view": "Ver a {{name}} en Groovy",
+    "back": "Volver",
+    "eyebrow": "Artista",
+    "loading": "Preparando el espacio del artista…",
+    "invalid": "El enlace de este artista no es válido.",
+    "error": "No pudimos cargar este artista. Reintenta dentro de un momento.",
+    "favorite": "Añadir a favoritos",
+    "favorited": "Entre tus favoritos",
+    "spotify": "Abrir en Spotify",
+    "albums": "Álbumes",
+    "albumsError": "No pudimos cargar los álbumes de este artista. Reintenta dentro de un momento.",
+    "noAlbums": "No encontramos álbumes disponibles de este artista en este momento."
+  },
+  "recommendations": {
+    "title": "¿Qué escuchamos hoy?",
+    "description": "Tus gustos marcan el camino. Un disco a la vez.",
+    "initial": "Hay discos que llegan justo cuando los necesitas. Vamos a buscar el siguiente.",
+    "start": "Encuentra mi próximo disco",
+    "loading": "Buscando un disco para ti…",
+    "picked": "Tu próxima escucha",
+    "another": "Otro álbum",
+    "notInterested": "No me interesa",
+    "alreadyKnow": "Ya lo conozco",
+    "markingKnown": "Guardando…",
+    "knownSaved": "Lo recordaremos para próximas sugerencias.",
+    "knownUndone": "Retiramos la marca de álbum conocido.",
+    "undo": "Deshacer",
+    "spotify": "Abrir en Spotify",
+    "signIn": "Inicia sesión para encontrar tu próxima escucha.",
+    "openAlbum": "Ver {{name}} en Groovy",
+    "announcement": "Tu próxima escucha: {{name}}.",
+    "chooseArtists": "Explorar artistas",
+    "library": "Ir a mi biblioteca",
+    "waiting": "Espera un momento",
+    "back": "Volver a Para ti",
+    "reasons": {
+      "artist": "{{name}} está entre tus artistas favoritos. Este disco es otra puerta a su música.",
+      "artistFallback": "Un disco de uno de tus artistas favoritos, listo para encontrar su momento.",
+      "album": "Un artista de {{name}}, uno de tus álbumes favoritos, también aparece en este disco.",
+      "albumFallback": "Comparte un artista con uno de tus álbumes favoritos.",
+      "ratedAlbum": "Le diste {{stars}} estrellas a {{name}}. Este disco comparte al menos un artista.",
+      "ratedAlbumFallback": "Comparte un artista con un álbum al que diste {{stars}} estrellas.",
+      "favoriteTrack": "{{name}} está entre tus canciones favoritas. Este disco comparte al menos un intérprete.",
+      "favoriteTrackFallback": "Comparte un intérprete con una de tus canciones favoritas.",
+      "likedTrack": "Te gusta {{name}}. Este disco comparte al menos un intérprete.",
+      "likedTrackFallback": "Comparte un intérprete con una canción que te gusta.",
+      "random": "Una elección al azar entre los discos disponibles de este lote."
+    },
+    "empty": {
+      "saved": "Ya tiene un lugar en tus pendientes. ¿Buscamos el siguiente?",
+      "known": "Este ya forma parte de tu mundo musical. Vamos por otro.",
+      "selection_changed": "Tu colección o tus preferencias han cambiado. Vamos por otra opción.",
+      "onboarding_required": "Completa tu selección musical inicial para encontrar tu próxima escucha.",
+      "needs_preferences": "Tus favoritos, las canciones que te gustan y tus valoraciones nos dan nuevas pistas.",
+      "needs_metadata": "No pudimos preparar tus referencias musicales. Reintenta para seguir buscando.",
+      "no_candidates_in_batch": "Este lote no trajo un disco nuevo para ti. Probemos con otras pistas."
+    }
   },
   "actions": {
     "save": "Guardar como pendiente",
@@ -36,6 +111,7 @@
     "SPOTIFY_QUOTA": "Spotify agotó temporalmente la cuota disponible. Inténtalo más tarde.",
     "SPOTIFY_UNAVAILABLE": "No pudimos conectar con Spotify. Inténtalo más tarde.",
     "ALBUM_NOT_FOUND": "Este álbum ya no está disponible.",
+    "KNOWN_ALBUM_CONFLICT": "Esta decisión cambió en otra sesión. Reintenta para actualizar la pantalla sin sobrescribirla.",
     "SERVER_ERROR": "No pudimos completar la solicitud. Inténtalo más tarde."
   }
 }

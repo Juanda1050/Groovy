@@ -8,6 +8,7 @@ function initialView(): LibraryViewState {
     section: "albums",
     trackSection: "likes",
     filter: "all",
+    artistPage: 1,
     albumPage: 1,
     likesPage: 1,
     dislikesPage: 1,
@@ -33,12 +34,14 @@ export function useLibraryView() {
     if (useAuthStore.getState().user?.id !== userId) return;
 
     client.setQueryData<LibraryViewState>(key, (previous) => ({
-      ...(previous ?? initialView()),
+      ...initialView(),
+      ...previous,
       ...changes,
     }));
   }
 
   return {
+    ...initialView(),
     ...query.data,
     onChange,
   };

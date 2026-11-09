@@ -1,28 +1,54 @@
 {
   "title": "My library",
-  "description": "Your albums and music preferences.",
+  "description": "Your artists, albums and music preferences.",
   "loading": "Loading your library…",
   "error": "We couldn't load your library. Please try again.",
   "localPreview": "Sign in to access your library.",
   "sections": {
     "label": "Library content",
+    "artists": "Artists",
     "albums": "Albums",
     "likes": "Liked",
     "dislikes": "Disliked",
-    "tracks": "Tracks",
+    "tracks": "Songs",
     "trackPreferences": "Track preference"
   },
+  "artists": {
+    "unavailable": "Saved artist",
+    "open": "Open {{name}} on Spotify in a new tab",
+    "metadataError": "Some artist details are missing. Your favorites are still saved.",
+    "emptyTitle": "A home for your favorite artists",
+    "emptyDescription": "Artists you choose as favorites will appear here."
+  },
+  "favorites": {
+    "add": "Mark {{name}} as a favorite",
+    "remove": "Remove {{name}} from favorites",
+    "loadError": "We couldn't load your preferences. Try again to change favorites.",
+    "emptyTitle": "Some albums deserve a star",
+    "emptyDescription": "Mark an album as a favorite to find it here, even if you haven't saved it as pending or listened yet."
+  },
   "tracks": {
-    "loading": "Loading track information…",
-    "unavailable": "Unavailable track",
+    "favorites": "Favorites",
+    "loading": "Loading your songs…",
+    "unavailable": "Unavailable song",
     "openAlbum": "View album",
-    "metadataError": "We couldn't load information for some tracks.",
-    "emptyTitle": "No tracks in this section",
-    "emptyDescription": "Tracks you mark will appear here."
+    "metadataError": "We couldn't refresh some song details. Your preferences are still saved.",
+    "preferenceError": "We couldn't load your preferences. Try again to use the song controls.",
+    "emptyTitle": "Your music will take shape here",
+    "emptyDescription": "Songs you mark with this preference will appear in this section.",
+    "controls": "Preferences for {{name}}",
+    "addFavorite": "Mark {{name}} as a favorite",
+    "removeFavorite": "Remove {{name}} from favorites",
+    "addLike": "Like {{name}}",
+    "removeLike": "Remove your like from {{name}}",
+    "addDislike": "Dislike {{name}}",
+    "removeDislike": "Remove your dislike from {{name}}",
+    "favoriteIncludesLike": "{{name}} is a favorite and includes a like. Remove the star first to remove the like."
   },
   "filters": {
     "label": "Filters",
     "all": "All",
+    "favorites": "Favorites",
     "pending": "Pending",
     "listened": "Listened",
     "rated": "Rated",

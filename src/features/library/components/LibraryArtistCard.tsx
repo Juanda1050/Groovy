@@ -1,0 +1,105 @@
+import { ExternalLink, Star, UserRound } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "react-router-dom";
+
+import type { LibraryArtistCardProps } from "@/models/libraryView";
+import { Button } from "@/shared/components/ui/button";
+
+export function LibraryArtistCard({
+  artist,
+  favorite,
+  disabled,
+  onFavoriteChange,
+}: LibraryArtistCardProps) {
+  const { t } = useTranslation(["library", "discover"]);
+  const location = useLocation();
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+  const imageVisible =
+    artist.imageUrl !== null && failedUrl !== artist.imageUrl;
+  const name = artist.name ?? t("artists.unavailable");
+  const detailTo = `/artists/${artist.id}`;
+
+  const navigationState = {
+    artistSource: {
+      pathname: location.pathname,
+      search: location.search,
+      state: location.state,
+    },
+  };
+
+  return (
+    <article className="mx-auto flex w-full max-w-44 flex-col items-center gap-3 text-center">
+      <div className="relative aspect-square w-full">
+        <Link
+          to={detailTo}
+          state={navigationState}
+          aria-label={t("artistDetail.view", { ns: "discover", name })}
+          className="group block size-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+        >
+          {imageVisible && artist.imageUrl ? (
+            <img
+              src={artist.imageUrl}
+              alt=""
+              width={300}
+              height={300}
+              loading="lazy"
+              decoding="async"
+              onError={() => setFailedUrl(artist.imageUrl)}
+              className="size-full rounded-full object-cover ring-1 ring-border transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transition-none"
+            />
+          ) : (
+            <span className="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <UserRound aria-hidden="true" className="size-10" />
+            </span>
+          )}
+        </Link>
+
+        <Button
+          type="button"
+          variant={favorite ? "default" : "outline"}
+          size="icon"
+          disabled={disabled}
+          aria-pressed={favorite}
+          aria-label={t(favorite ? "favorites.remove" : "favorites.add", {
+            name,
+          })}
+          title={t(favorite ? "favorites.remove" : "favorites.add", { name })}
+          data-artist-favorite={artist.id}
+          onClick={() => onFavoriteChange(artist.id, !favorite)}
+          className={
+            favorite
+              ? "absolute right-0 bottom-0 size-11 rounded-full ring-4 ring-background"
+              : "absolute right-0 bottom-0 size-11 rounded-full bg-background text-muted-foreground ring-4 ring-background hover:text-primary"
+          }
+        >
+          <Star
+            aria-hidden="true"
+            className={favorite ? "size-4 fill-current" : "size-4"}
+          />
+        </Button>
+      </div>
+
+      <div className="flex min-h-10 max-w-full items-start justify-center gap-1">
+        <Link
+          to={detailTo}
+          state={navigationState}
+          className="line-clamp-2 rounded-sm px-1 text-sm font-medium leading-5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {name}
+        </Link>
+        <a
+          href={`https://open.spotify.com/artist/${artist.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("artists.open", { name })}
+          title={t("artists.open", { name })}
+          className="flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ExternalLink aria-hidden="true" className="size-3" />
+        </a>
+      </div>
+    </article>
+  );
+}

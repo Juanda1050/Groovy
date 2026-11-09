@@ -1,42 +1,73 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
 import { signOut } from "@/features/auth/services/authService";
-import { albumDetailSchema,albumTracksPageSchema } from "@/features/catalog/lib/albumDetailSchemas";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import {
+  albumDetailSchema,
+  albumTracksPageSchema,
+} from "@/features/catalog/lib/albumDetailSchemas";
 import { CatalogError } from "@/features/catalog/lib/catalogError";
-import { catalogErrorSchema,catalogPageSchema,savedCatalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
+import {
+  catalogErrorSchema,
+  catalogPageSchema,
+  savedCatalogAlbumSchema,
+} from "@/features/catalog/lib/catalogSchemas";
 import { useSpotifyNetworkStore } from "@/features/catalog/stores/spotifyNetworkStore";
+import type { AlbumDetail, AlbumTracksPage } from "@/models/albumDetail";
+import type { RecommendationRequest } from "@/models/albumRecommendation";
+import type {
+  CatalogPage,
+  CatalogRequest,
+  SaveCatalogAlbumInput,
+  SavedCatalogAlbum,
+  SpotifySearchPageSize,
+} from "@/models/catalog";
+import type { ArtistCatalogRequest } from "@/models/musicOnboarding";
 import { supabase } from "@/shared/lib/supabaseClient";
 
-import type { AlbumDetail,AlbumTracksPage } from "@/models/albumDetail";
-import type { CatalogPage,CatalogRequest,SaveCatalogAlbumInput,SavedCatalogAlbum,SpotifySearchPageSize } from "@/models/catalog";
-
-async function invokeSpotify(
-  body: CatalogRequest,
+export async function invokeCatalogFunction(
+  functionName: "spotify" | "albumRecommendation",
+  body: CatalogRequest | ArtistCatalogRequest | RecommendationRequest,
   signal?: AbortSignal,
+  timeoutMs = 12_000,
 ): Promise<unknown> {
   signal?.throwIfAborted();
+
+  const requestedUserId = useAuthStore.getState().user?.id ?? null;
+
+  function assertCurrent(): void {
+    signal?.throwIfAborted();
+
+    if ((useAuthStore.getState().user?.id ?? null) !== requestedUserId) {
+      throw new CatalogError("UNAUTHORIZED");
+    }
+  }
 
   const network = useSpotifyNetworkStore.getState();
   const remaining = network.blockedUntil - Date.now();
 
-  if (remaining > 0) {
+  if (functionName === "spotify" && remaining > 0) {
     throw new CatalogError(network.limitCode, Math.ceil(remaining / 1000));
   }
 
-  const timeout = AbortSignal.timeout(12_000);
+  const timeout = AbortSignal.timeout(timeoutMs);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
 
-  const { data, error } = await supabase.functions.invoke<unknown>("spotify", {
-    body,
-    signal: requestSignal,
-  });
+  const { data, error } = await supabase.functions.invoke<unknown>(
+    functionName,
+    {
+      body,
+      signal: requestSignal,
+    },
+  );
 
-  signal?.throwIfAborted();
+  assertCurrent();
 
   if (error instanceof FunctionsHttpError) {
     const response: unknown = error.context;
 
     if (response instanceof Response && response.status === 401) {
+      assertCurrent();
       await signOut();
       throw new CatalogError("UNAUTHORIZED");
     }
@@ -47,6 +78,8 @@ async function invokeSpotify(
         : null;
 
     const parsed = catalogErrorSchema.safeParse(payload);
+
+    assertCurrent();
 
     const header =
       response instanceof Response
@@ -94,6 +127,13 @@ async function invokeSpotify(
   return data;
 }
 
+export function invokeSpotify(
+  body: CatalogRequest | ArtistCatalogRequest,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  return invokeCatalogFunction("spotify", body, signal);
+}
+
 export async function searchAlbums(
   query: string,
   offset: number,
@@ -101,7 +141,15 @@ export async function searchAlbums(
   limit: SpotifySearchPageSize = 10,
 ): Promise<CatalogPage> {
   return catalogPageSchema.parse(
-    await invokeSpotify({ action: "search", query, offset, limit }, signal),
+    await invokeSpotify(
+      {
+        action: "search",
+        query,
+        offset,
+        limit,
+      },
+      signal,
+    ),
   );
 }
 
@@ -109,7 +157,10 @@ export async function saveCatalogAlbum(
   input: SaveCatalogAlbumInput,
 ): Promise<SavedCatalogAlbum> {
   return savedCatalogAlbumSchema.parse(
-    await invokeSpotify({ action: "save", ...input }),
+    await invokeSpotify({
+      action: "save",
+      ...input,
+    }),
   );
 }
 
@@ -118,7 +169,13 @@ export async function getAlbumDetail(
   signal: AbortSignal,
 ): Promise<AlbumDetail> {
   return albumDetailSchema.parse(
-    await invokeSpotify({ action: "detail", albumId }, signal),
+    await invokeSpotify(
+      {
+        action: "detail",
+        albumId,
+      },
+      signal,
+    ),
   );
 }
 
@@ -128,6 +185,13 @@ export async function getAlbumTracks(
   signal: AbortSignal,
 ): Promise<AlbumTracksPage> {
   return albumTracksPageSchema.parse(
-    await invokeSpotify({ action: "tracks", albumId, offset }, signal),
+    await invokeSpotify(
+      {
+        action: "tracks",
+        albumId,
+        offset,
+      },
+      signal,
+    ),
   );
 }

@@ -17,7 +17,7 @@
   "statusChanged": "The album's status changed. Reopen the detail to refresh it.",
   "confirmation": {
     "title": "Move back to pending?",
-    "description": "Your rating, review, listening date, and track selections will be removed. The album will stay in your library.",
+    "description": "Your rating, review and listening date will be removed. The album will stay in your library, and your independent song preferences will be kept.",
     "confirm": "Move to pending"
   },
   "status": {
@@ -42,7 +42,7 @@
   "removal": {
     "open": "Remove from my library",
     "title": "Remove from your library?",
-    "description": "Your rating, review, and track selections for this album will be removed. This action cannot be undone.",
+    "description": "This album's listening status, rating and review will be removed. Your favorites and independent song preferences will be kept. This action cannot be undone.",
     "confirm": "Remove album",
     "removing": "Removing…",
     "saved": "Album removed from your library",

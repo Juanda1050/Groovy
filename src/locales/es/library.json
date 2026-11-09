@@ -1,28 +1,54 @@
 {
   "title": "Mi biblioteca",
-  "description": "Tus álbumes y preferencias musicales.",
+  "description": "Tus artistas, álbumes y preferencias musicales.",
   "loading": "Cargando tu biblioteca…",
   "error": "No pudimos cargar tu biblioteca. Inténtalo de nuevo.",
   "localPreview": "Inicia sesión para consultar tu biblioteca.",
   "sections": {
     "label": "Contenido de tu biblioteca",
+    "artists": "Artistas",
     "albums": "Álbumes",
     "likes": "Me gusta",
     "dislikes": "No me gusta",
     "tracks": "Canciones",
     "trackPreferences": "Preferencia de canciones"
   },
+  "artists": {
+    "unavailable": "Artista guardado",
+    "open": "Abrir {{name}} en Spotify en una nueva pestaña",
+    "metadataError": "Faltan los datos de algunos artistas. Tus favoritos siguen guardados.",
+    "emptyTitle": "Tus artistas favoritos tendrán su lugar aquí",
+    "emptyDescription": "Los artistas que elijas como favoritos aparecerán en esta sección."
+  },
+  "favorites": {
+    "add": "Marcar {{name}} como favorito",
+    "remove": "Quitar {{name}} de favoritos",
+    "loadError": "No pudimos cargar tus preferencias. Reintenta para modificar favoritos.",
+    "emptyTitle": "Hay discos que merecen su estrella",
+    "emptyDescription": "Marca un álbum como favorito y aparecerá aquí, aunque todavía no lo hayas guardado como pendiente o escuchado."
+  },
   "tracks": {
-    "loading": "Cargando información de las canciones…",
+    "favorites": "Favoritas",
+    "loading": "Cargando tus canciones…",
     "unavailable": "Canción no disponible",
     "openAlbum": "Ver álbum",
-    "metadataError": "No pudimos completar la información de algunas canciones.",
-    "emptyTitle": "No hay canciones en esta sección",
-    "emptyDescription": "Las canciones que marques aparecerán aquí."
+    "metadataError": "No pudimos actualizar los datos de algunas canciones. Tus preferencias siguen guardadas.",
+    "preferenceError": "No pudimos cargar tus preferencias. Reintenta para usar los controles de canciones.",
+    "emptyTitle": "Tu música irá tomando forma aquí",
+    "emptyDescription": "En esta sección aparecerán las canciones que marques con esta preferencia.",
+    "controls": "Preferencias de {{name}}",
+    "addFavorite": "Marcar {{name}} como favorita",
+    "removeFavorite": "Quitar {{name}} de favoritas",
+    "addLike": "Me gusta {{name}}",
+    "removeLike": "Quitar el me gusta de {{name}}",
+    "addDislike": "No me gusta {{name}}",
+    "removeDislike": "Quitar el no me gusta de {{name}}",
+    "favoriteIncludesLike": "{{name}} es favorita e incluye me gusta. Quita primero la estrella para retirar el me gusta."
   },
   "filters": {
     "label": "Filtros",
     "all": "Todos",
+    "favorites": "Favoritos",
     "pending": "Pendientes",
     "listened": "Escuchados",
     "rated": "Calificados",

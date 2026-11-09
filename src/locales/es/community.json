@@ -1,8 +1,6 @@
 {
-  "title": "La buena música se comparte.",
-  "description": "Descubre lo que otras personas están escuchando y reseñando.",
   "loading": "Cargando publicaciones…",
-  "error": "No pudimos actualizar las publicaciones. Inténtalo de nuevo.",
+  "error": "No pudimos actualizar las publicaciones. Reintenta.",
   "signInRequired": "Inicia sesión para ver las publicaciones.",
   "actions": {
     "refresh": "Actualizar publicaciones",
@@ -12,87 +10,81 @@
     "library": "Ir a mi biblioteca"
   },
   "connection": {
-    "connecting": "Conectando actualizaciones…",
-    "live": "Actualizaciones en tiempo real",
-    "offline": "Sin conexión en tiempo real. Puedes actualizar manualmente."
+    "offline": "Las novedades en directo no están disponibles. Puedes actualizar manualmente."
   },
   "empty": {
-    "title": "Aún no hay publicaciones",
-    "description": "Marca un álbum como escuchado para que aparezca aquí. Tus cambios se publican automáticamente."
+    "title": "Todavía no hay publicaciones",
+    "description": "Los álbumes que marques como escuchados y tus nuevos favoritos aparecerán aquí."
   },
   "post": {
-    "author": "Oyente de Groovy",
+    "author": "Melómano de Groovy",
     "album": "Ver álbum",
     "openAlbum": "Abrir {{album}}",
-    "listened": "Escuchó este álbum."
+    "listened": "Escuchó este álbum.",
+    "favorite": "Álbum favorito",
+    "favoriteDescription": "Un disco con un lugar especial entre sus favoritos."
   },
   "social": {
     "openProfile": "Ver el perfil de {{name}}",
     "follow": "Seguir",
     "following": "Siguiendo",
     "unfollow": "Dejar de seguir",
-    "viewAlbum": "Ver álbum",
     "react": "Me gusta esta publicación",
-    "unreact": "Quitar Me gusta",
-    "saveAlbum": "Agregar a mi biblioteca",
+    "unreact": "Quitar me gusta",
+    "saveAlbum": "Añadir a mi biblioteca",
     "inLibrary": "Ya está en tu biblioteca",
-    "saved": "Álbum agregado a tu biblioteca",
-    "openPost": "Ver publicación",
-    "postTitle": "Publicación",
-    "postDescription": "Valoración y opinión del álbum.",
+    "saved": "Álbum añadido a tu biblioteca",
     "profileTitle": "Perfil",
-    "profileDescription": "Información pública del usuario.",
+    "profileDescription": "Información pública del perfil.",
     "profileLoading": "Cargando perfil…",
     "profileError": "No pudimos cargar este perfil.",
-    "followingCount": "siguiendo",
+    "followingCount": "seguidos",
     "followersCount": "seguidores",
     "close": "Cerrar",
-    "readError": "No pudimos cargar las reacciones y seguimientos.",
-    "error": "No pudimos confirmar el cambio. Inténtalo de nuevo.",
+    "readError": "No pudimos cargar las reacciones y los seguimientos.",
+    "error": "No pudimos confirmar el cambio. Reintenta.",
     "sessionError": "Tu sesión terminó. Vuelve a iniciar sesión.",
-    "rateError": "Has hecho varios cambios seguidos. Espera un momento.",
-    "retryAfter": "Puedes reintentar en {{count}} s.",
+    "rateError": "Has realizado varios cambios seguidos. Espera un momento.",
+    "retryAfter": "Podrás reintentar en {{count}} s.",
     "saveShort": "Guardar",
-    "savedShort": "Guardado",
-    "openShort": "Ver"
+    "savedShort": "Guardado"
   },
   "profile": {
     "posts": "Publicaciones",
-    "empty": "Aún no hay publicaciones públicas.",
+    "empty": "Todavía no hay publicaciones públicas.",
     "back": "Volver a Comunidad"
   },
   "tabs": {
-    "label": "Publicaciones de la comunidad",
+    "label": "Listados de Comunidad",
     "community": "Comunidad",
     "following": "Siguiendo"
   },
   "followingEmpty": {
-    "title": "Tu música, en compañía",
-    "description": "Sigue a otros oyentes para ver sus publicaciones aquí.",
-    "action": "Explorar comunidad"
+    "title": "La música se disfruta en compañía",
+    "description": "Sigue a otras personas para encontrar sus publicaciones aquí.",
+    "action": "Explorar Comunidad"
   },
   "search": {
     "label": "Buscar personas",
-    "placeholder": "Nombre o @usuario",
+    "placeholder": "Nombre o @username",
     "clear": "Limpiar búsqueda",
-    "hint": "Escribe al menos 2 caracteres del inicio del nombre o usuario.",
+    "hint": "Escribe al menos 2 caracteres del inicio de un nombre o username.",
     "loading": "Buscando personas…",
-    "error": "No pudimos buscar personas. Inténtalo de nuevo.",
-    "empty": "No encontramos personas con ese nombre o usuario.",
-    "more": "Hay más coincidencias. Escribe algo más específico.",
+    "error": "No pudimos buscar personas. Reintenta.",
+    "empty": "No encontramos personas con ese nombre o username.",
+    "more": "Hay más coincidencias. Prueba una búsqueda más específica.",
     "results": "Personas",
     "own": "Tu perfil"
   },
   "comments": {
     "title": "Comentarios",
     "label": "Tu comentario",
-    "placeholder": "Comparte lo que piensas…",
+    "placeholder": "¿Qué te parece este disco?",
     "publish": "Publicar",
     "loading": "Cargando comentarios…",
-    "empty": "Inicia la conversación.",
     "error": "No pudimos cargar los comentarios.",
-    "writeError": "No pudimos confirmar el cambio. Inténtalo de nuevo.",
-    "unavailable": "La publicación o el comentario ya no está disponible.",
+    "writeError": "No pudimos confirmar el cambio. Reintenta.",
+    "unavailable": "Esta publicación o comentario ya no está disponible.",
     "sent": "Comentario publicado",
     "deleted": "Comentario eliminado",
     "delete": "Eliminar comentario",
@@ -101,31 +93,30 @@
     "cancel": "Cancelar",
     "confirmDelete": "Eliminar",
     "length": "{{count}} / {{max}}",
-    "tooLong": "El comentario puede tener hasta {{max}} caracteres.",
-    "offline": "Sin actualizaciones en vivo. Se reanudarán al recuperar la conexión.",
+    "tooLong": "Los comentarios pueden tener hasta {{max}} caracteres.",
+    "offline": "Las novedades en directo no están disponibles. Se reanudarán cuando vuelva la conexión.",
     "updates": "Mostrar comentarios nuevos",
     "more": "Ver comentarios anteriores",
-    "remaining": "Podrás publicar en {{count}} s.",
+    "remaining": "Podrás volver a publicar en {{count}} s.",
     "edit": "Editar comentario",
     "editLabel": "Editar tu comentario",
     "saveEdit": "Guardar",
     "updated": "Comentario actualizado",
     "edited": "editado",
-    "editConflict": "El comentario cambió en otra sesión. Revisa la versión actual antes de guardar.",
+    "editConflict": "Este comentario cambió en otra sesión. Revisa la versión actual antes de guardar.",
     "keepChanges": "Conservar mis cambios",
     "currentVersion": "Versión actual",
     "options": "Opciones del comentario",
     "openComposer": "Escribir un comentario y ver más",
-    "closeComposer": "Cerrar el cuadro de comentario"
+    "closeComposer": "Cerrar el campo de comentarios"
   },
   "reactions": {
     "title": "Me gusta",
     "description": "Personas a las que les gustó esta publicación.",
-    "open": "Ver quién dio Me gusta",
-    "loading": "Cargando Me gusta…",
-    "empty": "Todavía no hay Me gusta.",
-    "error": "No pudimos cargar los Me gusta.",
-    "more": "Ver más",
-    "refresh": "Actualizar Me gusta"
+    "open": "Ver a quién le gustó esta publicación",
+    "loading": "Cargando reacciones…",
+    "empty": "Todavía no hay reacciones.",
+    "error": "No pudimos cargar las reacciones.",
+    "more": "Ver más"
   }
 }

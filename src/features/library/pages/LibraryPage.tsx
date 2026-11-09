@@ -1,58 +1,39 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Library,
-  Music2,
-  ThumbsDown,
-} from "lucide-react";
-
+import { ChevronLeft, ChevronRight, Library, Mic2, Music2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { AlbumConfirmation } from "@/features/library/components/AlbumConfirmation";
+import { LibraryArtists } from "@/features/library/components/LibraryArtists";
 import { LibraryCard } from "@/features/library/components/LibraryCard";
 import { LibraryFilters } from "@/features/library/components/LibraryFilters";
-import { TrackRow } from "@/features/library/components/TrackRow";
-
+import { LibrarySongs } from "@/features/library/components/LibrarySongs";
 import { useAlbumRemoval } from "@/features/library/hooks/useAlbumStatus";
 import { useLibrary } from "@/features/library/hooks/useLibrary";
-import { useLibraryTracks } from "@/features/library/hooks/useLibraryTracks";
 import { useLibraryView } from "@/features/library/hooks/useLibraryView";
-
-import { RecordLoader } from "@/shared/components/RecordLoader";
-import { Button } from "@/shared/components/ui/button";
-
 import type {
   LibraryCardLabels,
   LibraryFilterOption,
   LibraryItem,
   LibrarySection,
 } from "@/models/libraryView";
+import { PageSkeleton } from "@/shared/components/PageSkeleton";
+import { Button } from "@/shared/components/ui/button";
 
 export default function LibraryPage() {
   const { t, i18n } = useTranslation("library");
-
   const view = useLibraryView();
-  const { section, trackSection } = view;
+  const showingArtists = view.section === "artists";
+  const showingAlbums = view.section === "albums";
+  const showingSongs = !showingArtists && !showingAlbums;
+  const library = useLibrary(showingAlbums);
 
   const [albumToRemove, setAlbumToRemove] = useState<LibraryItem | null>(null);
-
   const removal = useAlbumRemoval(albumToRemove?.spotifyAlbumId ?? "");
-
-  const showingTracks = section !== "albums";
-  const library = useLibrary(!showingTracks);
-
-  const tracks = useLibraryTracks(
-    section === "dislikes" ? "least_favorite" : "favorite",
-    showingTracks,
-  );
-
-  const current = showingTracks ? tracks : library;
 
   const options: readonly LibraryFilterOption[] = [
     { value: "all", label: t("filters.all") },
+    { value: "favorites", label: t("filters.favorites") },
     { value: "pending", label: t("filters.pending") },
     { value: "listened", label: t("filters.listened") },
     { value: "rated", label: t("filters.rated") },
@@ -73,36 +54,21 @@ export default function LibraryPage() {
     maximumFractionDigits: 1,
   });
 
-  function onSectionChange(next: LibrarySection): void {
-    if (next === section) return;
-
-    view.onChange({
-      section: next,
-      ...(next !== "albums" ? { trackSection: next } : {}),
-    });
+  function changeSection(section: LibrarySection): void {
+    if (section !== view.section) view.onChange({ section });
   }
 
-  function onRequestRemove(item: LibraryItem) {
-    if (removal.saving) return;
-
+  function requestRemoval(item: LibraryItem): void {
+    if (removal.saving || item.status === null) return;
     removal.onReset();
     setAlbumToRemove(item);
   }
 
-  function onRemovalOpenChange(open: boolean) {
-    if (open || removal.saving) return;
-
-    setAlbumToRemove(null);
-    removal.onReset();
-  }
-
-  async function onConfirmRemoval() {
-    const removed = await removal.onRemove();
-
-    if (!removed) return;
-
-    setAlbumToRemove(null);
-    removal.onReset();
+  async function confirmRemoval(): Promise<void> {
+    if (await removal.onRemove()) {
+      setAlbumToRemove(null);
+      removal.onReset();
+    }
   }
 
   return (
@@ -112,15 +78,13 @@ export default function LibraryPage() {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {t("title")}
           </h1>
-
           <p className="mt-2 text-sm text-muted-foreground">
             {t("description")}
           </p>
         </div>
-
         <Link
           to="/"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 px-4 text-xs font-medium text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 px-4 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("actions.discover")}
         </Link>
@@ -129,12 +93,17 @@ export default function LibraryPage() {
       <div
         role="group"
         aria-label={t("sections.label")}
-        className="grid min-w-0 grid-cols-2 gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 sm:inline-flex"
+        className="grid grid-cols-3 gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 sm:inline-flex"
       >
-        {(["albums", "tracks"] as const).map((value) => {
-          const Icon = value === "albums" ? Library : Music2;
-
-          const selected = value === "albums" ? !showingTracks : showingTracks;
+        {(["artists", "albums", "tracks"] as const).map((value) => {
+          const Icon =
+            value === "artists" ? Mic2 : value === "albums" ? Library : Music2;
+          const selected =
+            value === "artists"
+              ? showingArtists
+              : value === "albums"
+                ? showingAlbums
+                : showingSongs;
 
           return (
             <Button
@@ -143,189 +112,143 @@ export default function LibraryPage() {
               variant="ghost"
               aria-pressed={selected}
               onClick={() =>
-                onSectionChange(value === "albums" ? "albums" : trackSection)
+                changeSection(value === "tracks" ? view.trackSection : value)
               }
-              className="min-h-12 min-w-0 gap-2 rounded-lg px-3 text-sm font-medium aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm sm:min-h-11 sm:min-w-28"
+              className="min-h-12 min-w-0 gap-1.5 rounded-lg px-2 text-xs aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm sm:min-h-11 sm:min-w-28 sm:px-3 sm:text-sm"
             >
               <Icon aria-hidden="true" className="size-4 shrink-0" />
-
               <span className="truncate">{t(`sections.${value}`)}</span>
             </Button>
           );
         })}
       </div>
 
-      {showingTracks && (
-        <div
-          role="group"
-          aria-label={t("sections.trackPreferences")}
-          className="grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap"
-        >
-          {(["likes", "dislikes"] as const).map((value) => {
-            const Icon = value === "likes" ? Heart : ThumbsDown;
+      {showingArtists ? (
+        <LibraryArtists />
+      ) : showingSongs ? (
+        <LibrarySongs />
+      ) : (
+        <>
+          <LibraryFilters
+            value={library.filter}
+            options={options}
+            label={t("filters.label")}
+            disabled={library.isFetching || library.needsSignIn}
+            onChange={library.onFilterChange}
+          />
 
-            const colors =
-              value === "likes"
-                ? "aria-pressed:border-like/30 aria-pressed:bg-like/10 aria-pressed:text-like"
-                : "aria-pressed:border-dislike/30 aria-pressed:bg-dislike/10 aria-pressed:text-dislike";
-
-            return (
-              <Button
-                key={value}
-                type="button"
-                variant="ghost"
-                aria-pressed={section === value}
-                onClick={() => onSectionChange(value)}
-                className={`min-h-11 min-w-0 gap-2 rounded-lg border border-border/60 px-3 text-xs font-medium sm:text-sm ${colors}`}
-              >
-                <Icon
-                  aria-hidden="true"
-                  className={`size-4 shrink-0 ${
-                    value === "likes" ? "text-like" : "text-dislike"
-                  }`}
-                />
-
-                <span className="truncate">{t(`sections.${value}`)}</span>
-              </Button>
-            );
-          })}
-        </div>
-      )}
-
-      {!showingTracks && (
-        <LibraryFilters
-          value={library.filter}
-          options={options}
-          label={t("filters.label")}
-          disabled={library.isFetching || library.needsSignIn}
-          onChange={library.onFilterChange}
-        />
-      )}
-
-      {library.needsSignIn ? (
-        <p className="text-sm text-muted-foreground">{t("localPreview")}</p>
-      ) : current.isPending ? (
-        <div
-          role="status"
-          className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground"
-        >
-          <RecordLoader size="sm" />
-          {t("loading")}
-        </div>
-      ) : current.isError ? (
-        <div role="alert" className="space-y-3 py-6">
-          <p className="text-sm text-destructive">{t("error")}</p>
-
-          <Button type="button" variant="outline" onClick={current.onRetry}>
-            {t("actions.retry")}
-          </Button>
-        </div>
-      ) : current.items.length === 0 ? (
-        <div className="px-4 py-12 text-center">
-          <h2 className="text-base font-medium">
-            {t(showingTracks ? "tracks.emptyTitle" : "empty.title")}
-          </h2>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t(showingTracks ? "tracks.emptyDescription" : "empty.description")}
-          </p>
-        </div>
-      ) : showingTracks ? (
-        <div aria-busy={tracks.isFetching || tracks.metadataLoading}>
-          {tracks.metadataError && (
-            <div
-              role="alert"
-              className="flex flex-wrap items-center gap-2 pb-3"
-            >
+          {library.preferenceError && (
+            <div role="alert" className="flex flex-wrap items-center gap-2">
               <p className="text-xs text-destructive">
-                {t("tracks.metadataError")}
+                {t("favorites.loadError")}
               </p>
-
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={tracks.onRetry}
+                onClick={library.onPreferenceRetry}
               >
                 {t("actions.retry")}
               </Button>
             </div>
           )}
 
-          <ul className="divide-y divide-border/40">
-            {tracks.items.map((item) => (
-              <TrackRow
-                key={`${item.userAlbumId}:${item.trackId}`}
-                item={item}
-                loading={tracks.metadataLoading}
-              />
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div
-          aria-busy={library.isFetching}
-          className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5"
-        >
-          {library.items.map((item) => (
-            <LibraryCard
-              key={item.id}
-              item={item}
-              labels={labels}
-              ratingLabel={
-                item.rating === null ? null : formatter.format(item.rating)
-              }
-              onRemove={onRequestRemove}
-            />
-          ))}
-        </div>
-      )}
-
-      {!library.needsSignIn && !current.isPending && !current.isError && (
-        <nav
-          aria-label={t("pagination.label")}
-          className={`flex min-w-0 items-center justify-center gap-2 pt-3 ${
-            showingTracks ? "" : "border-t border-border/40"
-          }`}
-        >
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t("pagination.previous")}
-              disabled={!current.hasPrevious || current.isFetching}
-              onClick={current.onPrevious}
-              className="size-11 rounded-xl p-0 text-muted-foreground"
+          {library.needsSignIn ? (
+            <p className="text-sm text-muted-foreground">{t("localPreview")}</p>
+          ) : library.isPending ? (
+            <div role="status" aria-live="polite">
+              <PageSkeleton variant="albums" />
+              <span className="sr-only">{t("loading")}</span>
+            </div>
+          ) : library.isError ? (
+            <div role="alert" className="space-y-3 py-6">
+              <p className="text-sm text-destructive">{t("error")}</p>
+              <Button type="button" variant="outline" onClick={library.onRetry}>
+                {t("actions.retry")}
+              </Button>
+            </div>
+          ) : library.items.length === 0 ? (
+            <div className="py-12 text-center">
+              <h2 className="text-base font-medium">
+                {t(
+                  library.filter === "favorites"
+                    ? "favorites.emptyTitle"
+                    : "empty.title",
+                )}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t(
+                  library.filter === "favorites"
+                    ? "favorites.emptyDescription"
+                    : "empty.description",
+                )}
+              </p>
+            </div>
+          ) : (
+            <div
+              aria-busy={library.isFetching}
+              className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5"
             >
-              <ChevronLeft aria-hidden="true" className="size-4" />
-            </Button>
+              {library.items.map((item) => (
+                <LibraryCard
+                  key={item.id}
+                  item={item}
+                  labels={labels}
+                  ratingLabel={
+                    item.rating === null ? null : formatter.format(item.rating)
+                  }
+                  favorite={
+                    library.preferences?.[item.spotifyAlbumId]?.is_favorite ??
+                    library.filter === "favorites"
+                  }
+                  favoriteDisabled={library.favoriteDisabled}
+                  onFavoriteChange={library.onFavoriteChange}
+                  onRemove={requestRemoval}
+                />
+              ))}
+            </div>
+          )}
 
-            <span
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              className="min-w-16 text-center text-xs tabular-nums text-muted-foreground"
+          {!library.needsSignIn && !library.isPending && !library.isError && (
+            <nav
+              aria-label={t("pagination.label")}
+              className="flex items-center justify-center gap-2 border-t border-border/40 pt-3"
             >
-              {t("pagination.position", {
-                page: current.pageNumber,
-                total: current.pageCount,
-              })}
-            </span>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t("pagination.next")}
-              disabled={!current.hasNext || current.isFetching}
-              onClick={current.onNext}
-              className="size-11 rounded-xl p-0 text-muted-foreground"
-            >
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Button>
-          </div>
-        </nav>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("pagination.previous")}
+                disabled={!library.hasPrevious || library.isFetching}
+                onClick={library.onPrevious}
+                className="size-11"
+              >
+                <ChevronLeft aria-hidden="true" />
+              </Button>
+              <span
+                role="status"
+                aria-live="polite"
+                className="min-w-16 text-center text-xs tabular-nums text-muted-foreground"
+              >
+                {t("pagination.position", {
+                  page: library.pageNumber,
+                  total: library.pageCount,
+                })}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("pagination.next")}
+                disabled={!library.hasNext || library.isFetching}
+                onClick={library.onNext}
+                className="size-11"
+              >
+                <ChevronRight aria-hidden="true" />
+              </Button>
+            </nav>
+          )}
+        </>
       )}
 
       <AlbumConfirmation
@@ -335,9 +258,14 @@ export default function LibraryPage() {
         disabled={removal.disabled}
         errorKey={removal.errorKey}
         remainingSeconds={removal.remainingSeconds}
-        onOpenChange={onRemovalOpenChange}
+        onOpenChange={(open) => {
+          if (!open && !removal.saving) {
+            setAlbumToRemove(null);
+            removal.onReset();
+          }
+        }}
         onConfirm={() => {
-          void onConfirmRemoval();
+          void confirmRemoval();
         }}
       />
     </section>

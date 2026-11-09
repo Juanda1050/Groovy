@@ -2,13 +2,16 @@ import type { Database } from "@/models/database";
 
 export type LibraryFilter =
   | "all"
+  | "favorites"
   | "pending"
   | "listened"
   | "rated"
   | "unrated"
   | "reviewed";
 
-export type LibrarySection = "albums" | "likes" | "dislikes";
+export type LibrarySection = "artists" | "albums" | "likes" | "dislikes";
+
+export type LibraryTrackSection = "likes" | "dislikes";
 
 export type LibraryPageSize = 10 | 20 | 50;
 
@@ -25,7 +28,7 @@ export interface LibraryCursor {
 export interface LibraryItem {
   id: string;
   spotifyAlbumId: string;
-  status: "pending" | "listened";
+  status: "pending" | "listened" | null;
   rating: number | null;
   hasReview: boolean;
   title: string | null;
@@ -81,13 +84,43 @@ export interface LibraryCardProps {
   ratingLabel: string | null;
   labels: LibraryCardLabels;
   onRemove: (item: LibraryItem) => void;
+  favorite: boolean;
+  favoriteDisabled: boolean;
+  onFavoriteChange: (spotifyId: string, active: boolean) => void;
 }
 
 export interface LibraryViewState {
   section: LibrarySection;
-  trackSection: Exclude<LibrarySection, "albums">;
+  trackSection: LibraryTrackSection;
   filter: LibraryFilter;
+  artistPage: number;
   albumPage: number;
   likesPage: number;
   dislikesPage: number;
+}
+
+export interface LibraryArtist {
+  id: string;
+  name: string | null;
+  imageUrl: string | null;
+}
+
+export interface LibraryArtistPage {
+  items: LibraryArtist[];
+  total: number;
+  page: number;
+  metadataError: boolean;
+}
+
+export interface GetLibraryArtistsInput {
+  userId: string;
+  page: number;
+  signal: AbortSignal;
+}
+
+export interface LibraryArtistCardProps {
+  artist: LibraryArtist;
+  favorite: boolean;
+  disabled: boolean;
+  onFavoriteChange: (id: string, active: boolean) => void;
 }

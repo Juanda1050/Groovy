@@ -1,17 +1,19 @@
 import {
-queryOptions,
-type InfiniteData,
-type QueryClient,
+  queryOptions,
+  type InfiniteData,
+  type QueryClient,
 } from "@tanstack/react-query";
 
 import { CatalogError } from "@/features/catalog/lib/catalogError";
 import { getAlbumDetail } from "@/features/catalog/services/spotifyService";
 import { getUserAlbum } from "@/features/library/services/libraryService";
-
-import type { CatalogPage,CatalogRatings,ListeningStatus } from "@/models/catalog";
+import type {
+  CatalogPage,
+  CatalogRatings,
+  ListeningStatus,
+} from "@/models/catalog";
 import type { LibraryAlbum } from "@/models/library";
 import type { LibraryPageResult } from "@/models/libraryView";
-import type { LibraryTracksPage,TrackPick } from "@/models/trackPicks";
 
 export const albumStaleTime = 15 * 60_000;
 export const albumGcTime = 30 * 60_000;
@@ -28,9 +30,7 @@ export function shouldRetryAlbum(
   failureCount: number,
   error: unknown,
 ): boolean {
-  if (failureCount >= 2 || !(error instanceof CatalogError)) {
-    return false;
-  }
+  if (failureCount >= 2 || !(error instanceof CatalogError)) return false;
 
   if (error.code === "RATE_LIMITED" || error.code === "SPOTIFY_QUOTA") {
     return error.retryAfter > 0 && error.retryAfter <= 60;
@@ -69,7 +69,6 @@ export function albumLibraryOptions(userId: string | null, albumId: string) {
     enabled: userId !== null && /^[A-Za-z0-9]{22}$/.test(albumId),
     queryFn: ({ signal }) => {
       if (!userId) throw new Error("AUTH_REQUIRED");
-
       return getUserAlbum(userId, albumId, signal);
     },
     staleTime: 60_000,
@@ -81,12 +80,12 @@ export function albumLibraryOptions(userId: string | null, albumId: string) {
 }
 
 export function syncCatalogAlbumStatus(
-  queryClient: QueryClient,
+  client: QueryClient,
   userId: string | null,
   albumId: string,
   status: ListeningStatus | null,
 ): void {
-  void queryClient.cancelQueries(
+  void client.cancelQueries(
     { queryKey: ["albumSearchInfinite", userId] },
     { revert: false },
   );
@@ -100,38 +99,40 @@ export function syncCatalogAlbumStatus(
     };
   }
 
-  queryClient.setQueriesData<CatalogPage>(
+  client.setQueriesData<CatalogPage>(
     { queryKey: ["albumSearch", userId] },
     (previous) => (previous ? updatePage(previous) : previous),
   );
 
-  queryClient.setQueriesData<InfiniteData<CatalogPage, number>>(
+  client.setQueriesData<InfiniteData<CatalogPage, number>>(
     { queryKey: ["albumSearchInfinite", userId] },
     (previous) =>
       previous
-        ? {
-            ...previous,
-            pages: previous.pages.map(updatePage),
-          }
+        ? { ...previous, pages: previous.pages.map(updatePage) }
         : previous,
   );
+
+  void client.invalidateQueries({
+    queryKey: ["artistAlbums", userId],
+    refetchType: "none",
+  });
 }
 
 export function syncAlbumLibrary(
-  queryClient: QueryClient,
+  client: QueryClient,
   album: LibraryAlbum,
 ): void {
   const userId = album.user_id;
   const albumId = album.spotify_album_id;
 
-  queryClient.setQueryData<LibraryAlbum | null>(
+  client.setQueryData<LibraryAlbum | null>(
     albumLibraryKey(userId, albumId),
     album,
   );
 
-  syncCatalogAlbumStatus(queryClient, userId, albumId, album.status);
+  syncCatalogAlbumStatus(client, userId, albumId, album.status);
 
-  queryClient.setQueriesData<CatalogRatings>(
+  client.setQueriesData<CatalogRatings>(
     { queryKey: ["catalogRatings", userId] },
     (previous) =>
       previous && albumId in previous
@@ -139,7 +140,7 @@ export function syncAlbumLibrary(
         : previous,
   );
 
-  queryClient.setQueriesData<LibraryPageResult>(
+  client.setQueriesData<LibraryPageResult>(
     { queryKey: ["library", userId] },
     (previous) =>
       previous
@@ -149,6 +150,7 @@ export function syncAlbumLibrary(
               item.spotifyAlbumId === albumId
                 ? {
                     ...item,
+                    id: album.id,
                     status: album.status,
                     rating: album.rating,
                     hasReview: Boolean(album.review?.trim()),
@@ -159,12 +161,8 @@ export function syncAlbumLibrary(
         : previous,
   );
 
-  void queryClient.invalidateQueries({
-    queryKey: ["library", userId],
-  });
-  void queryClient.invalidateQueries({
-    queryKey: ["albumFeed"],
-  });
+  void client.invalidateQueries({ queryKey: ["library", userId] });
+  void client.invalidateQueries({ queryKey: ["albumFeed"] });
 }
 
 export function syncAlbumRemoval(
@@ -172,10 +170,6 @@ export function syncAlbumRemoval(
   userId: string,
   albumId: string,
 ): void {
-  const album = client.getQueryData<LibraryAlbum | null>(
-    albumLibraryKey(userId, albumId),
-  );
-
   client.setQueryData<LibraryAlbum | null>(
     albumLibraryKey(userId, albumId),
     null,
@@ -191,72 +185,8 @@ export function syncAlbumRemoval(
         : previous,
   );
 
-  client.setQueriesData<TrackPick[]>(
-    {
-      queryKey: ["albumTrackPicks", userId, albumId],
-    },
-    [],
-  );
-
   client.setQueriesData({ queryKey: ["albumPost", userId, albumId] }, null);
 
   void client.invalidateQueries({ queryKey: ["albumFeed"] });
-
-  const libraryEntries = client.getQueriesData<LibraryPageResult>({
-    queryKey: ["library", userId],
-  });
-
-  for (const [key, previous] of libraryEntries) {
-    if (!previous) continue;
-
-    const filter = key[2];
-
-    const included =
-      album &&
-      (filter === "all" ||
-        filter === album.status ||
-        (filter === "rated" && album.rating !== null) ||
-        (filter === "unrated" &&
-          album.status === "listened" &&
-          album.rating === null) ||
-        (filter === "reviewed" && Boolean(album.review?.trim())));
-
-    const items = previous.items.filter(
-      (item) => item.spotifyAlbumId !== albumId,
-    );
-
-    const removed = included || items.length < previous.items.length;
-
-    client.setQueryData<LibraryPageResult>(key, {
-      ...previous,
-      items,
-      total: Math.max(0, previous.total - (removed ? 1 : 0)),
-    });
-  }
-
-  client.setQueriesData<LibraryTracksPage>(
-    { queryKey: ["likedAlbums", userId] },
-    (previous) => {
-      if (!previous) return previous;
-
-      const items = previous.items.filter((item) => item.albumId !== albumId);
-
-      return {
-        ...previous,
-        items,
-        total: Math.max(
-          0,
-          previous.total - (previous.items.length - items.length),
-        ),
-      };
-    },
-  );
-
-  void client.invalidateQueries({
-    queryKey: ["library", userId],
-  });
-
-  void client.invalidateQueries({
-    queryKey: ["likedAlbums", userId],
-  });
+  void client.invalidateQueries({ queryKey: ["library", userId] });
 }

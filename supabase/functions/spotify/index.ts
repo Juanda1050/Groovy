@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
+import { getArtistAlbums } from "./artistAlbums.ts";
+import { getArtistDetail } from "./artistDetails.ts";
+import { getArtists } from "./artists.ts";
 import { ApiError, readBody } from "./http.ts";
+import type { Database } from "./models/database.ts";
+import type { CatalogAlbum } from "./models/spotify.ts";
 import { getSpotifyJson } from "./spotifyClient.ts";
 import {
   catalogAlbumSchema,
@@ -8,10 +14,6 @@ import {
   requestSchema,
   searchSchema,
 } from "./validation.ts";
-import { normalizeAlbumDetail, normalizeTracksPage } from "./albumDetails.ts";
-
-import type { CatalogAlbum } from "./models/spotify.ts";
-import type { Database } from "./models/database.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const publicKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -48,9 +50,7 @@ async function cacheAlbum(album: CatalogAlbum): Promise<void> {
     expires_at: new Date(now + 6 * 60 * 60_000).toISOString(),
   });
 
-  if (error) {
-    throw new ApiError(503, "SERVER_ERROR");
-  }
+  if (error) throw new ApiError(503, "SERVER_ERROR");
 }
 
 Deno.serve(async (request) => {
@@ -77,10 +77,7 @@ Deno.serve(async (request) => {
   }
 
   function reply(body: unknown, status = 200): Response {
-    return new Response(JSON.stringify(body), {
-      status,
-      headers,
-    });
+    return new Response(JSON.stringify(body), { status, headers });
   }
 
   try {
@@ -89,10 +86,7 @@ Deno.serve(async (request) => {
     }
 
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers,
-      });
+      return new Response(null, { status: 204, headers });
     }
 
     if (request.method !== "POST") {
@@ -107,9 +101,7 @@ Deno.serve(async (request) => {
 
     const userClient = createClient<Database>(url, publicKey, {
       global: {
-        headers: {
-          Authorization: authorization,
-        },
+        headers: { Authorization: authorization },
       },
       auth: {
         persistSession: false,
@@ -138,7 +130,12 @@ Deno.serve(async (request) => {
 
     const { data: authorizationData, error: authorizationError } =
       await userClient.rpc("authorize_spotify_action", {
-        p_action: input.action,
+        p_action:
+          input.action === "artists" || input.action === "artistAlbums"
+            ? "search"
+            : input.action === "artist"
+              ? "detail"
+              : input.action,
       });
 
     if (authorizationError?.code === "PT401") {
@@ -153,8 +150,28 @@ Deno.serve(async (request) => {
 
     if (!budget.allowed) {
       userRateLimited = true;
-
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
+    }
+
+    if (input.action === "artistAlbums") {
+      return reply(
+        await getArtistAlbums(
+          input.artistId,
+          input.offset,
+          market,
+          budget.user_id,
+          userClient,
+          admin,
+        ),
+      );
+    }
+
+    if (input.action === "artist") {
+      return reply(await getArtistDetail(input.artistId, admin));
+    }
+
+    if (input.action === "artists") {
+      return reply(await getArtists(input, admin, market));
     }
 
     if (input.action === "detail") {
@@ -166,7 +183,6 @@ Deno.serve(async (request) => {
       );
 
       const detail = normalizeAlbumDetail(raw);
-
       await cacheAlbum(detail.album);
 
       return reply(detail);
@@ -214,14 +230,9 @@ Deno.serve(async (request) => {
                 "spotify_album_id",
                 albums.map((album) => album.id),
               )
-          : {
-              data: [],
-              error: null,
-            };
+          : { data: [], error: null };
 
-      if (error) {
-        throw new ApiError(503, "SERVER_ERROR");
-      }
+      if (error) throw new ApiError(503, "SERVER_ERROR");
 
       const statuses = new Map(
         saved?.map((item) => [item.spotify_album_id, item.status]) ?? [],
@@ -249,9 +260,7 @@ Deno.serve(async (request) => {
       .eq("spotify_album_id", input.albumId)
       .maybeSingle();
 
-    if (existingError) {
-      throw new ApiError(503, "SERVER_ERROR");
-    }
+    if (existingError) throw new ApiError(503, "SERVER_ERROR");
 
     if (existing) {
       return reply({
@@ -268,9 +277,7 @@ Deno.serve(async (request) => {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
-    if (cacheError) {
-      throw new ApiError(503, "SERVER_ERROR");
-    }
+    if (cacheError) throw new ApiError(503, "SERVER_ERROR");
 
     const cachedAlbum = catalogAlbumSchema.safeParse(
       cached
@@ -296,9 +303,7 @@ Deno.serve(async (request) => {
           ),
         );
 
-    if (!cachedAlbum.success) {
-      await cacheAlbum(album);
-    }
+    if (!cachedAlbum.success) await cacheAlbum(album);
 
     const { data: saved, error: saveError } = await userClient.rpc(
       "add_album_to_library",
@@ -314,7 +319,6 @@ Deno.serve(async (request) => {
 
     if (saveError?.message === "RATE_LIMITED") {
       userRateLimited = true;
-
       throw new ApiError(429, "RATE_LIMITED", 60);
     }
 

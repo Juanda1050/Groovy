@@ -13,7 +13,6 @@
   },
   "actions": {
     "save": "Save",
-    "cancel": "Cancel",
     "retry": "Try again"
   },
   "status": {
@@ -34,12 +33,17 @@
     "deviceHint": "Your choice is saved in this browser. Sign in to sync it with your account.",
     "error": "We couldn't load or save your preference. Check your connection and try again."
   },
-  "preferences": {
-    "title": "Make Groovy yours",
-    "description": "Choose your language. Your music stays the same."
-  },
   "session": {
     "loading": "Getting your space ready…",
     "connectionError": "We couldn't verify your session. Check your connection and try again."
+  },
+  "musicPreferences": {
+    "errors": {
+      "session": "Please sign in again to save your preferences.",
+      "conflict": "This preference changed in another tab or device. We refreshed the data; review your selection before trying again.",
+      "favoriteRequiresLike": "Remove the song from favorites before removing its like.",
+      "rate": "Wait a moment before saving another preference.",
+      "save": "We couldn't confirm the change. Check the refreshed state before trying again."
+    }
   }
 }

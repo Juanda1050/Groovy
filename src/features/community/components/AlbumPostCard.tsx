@@ -5,8 +5,8 @@ import {
   Headphones,
   Heart,
   MessageCircle,
+  Star,
 } from "lucide-react";
-
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -15,10 +15,8 @@ import { AlbumPostComments } from "@/features/community/components/AlbumPostComm
 import { AlbumPostReactionsDialog } from "@/features/community/components/AlbumPostReactionsDialog";
 import { AlbumRatingBadge } from "@/features/library/components/AlbumRatingBadge";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
-
-import { Button } from "@/shared/components/ui/button";
-
 import type { AlbumFeedCardProps } from "@/models/library";
+import { Button } from "@/shared/components/ui/button";
 
 const postActionHover =
   "hover:bg-transparent hover:text-primary active:bg-transparent";
@@ -47,7 +45,8 @@ export function AlbumPostCard({
 
   const cover = item.album?.coverUrl;
   const locale = i18n.resolvedLanguage ?? "en";
-  const activityDate = new Date(item.updated_at);
+  const publicationDate = item.published_at ?? item.updated_at;
+  const activityDate = new Date(publicationDate);
 
   const shortDate = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -65,32 +64,44 @@ export function AlbumPostCard({
   }).format(social?.reaction_count ?? 0);
 
   const profileLayout = variant === "profile";
+  const favoritePost = item.post_kind === "favorite";
   const saved = Boolean(social?.library_status);
 
   const canFollow =
     !profileLayout && Boolean(viewerId && viewerId !== item.user_id);
 
-  const review = item.review?.trim();
+  const review = favoritePost ? null : item.review?.trim();
 
-  const containerClassName = profileLayout
-    ? "min-w-0 rounded-2xl border border-border/80 bg-card px-4 pb-3 pt-4 text-card-foreground shadow-[0_2px_8px_-2px_rgb(0_0_0/0.12),0_10px_24px_-18px_rgb(0_0_0/0.24)] sm:px-5 sm:pt-5"
-    : "min-w-0 rounded-2xl border border-border/60 bg-card px-5 pb-3 pt-4 text-card-foreground shadow-sm shadow-black/2.5 sm:px-6 sm:pt-5";
+  const containerClassName = favoritePost
+    ? "min-w-0 rounded-2xl border border-primary/25 bg-card px-5 pb-3 pt-4 text-card-foreground shadow-sm shadow-primary/5 sm:px-6 sm:pt-5"
+    : profileLayout
+      ? "min-w-0 rounded-2xl border border-border/80 bg-card px-4 pb-3 pt-4 text-card-foreground shadow-[0_2px_8px_-2px_rgb(0_0_0/0.12),0_10px_24px_-18px_rgb(0_0_0/0.24)] sm:px-5 sm:pt-5"
+      : "min-w-0 rounded-2xl border border-border/60 bg-card px-5 pb-3 pt-4 text-card-foreground shadow-sm shadow-black/2.5 sm:px-6 sm:pt-5";
 
   return (
     <article className={containerClassName}>
       {profileLayout ? (
         <header className="mb-3 flex min-w-0 items-center justify-between gap-3 text-[11px] text-muted-foreground">
           <span className="inline-flex min-w-0 items-center gap-1.5">
-            <Headphones
-              aria-hidden="true"
-              className="size-3.5 shrink-0 text-primary/70"
-            />
+            {favoritePost ? (
+              <Star
+                aria-hidden="true"
+                className="size-3.5 shrink-0 fill-primary text-primary"
+              />
+            ) : (
+              <Headphones
+                aria-hidden="true"
+                className="size-3.5 shrink-0 text-primary/70"
+              />
+            )}
 
-            <span className="truncate">{t("post.listened")}</span>
+            <span className="truncate">
+              {t(favoritePost ? "post.favorite" : "post.listened")}
+            </span>
           </span>
 
           <time
-            dateTime={item.updated_at}
+            dateTime={publicationDate}
             title={fullDate}
             className="shrink-0 tabular-nums"
           >
@@ -125,7 +136,7 @@ export function AlbumPostCard({
               )}
 
               <time
-                dateTime={item.updated_at}
+                dateTime={publicationDate}
                 title={fullDate}
                 className="shrink-0"
               >
@@ -146,15 +157,11 @@ export function AlbumPostCard({
               title={t(
                 social?.following_author ? "social.unfollow" : "social.follow",
               )}
-              className={`
-                -mr-2 min-h-11 shrink-0 rounded-lg px-2
-                text-xs hover:bg-primary/5
-                ${
-                  social?.following_author
-                    ? "text-muted-foreground"
-                    : "text-primary"
-                }
-              `}
+              className={`-mr-2 min-h-11 shrink-0 rounded-lg px-2 text-xs hover:bg-primary/5 ${
+                social?.following_author
+                  ? "text-muted-foreground"
+                  : "text-primary"
+              }`}
             >
               {t(
                 social?.following_author ? "social.following" : "social.follow",
@@ -164,6 +171,13 @@ export function AlbumPostCard({
         </header>
       )}
 
+      {favoritePost && !profileLayout && (
+        <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary">
+          <Star aria-hidden="true" className="size-3.5 fill-current" />
+          {t("post.favorite")}
+        </div>
+      )}
+
       <Link
         to={`/albums/${item.spotify_album_id}`}
         state={{ returnTo: "/community" }}
@@ -171,27 +185,31 @@ export function AlbumPostCard({
           album: item.album?.name ?? t("post.album"),
         })}
         className={
-          profileLayout
-            ? "group flex min-w-0 items-start gap-3.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
-            : "group mt-3 flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
+          favoritePost
+            ? "group mt-4 grid min-w-0 grid-cols-[7rem_minmax(0,1fr)] items-center gap-4 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6"
+            : profileLayout
+              ? "group flex min-w-0 items-start gap-3.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
+              : "group mt-3 flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4"
         }
       >
         <div
           className={
-            profileLayout
-              ? "flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border/50 sm:size-24"
-              : "flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted sm:size-32"
+            favoritePost
+              ? "flex aspect-square w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-primary/15"
+              : profileLayout
+                ? "flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted ring-1 ring-border/50 sm:size-24"
+                : "flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted sm:size-32"
           }
         >
           {cover && failedCover !== cover ? (
             <img
               src={cover}
               alt=""
-              width={128}
-              height={128}
+              width={favoritePost ? 160 : 128}
+              height={favoritePost ? 160 : 128}
               loading="lazy"
               decoding="async"
-              className="size-full object-cover transition-opacity group-hover:opacity-90"
+              className="size-full object-cover transition-opacity group-hover:opacity-90 motion-reduce:transition-none"
               onError={() => setFailedCover(cover)}
             />
           ) : (
@@ -205,9 +223,11 @@ export function AlbumPostCard({
         <div className="min-w-0 flex-1 space-y-1">
           <h2
             className={
-              profileLayout
-                ? "line-clamp-2 wrap-break-word text-base font-semibold leading-6 tracking-tight transition-colors group-hover:text-primary sm:text-lg"
-                : "line-clamp-2 wrap-break-word text-[15px] font-semibold leading-5 transition-colors group-hover:text-primary sm:text-base"
+              favoritePost
+                ? "line-clamp-3 wrap-break-word text-lg font-semibold leading-6 tracking-tight transition-colors group-hover:text-primary sm:text-2xl sm:leading-8"
+                : profileLayout
+                  ? "line-clamp-2 wrap-break-word text-base font-semibold leading-6 tracking-tight transition-colors group-hover:text-primary sm:text-lg"
+                  : "line-clamp-2 wrap-break-word text-[15px] font-semibold leading-5 transition-colors group-hover:text-primary sm:text-base"
             }
           >
             {item.album?.name ?? t("post.album")}
@@ -219,7 +239,11 @@ export function AlbumPostCard({
             </p>
           )}
 
-          {item.rating !== null ? (
+          {favoritePost ? (
+            <p className="pt-2 text-xs leading-5 text-muted-foreground">
+              {t("post.favoriteDescription")}
+            </p>
+          ) : item.rating !== null ? (
             <div className="pt-0.5">
               <AlbumRatingBadge rating={item.rating} />
             </div>
@@ -248,7 +272,7 @@ export function AlbumPostCard({
 
       <footer
         className={
-          profileLayout
+          profileLayout && !favoritePost
             ? "mt-2.5 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-0"
             : "mt-3 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-0 border-t border-border/45 pt-1.5"
         }
@@ -262,11 +286,7 @@ export function AlbumPostCard({
             title={t(social?.reacted ? "social.unreact" : "social.react")}
             disabled={busy || !social}
             onClick={onReaction}
-            className={`
-              h-11 w-9 justify-end rounded-md p-0 pr-1
-              text-muted-foreground aria-pressed:text-primary
-              ${postActionHover}
-            `}
+            className={`h-11 w-9 justify-end rounded-md p-0 pr-1 text-muted-foreground aria-pressed:text-primary ${postActionHover}`}
           >
             <Heart
               aria-hidden="true"
@@ -282,12 +302,7 @@ export function AlbumPostCard({
             title={t("reactions.open")}
             aria-haspopup="dialog"
             onClick={() => setReactionsOpen(true)}
-            className={`
-              min-h-11 min-w-5 justify-start rounded-md
-              p-0 pr-1 text-xs font-medium tabular-nums
-              text-muted-foreground
-              ${postActionHover}
-            `}
+            className={`min-h-11 min-w-5 justify-start rounded-md p-0 pr-1 text-xs font-medium tabular-nums text-muted-foreground ${postActionHover}`}
           >
             {count}
           </Button>
@@ -304,14 +319,8 @@ export function AlbumPostCard({
           )}
           aria-expanded={commentsOpen}
           aria-controls={commentsId}
-          onClick={() => {
-            setCommentsOpen((current) => !current);
-          }}
-          className={`
-            min-h-11 rounded-lg px-1 text-muted-foreground
-            aria-expanded:text-primary
-            ${postActionHover}
-          `}
+          onClick={() => setCommentsOpen((current) => !current)}
+          className={`min-h-11 rounded-lg px-1 text-muted-foreground aria-expanded:text-primary ${postActionHover}`}
         >
           <MessageCircle aria-hidden="true" className="size-4" />
         </Button>
@@ -322,7 +331,6 @@ export function AlbumPostCard({
             className="inline-flex min-h-11 min-w-0 items-center gap-1.5 justify-self-end px-2 text-xs text-primary"
           >
             <BookmarkCheck aria-hidden="true" className="size-4 shrink-0" />
-
             <span className="truncate">{t("social.savedShort")}</span>
           </span>
         ) : (
@@ -336,7 +344,6 @@ export function AlbumPostCard({
             className="min-h-11 min-w-0 gap-1.5 justify-self-end rounded-lg px-2 text-xs text-muted-foreground hover:bg-primary/5 hover:text-primary"
           >
             <BookmarkPlus aria-hidden="true" className="size-4 shrink-0" />
-
             <span className="truncate">{t("social.saveShort")}</span>
           </Button>
         )}

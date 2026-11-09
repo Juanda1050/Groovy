@@ -5,17 +5,13 @@ import i18n from "@/app/i18n";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { syncProfileCache } from "@/features/profile/lib/profileCache";
 
-import type { TrackPick } from "@/models/trackPicks";
-
 export const createToastManager = ToastPrimitive.createToastManager;
-
 export const useToastManager = ToastPrimitive.useToastManager;
-
 export const toast = createToastManager();
 
 export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
-    onSuccess: async (_data, variables, _context, mutation) => {
+    onSuccess: async (data, variables, _context, mutation) => {
       const key = mutation.options.mutationKey;
       const userId = useAuthStore.getState().user?.id ?? null;
 
@@ -27,11 +23,9 @@ export const queryClient = new QueryClient({
       if (!albumWrite && !profileWrite) return;
 
       if (profileWrite) {
-        await syncProfileCache(queryClient, userId, _data);
+        await syncProfileCache(queryClient, userId, data);
 
-        if (useAuthStore.getState().user?.id !== userId) {
-          return;
-        }
+        if (useAuthStore.getState().user?.id !== userId) return;
       }
 
       const deleting =
@@ -45,70 +39,10 @@ export const queryClient = new QueryClient({
         id: "groovy-save",
         type: "success",
         title: deleting
-          ? i18n.t("removal.saved", {
-              ns: "rating",
-            })
-          : i18n.t("notifications.saved", {
-              ns: "common",
-            }),
+          ? i18n.t("removal.saved", { ns: "rating" })
+          : i18n.t("notifications.saved", { ns: "common" }),
         timeout: 2600,
         priority: "low",
-      });
-
-      if (!albumWrite || typeof variables !== "object" || variables === null) {
-        return;
-      }
-
-      const changesSelections =
-        !("action" in variables) || variables.action === "status";
-
-      if (!changesSelections) return;
-
-      const changesStatus =
-        "action" in variables && variables.action === "status";
-
-      const albumId =
-        "albumId" in variables && typeof variables.albumId === "string"
-          ? variables.albumId
-          : null;
-
-      const picksKey = ["albumTrackPicks", userId, albumId];
-
-      await Promise.all([
-        queryClient.cancelQueries({
-          queryKey: ["likedAlbums", userId],
-        }),
-
-        changesStatus && albumId
-          ? queryClient.cancelQueries({
-              queryKey: picksKey,
-            })
-          : Promise.resolve(),
-      ]);
-
-      if (useAuthStore.getState().user?.id !== userId) {
-        return;
-      }
-
-      if (changesStatus && albumId) {
-        if ("status" in variables && variables.status === "pending") {
-          queryClient.setQueriesData<TrackPick[]>(
-            {
-              queryKey: picksKey,
-            },
-            [],
-          );
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: picksKey,
-          refetchType: "none",
-        });
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: ["likedAlbums", userId],
-        refetchType: "active",
       });
     },
   }),
@@ -121,7 +55,6 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       retry: false,
     },
-
     mutations: {
       retry: false,
     },

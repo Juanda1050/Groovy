@@ -39,8 +39,27 @@ export const catalogPageSchema = z.object({
   nextOffset: z.number().int().nonnegative().nullable(),
 });
 
+export const artistAlbumPageSchema = catalogPageSchema.extend({
+  items: z
+    .array(
+      catalogAlbumSchema.extend({
+        id: z.string().regex(/^[A-Za-z0-9]{22}$/),
+        libraryRating: z.number().finite().nullable(),
+      }),
+    )
+    .max(10),
+  limit: z.literal(10),
+});
+
 export const savedCatalogAlbumSchema = z.object({
   id: z.uuid(),
   spotifyAlbumId: z.string(),
   status: z.enum(["pending", "listened"]),
+});
+
+export const artistDetailSchema = z.object({
+  id: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  name: z.string().trim().min(1),
+  imageUrl: z.url().startsWith("https://").nullable(),
+  spotifyUrl: z.url().startsWith("https://open.spotify.com/artist/"),
 });
