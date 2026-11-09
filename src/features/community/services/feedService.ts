@@ -1,15 +1,96 @@
-import { getAlbumMetadata } from "@/features/catalog/services/albumMetadataService";
+import { z } from "zod";
+
+import { useAuthStore } from "@/features/auth/stores/authStore";
 import {
   createSignal,
   requireUser,
 } from "@/features/library/services/libraryService";
-import type {
-  AlbumFeedCursor,
-  AlbumPost,
-  FeedAlbum,
-  FeedProfile,
-} from "@/models/library";
+import type { AlbumFeedCursor } from "@/models/library";
 import { supabase } from "@/shared/lib/supabaseClient";
+
+const uuid = z.uuid();
+const timestamp = z.iso.datetime({ offset: true });
+const spotifyId = z.string().regex(/^[A-Za-z0-9]{22}$/);
+
+const cursorSchema = z.object({
+  createdAt: timestamp,
+  id: uuid,
+});
+
+const profileSchema = z.object({
+  id: uuid,
+  display_name: z.string(),
+  username: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+});
+
+const albumSchema = z.object({
+  id: spotifyId,
+  name: z.string().min(1),
+  coverUrl: z.string().nullable(),
+  artists: z.array(z.string()),
+});
+
+const postSchema = z.object({
+  id: uuid,
+  user_id: uuid,
+  user_album_id: uuid,
+  spotify_album_id: spotifyId,
+  rating: z.number().finite().nullable(),
+  review: z.string().nullable(),
+  visibility: z.literal("community"),
+  created_at: timestamp,
+  updated_at: timestamp,
+  revision: z.number().int().positive(),
+});
+
+const socialSchema = z.object({
+  post_id: uuid,
+  reaction_count: z.number().int().nonnegative(),
+  reacted: z.boolean(),
+  following_author: z.boolean(),
+  library_status: z.enum(["pending", "listened"]).nullable(),
+});
+
+const commentSchema = z.object({
+  id: uuid,
+  post_id: uuid,
+  user_id: uuid,
+  body: z.string(),
+  created_at: timestamp,
+  edited_at: timestamp.nullable(),
+  revision: z.number().int().positive(),
+  display_name: z.string(),
+  username: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+});
+
+const pageSchema = z.object({
+  userId: uuid,
+  items: z.array(postSchema).max(10),
+  nextCursor: cursorSchema.nullable(),
+  profiles: z.array(profileSchema).max(10),
+  albums: z.array(albumSchema).max(10),
+  social: z.array(socialSchema).max(10),
+  previews: z
+    .array(
+      z.object({
+        postId: uuid,
+        totalCount: z.number().int().nonnegative(),
+        items: z.array(commentSchema).max(2),
+        nextCursor: cursorSchema.nullable(),
+      }),
+    )
+    .max(10),
+});
+
+function assertCurrent(userId: string, signal?: AbortSignal): void {
+  signal?.throwIfAborted();
+
+  if (useAuthStore.getState().user?.id !== userId) {
+    throw new Error("AUTH_REQUIRED");
+  }
+}
 
 export async function getAlbumFeed(
   userId: string,
@@ -17,95 +98,182 @@ export async function getAlbumFeed(
   signal: AbortSignal,
   profileId: string | null = null,
   followingOnly = false,
-): Promise<{
-  items: AlbumPost[];
-  nextCursor: AlbumFeedCursor | null;
-}> {
+): Promise<z.infer<typeof pageSchema>> {
+  assertCurrent(userId, signal);
   await requireUser(userId);
+  assertCurrent(userId, signal);
 
-  const args = {
-    p_limit: 10,
-
-    ...(cursor
-      ? {
-          p_before_created_at: cursor.createdAt,
-          p_before_id: cursor.id,
-        }
-      : {}),
-  };
-
-  const request = profileId
-    ? supabase.rpc("get_profile_album_feed", {
-        ...args,
-        p_profile_id: profileId,
-      })
-    : followingOnly
-      ? supabase.rpc("get_following_album_feed", args)
-      : supabase.rpc("get_album_feed", args);
-
-  const { data, error } = await request.abortSignal(createSignal(signal));
-
-  if (error) throw error;
-
-  const rows = data ?? [];
-
-  const items: AlbumPost[] = rows.slice(0, 10).map((row) => {
-    if (row.visibility !== "community") {
-      throw new Error("INVALID_POST_RESPONSE");
-    }
-
-    return {
-      ...row,
-      visibility: "community",
-    };
-  });
-
-  const last = items.at(-1);
-
-  return {
-    items,
-    nextCursor:
-      rows.length > 10 && last
+  const result = await supabase
+    .rpc("get_community_feed_page", {
+      p_following_only: followingOnly,
+      ...(profileId ? { p_profile_id: profileId } : {}),
+      ...(cursor
         ? {
-            createdAt: last.updated_at,
-            id: last.id,
+            p_before_created_at: cursor.createdAt,
+            p_before_id: cursor.id,
           }
-        : null,
-  };
-}
+        : {}),
+    })
+    .abortSignal(createSignal(signal));
 
-export async function getFeedMetadata(
-  userId: string,
-  profileIds: string[],
-  albumIds: string[],
-  signal: AbortSignal,
-): Promise<{
-  profiles: FeedProfile[];
-  albums: FeedAlbum[];
-}> {
-  await requireUser(userId);
+  assertCurrent(userId, signal);
 
-  const [profiles, albums] = await Promise.all([
-    profileIds.length
-      ? supabase
-          .from("profiles")
-          .select("id, display_name, username, avatar_url")
-          .in("id", profileIds)
-          .abortSignal(createSignal(signal))
-      : Promise.resolve({
-          data: [],
-          error: null,
-        }),
+  if (result.error) throw result.error;
 
-    getAlbumMetadata(userId, albumIds, signal),
-  ]);
+  const parsed = pageSchema.safeParse(result.data);
 
-  if (profiles.error) {
-    throw profiles.error;
+  if (!parsed.success || parsed.data.userId !== userId) {
+    throw new Error("INVALID_POST_RESPONSE");
   }
 
-  return {
-    profiles: profiles.data ?? [],
-    albums,
+  const page = parsed.data;
+  const ids = new Set(page.items.map((post) => post.id));
+  const authors = new Set(page.items.map((post) => post.user_id));
+  const albums = new Set(page.items.map((post) => post.spotify_album_id));
+
+  if (
+    ids.size !== page.items.length ||
+    page.profiles.some((profile) => !authors.has(profile.id)) ||
+    page.albums.some((album) => !albums.has(album.id)) ||
+    page.social.some((social) => !ids.has(social.post_id)) ||
+    page.previews.some(
+      (preview) =>
+        !ids.has(preview.postId) ||
+        preview.items.some((comment) => comment.post_id !== preview.postId),
+    )
+  ) {
+    throw new Error("INVALID_POST_RESPONSE");
+  }
+
+  return page;
+}
+
+export type CommunityFeedEvent =
+  | { kind: "connected"; resumed: boolean }
+  | { kind: "offline" }
+  | { kind: "new" | "changed" | "removed"; id: string };
+
+type Listener = (event: CommunityFeedEvent) => void;
+
+interface FeedRoom {
+  userId: string;
+  listeners: Set<Listener>;
+  channel: ReturnType<typeof supabase.channel> | null;
+  stopped: boolean;
+  connected: boolean;
+  everConnected: boolean;
+}
+
+let feedRoom: FeedRoom | null = null;
+let roomTasks: Promise<unknown> = Promise.resolve();
+
+function stopRoom(room: FeedRoom): void {
+  room.stopped = true;
+
+  if (!room.channel) return;
+
+  const channel = room.channel;
+
+  roomTasks = roomTasks
+    .then(() => supabase.removeChannel(channel))
+    .catch(() => {
+      console.error("COMMUNITY_CHANNEL_REMOVE_FAILED");
+    });
+}
+
+function emit(room: FeedRoom, event: CommunityFeedEvent): void {
+  if (room.stopped || useAuthStore.getState().user?.id !== room.userId) {
+    return;
+  }
+
+  for (const listener of room.listeners) listener(event);
+}
+
+export function watchCommunityFeed(
+  userId: string,
+  listener: Listener,
+): () => void {
+  if (!feedRoom || feedRoom.userId !== userId) {
+    if (feedRoom) stopRoom(feedRoom);
+
+    const room: FeedRoom = {
+      userId,
+      listeners: new Set(),
+      channel: null,
+      stopped: false,
+      connected: false,
+      everConnected: false,
+    };
+
+    feedRoom = room;
+
+    roomTasks = roomTasks
+      .then(async () => {
+        if (room.stopped) return;
+
+        assertCurrent(userId);
+        await supabase.realtime.setAuth();
+        assertCurrent(userId);
+
+        if (room.stopped) return;
+
+        room.channel = supabase
+          .channel("groovy:community", {
+            config: { private: true },
+          })
+          .on(
+            "broadcast",
+            { event: "feed_changed" },
+            ({ payload }: { payload: unknown }) => {
+              const parsed = z
+                .object({
+                  id: uuid,
+                  kind: z.enum(["new", "changed", "removed"]),
+                })
+                .safeParse(payload);
+
+              if (parsed.success) emit(room, parsed.data);
+            },
+          )
+          .subscribe((status) => {
+            if (room.stopped) return;
+
+            room.connected = status === "SUBSCRIBED";
+
+            if (room.connected) {
+              const resumed = room.everConnected;
+              room.everConnected = true;
+              emit(room, { kind: "connected", resumed });
+            } else if (
+              status === "CHANNEL_ERROR" ||
+              status === "TIMED_OUT" ||
+              status === "CLOSED"
+            ) {
+              emit(room, { kind: "offline" });
+            }
+          });
+      })
+      .catch(() => emit(room, { kind: "offline" }));
+  }
+
+  const room = feedRoom;
+  room.listeners.add(listener);
+
+  if (room.connected) {
+    queueMicrotask(() => {
+      if (!room.stopped && room.listeners.has(listener)) {
+        listener({ kind: "connected", resumed: false });
+      }
+    });
+  }
+
+  return () => {
+    room.listeners.delete(listener);
+
+    if (room.listeners.size === 0 && !room.stopped) {
+      stopRoom(room);
+
+      if (feedRoom === room) feedRoom = null;
+    }
   };
 }

@@ -1,48 +1,24 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { CommentActionsMenu } from "@/features/community/components/CommentActionsMenu";
 import { useAlbumPostComments } from "@/features/community/hooks/useAlbumPostComments";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
-
+import type { AlbumPostCommentsProps } from "@/models/library";
 import { RecordLoader } from "@/shared/components/RecordLoader";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 
-import type { AlbumPostCommentsProps } from "@/models/library";
-
-import { CommentActionsMenu } from "./CommentActionsMenu";
-
 export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
   const { t, i18n } = useTranslation("community");
-  const section = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const comments = useAlbumPostComments(postId, open || visible);
-
-  useEffect(() => {
-    const element = section.current;
-
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setVisible(Boolean(entry?.isIntersecting));
-      },
-      {
-        rootMargin: "160px",
-      },
-    );
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, [postId]);
+  // Mantiene activa una edición aunque se cierre el formulario de creación.
+  const comments = useAlbumPostComments(postId, open);
 
   const expanded = open || comments.editingId !== null;
   const items = expanded ? comments.items : comments.items.slice(0, 2);
-
-  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const inputId = useId();
   const hintId = useId();
@@ -63,12 +39,10 @@ export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
     comments.editingId !== null ||
     confirmId !== null;
 
-  if (!showSection) {
-    return <div ref={section} className="h-px" aria-hidden="true" />;
-  }
+  if (!showSection) return null;
 
   return (
-    <div ref={section}>
+    <div>
       <section
         aria-label={t("comments.title")}
         className="mt-3 border-t border-border/45 pt-4"
@@ -136,17 +110,13 @@ export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
 
             {tooLong && (
               <p role="status" className="text-xs text-destructive">
-                {t("comments.tooLong", {
-                  max: comments.maxLength,
-                })}
+                {t("comments.tooLong", { max: comments.maxLength })}
               </p>
             )}
 
             {comments.remaining > 0 && (
               <p role="status" className="text-xs text-muted-foreground">
-                {t("comments.remaining", {
-                  count: comments.remaining,
-                })}
+                {t("comments.remaining", { count: comments.remaining })}
               </p>
             )}
           </form>
@@ -170,7 +140,7 @@ export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
           </Button>
         )}
 
-        {comments.pending ? (
+        {open && comments.pending ? (
           <div
             role="status"
             className="flex items-center justify-center gap-3 py-6 text-sm text-muted-foreground"
@@ -287,9 +257,7 @@ export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
 
                       {comments.editLength > comments.maxLength && (
                         <p role="status" className="text-xs text-destructive">
-                          {t("comments.tooLong", {
-                            max: comments.maxLength,
-                          })}
+                          {t("comments.tooLong", { max: comments.maxLength })}
                         </p>
                       )}
 
@@ -386,9 +354,7 @@ export function AlbumPostComments({ postId, open }: AlbumPostCommentsProps) {
         <Dialog.Root
           open={confirmId !== null}
           onOpenChange={(next) => {
-            if (!next && !comments.busy) {
-              setConfirmId(null);
-            }
+            if (!next && !comments.busy) setConfirmId(null);
           }}
         >
           <Dialog.Portal>

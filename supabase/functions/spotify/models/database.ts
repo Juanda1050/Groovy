@@ -677,6 +677,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      authorize_album_recommendation: {
+        Args: { p_request_id: string }
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+          user_id: string
+        }[]
+      }
       authorize_spotify_action: {
         Args: { p_action: string }
         Returns: {
@@ -687,6 +695,10 @@ export type Database = {
       }
       block_spotify_requests: {
         Args: { p_seconds: number }
+        Returns: undefined
+      }
+      cache_recommendation_albums: {
+        Args: { p_albums: Json; p_fetched_at: string }
         Returns: undefined
       }
       claim_artist_page_cache: { Args: { p_cache_key: string }; Returns: Json }
@@ -810,6 +822,15 @@ export type Database = {
           id: string
           username: string
         }[]
+      }
+      get_community_feed_page: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_following_only?: boolean
+          p_profile_id?: string
+        }
+        Returns: Json
       }
       get_community_social: {
         Args: { p_post_ids: string[] }

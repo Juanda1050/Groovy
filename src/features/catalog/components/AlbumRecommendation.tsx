@@ -82,7 +82,7 @@ export function AlbumRecommendation() {
 
   let reason = "";
 
-  if (recommendation) {
+  if (recommendation && !recommendation.discovery) {
     const source = recommendation.reason;
 
     switch (source.code) {
@@ -244,9 +244,11 @@ export function AlbumRecommendation() {
               </p>
             </div>
 
-            <p className="max-w-md text-sm leading-6 text-muted-foreground">
-              {reason}
-            </p>
+            {reason && (
+              <p className="max-w-md text-sm leading-6 text-muted-foreground">
+                {reason}
+              </p>
+            )}
 
             <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
               <LoadingButton

@@ -29,6 +29,7 @@ const requestSchema = z.object({
   strategy: z.enum(["personalized", "random"]).default("personalized"),
   supportsRatedAlbums: z.boolean().default(false),
   supportsTrackSources: z.boolean().default(false),
+  supportsDiscovery: z.boolean().default(false),
 });
 
 Deno.serve(async (request) => {
@@ -103,27 +104,35 @@ Deno.serve(async (request) => {
     }
 
     const authorizationResult = await userClient.rpc(
-      "authorize_spotify_action",
-      { p_action: "search" },
+      "authorize_album_recommendation",
+      { p_request_id: input.data.requestId },
     );
 
-    if (authorizationResult.error?.code === "PT401") {
+    if (
+      authorizationResult.error?.code === "PT401" ||
+      authorizationResult.error?.code === "28000"
+    ) {
       throw new ApiError(401, "UNAUTHORIZED");
     }
 
     const budget = authorizationResult.data?.[0];
 
     if (authorizationResult.error || !budget) {
+      console.error(
+        "RECOMMENDATION_AUTHORIZATION_FAILED",
+        authorizationResult.error?.code ?? "EMPTY_RESPONSE",
+      );
+
       throw new ApiError(503, "SERVER_ERROR");
+    }
+
+    if (budget.user_id !== identity.data.claims.sub) {
+      throw new ApiError(401, "UNAUTHORIZED");
     }
 
     if (!budget.allowed) {
       userRateLimited = true;
       throw new ApiError(429, "RATE_LIMITED", budget.retry_after_seconds);
-    }
-
-    if (budget.user_id !== identity.data.claims.sub) {
-      throw new ApiError(401, "UNAUTHORIZED");
     }
 
     return reply(
@@ -133,6 +142,7 @@ Deno.serve(async (request) => {
         strategy: input.data.strategy,
         supportsRatedAlbums: input.data.supportsRatedAlbums,
         supportsTrackSources: input.data.supportsTrackSources,
+        supportsDiscovery: input.data.supportsDiscovery,
         market,
         signal: request.signal,
         userClient,

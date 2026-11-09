@@ -10,6 +10,7 @@ export const recommendationRequestSchema = z.object({
   strategy: z.enum(["personalized", "random"]),
   supportsRatedAlbums: z.boolean().default(true),
   supportsTrackSources: z.boolean().default(true),
+  supportsDiscovery: z.boolean().default(true),
 });
 
 export const recommendationSchema = z
@@ -20,6 +21,7 @@ export const recommendationSchema = z
     strategy: z.enum(["personalized", "random"]),
     createdAt: timestamp,
     album: albumDetailSchema.shape.album,
+    discovery: z.boolean().default(false),
     reason: z.object({
       code: z.enum([
         "favorite_artist",
@@ -54,9 +56,10 @@ export const recommendationSchema = z
         return (
           reason.sourceEntityType === "artist" &&
           reason.sourceStars === null &&
-          value.album.artists.some(
-            (artist) => artist.id === reason.sourceSpotifyId,
-          )
+          (value.discovery ||
+            value.album.artists.some(
+              (artist) => artist.id === reason.sourceSpotifyId,
+            ))
         );
 
       case "favorite_album_artist":
