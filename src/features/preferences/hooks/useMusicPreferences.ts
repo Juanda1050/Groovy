@@ -30,17 +30,11 @@ export function useMusicPreferences(
   const { t } = useTranslation("common");
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const client = useQueryClient();
-
   const ids = [...new Set(spotifyIds)].sort();
   const prefix = ["musicPreferences", userId, entityType];
   const writeKey = ["musicPreferenceWrite", userId];
   const writes = useIsMutating({ mutationKey: writeKey });
-
-  const [cooldown, setCooldown] = useState({
-    userId,
-    until: 0,
-  });
-
+  const [cooldown, setCooldown] = useState({ userId, until: 0 });
   const blockedUntil = cooldown.userId === userId ? cooldown.until : 0;
 
   useEffect(() => {
@@ -86,15 +80,12 @@ export function useMusicPreferences(
   ): Promise<void> {
     if (useAuthStore.getState().user?.id !== ownerId) return;
 
-    if (entity === "album") {
-      await client.invalidateQueries({
-        queryKey: ["library", ownerId],
-      });
-    } else if (entity === "artist") {
-      await client.invalidateQueries({
-        queryKey: ["musicPreferences", ownerId, "artist", "libraryPage"],
-      });
-    }
+    await client.invalidateQueries({
+      queryKey:
+        entity === "album"
+          ? ["library", ownerId]
+          : ["musicPreferences", ownerId, entity, "libraryPage"],
+    });
   }
 
   const mutation = useMutation({
@@ -111,9 +102,7 @@ export function useMusicPreferences(
 
       if (request.entityType === "album") {
         cancellations.push(
-          client.cancelQueries({
-            queryKey: ["library", request.userId],
-          }),
+          client.cancelQueries({ queryKey: ["library", request.userId] }),
         );
       }
 
@@ -125,9 +114,7 @@ export function useMusicPreferences(
 
       await client.cancelQueries({ queryKey });
 
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== request.userId) return;
 
       client.setQueriesData<MusicPreferenceBatch>({ queryKey }, (previous) => {
         if (!previous || !Object.hasOwn(previous, saved.spotify_id)) {
@@ -136,14 +123,9 @@ export function useMusicPreferences(
 
         const current = previous[saved.spotify_id];
 
-        if (current && current.revision > saved.revision) {
-          return previous;
-        }
+        if (current && current.revision > saved.revision) return previous;
 
-        return {
-          ...previous,
-          [saved.spotify_id]: saved,
-        };
+        return { ...previous, [saved.spotify_id]: saved };
       });
 
       toast.add({
@@ -156,9 +138,7 @@ export function useMusicPreferences(
     },
 
     onError: async (error, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== request.userId) return;
 
       const code = getLibraryErrorCode(error);
       const limited = code === "RATE_LIMITED";
@@ -189,12 +169,9 @@ export function useMusicPreferences(
       });
 
       const queryKey = ["musicPreferences", request.userId, request.entityType];
-
       await client.cancelQueries({ queryKey });
 
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== request.userId) return;
 
       await client.invalidateQueries({ queryKey });
       await invalidateLists(request.userId, request.entityType);

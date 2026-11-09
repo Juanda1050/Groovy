@@ -1,3 +1,15 @@
+import {
+  ArrowLeft,
+  CalendarDays,
+  Disc3,
+  ExternalLink,
+  ListMusic,
+  Music2,
+  Search,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation, useParams } from "react-router-dom";
+
 import { AlbumTrackList } from "@/features/catalog/components/AlbumTrackList";
 import { useAlbumDetail } from "@/features/catalog/hooks/useAlbumDetail";
 import { useAlbumMetadata } from "@/features/catalog/hooks/useAlbumMetadata";
@@ -6,21 +18,11 @@ import { AlbumStatus } from "@/features/library/components/AlbumStatus";
 import { LoadingButton } from "@/shared/components/LoadingButton";
 import { RecordLoader } from "@/shared/components/RecordLoader";
 import { Button } from "@/shared/components/ui/button";
-import {
-ArrowLeft,
-CalendarDays,
-Disc3,
-ExternalLink,
-ListMusic,
-Music2,
-Search,
-} from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { Link,useParams } from "react-router-dom";
 
 export default function AlbumDetailPage() {
   const { albumId = "" } = useParams<"albumId">();
   const { t, i18n } = useTranslation("album");
+  const location = useLocation();
   const detail = useAlbumDetail(albumId);
   const recovery = useAlbumRecovery(albumId);
 
@@ -38,7 +40,6 @@ export default function AlbumDetailPage() {
         className="flex min-h-[60svh] flex-col items-center justify-center gap-6 px-4 text-center"
       >
         <RecordLoader size="lg" />
-
         <p className="max-w-sm text-sm text-muted-foreground">
           {waiting
             ? t("waiting", { count: detail.waitingSeconds })
@@ -60,14 +61,12 @@ export default function AlbumDetailPage() {
           aria-hidden="true"
           className="size-12 text-muted-foreground/60"
         />
-
         <h1
           id="albumErrorTitle"
           className="mt-6 max-w-md text-2xl font-semibold tracking-tight"
         >
           {t("unavailableTitle")}
         </h1>
-
         <p
           role="status"
           className="mt-3 max-w-md text-sm leading-6 text-muted-foreground"
@@ -80,7 +79,6 @@ export default function AlbumDetailPage() {
             <Search aria-hidden="true" className="size-4" />
             {t(recovery.recoveryLabelKey)}
           </Button>
-
           {!detail.invalidId && (
             <LoadingButton
               type="button"
@@ -150,27 +148,39 @@ export default function AlbumDetailPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
               {t("eyebrow")}
             </p>
-
             <h1 className="mt-3 text-balance wrap-break-word text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               {album.name}
             </h1>
 
-            <p className="mt-3 text-base font-medium text-foreground/75 sm:text-lg">
-              {metadata.artistsLabel}
-            </p>
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-base font-medium text-foreground/75 sm:text-lg">
+              {album.artists.map((artist) => (
+                <Link
+                  key={artist.id}
+                  to={`/artists/${artist.id}`}
+                  state={{
+                    artistSource: {
+                      pathname: location.pathname,
+                      search: location.search,
+                      state: location.state,
+                    },
+                  }}
+                  className="rounded-sm hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {artist.name}
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-muted-foreground">
             {metadata.releaseDateLabel && album.releaseDate && (
               <span className="inline-flex items-center gap-2">
                 <CalendarDays aria-hidden="true" className="size-3.5" />
-
                 <time dateTime={album.releaseDate}>
                   {metadata.releaseDateLabel}
                 </time>
               </span>
             )}
-
             <span className="inline-flex items-center gap-2">
               <ListMusic aria-hidden="true" className="size-3.5" />
               {t("trackCount", { count: album.totalTracks })}
@@ -206,7 +216,6 @@ export default function AlbumDetailPage() {
             className="flex items-center justify-center gap-3 py-6"
           >
             <RecordLoader size="sm" />
-
             <p className="text-sm text-muted-foreground">
               {waiting
                 ? t("waiting", { count: detail.waitingSeconds })

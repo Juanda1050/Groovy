@@ -44,3 +44,10 @@ export const savedCatalogAlbumSchema = z.object({
   spotifyAlbumId: z.string(),
   status: z.enum(["pending", "listened"]),
 });
+
+export const artistDetailSchema = z.object({
+  id: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  name: z.string().trim().min(1),
+  imageUrl: z.url().startsWith("https://").nullable(),
+  spotifyUrl: z.url().startsWith("https://open.spotify.com/artist/"),
+});

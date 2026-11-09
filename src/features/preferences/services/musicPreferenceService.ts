@@ -33,10 +33,23 @@ export async function getMusicPreferences({
 }: GetMusicPreferencesInput): Promise<MusicPreferenceBatch> {
   const entity = musicEntityTypeSchema.safeParse(entityType);
 
-  const ids = musicPreferenceIdsSchema.safeParse([...new Set(spotifyIds)]);
-
-  if (!entity.success || !ids.success) {
+  if (!entity.success) {
     throw new Error("INVALID_MUSIC_PREFERENCE");
+  }
+
+  const ids = [...new Set(spotifyIds)];
+  const batches: string[][] = [];
+
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const batch = musicPreferenceIdsSchema.safeParse(
+      ids.slice(offset, offset + 100),
+    );
+
+    if (!batch.success) {
+      throw new Error("INVALID_MUSIC_PREFERENCE");
+    }
+
+    batches.push(batch.data);
   }
 
   const requestSignal = createSignal(signal);
@@ -46,41 +59,39 @@ export async function getMusicPreferences({
   assertActive(userId, requestSignal);
 
   const result: MusicPreferenceBatch = Object.fromEntries(
-    ids.data.map((id) => [id, null]),
+    ids.map((id) => [id, null]),
   );
 
-  if (ids.data.length === 0) {
-    return result;
-  }
+  for (const batch of batches) {
+    assertActive(userId, requestSignal);
 
-  const { data, error } = await supabase
-    .from("user_music_preferences")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("entity_type", entity.data)
-    .in("spotify_id", ids.data)
-    .abortSignal(requestSignal);
+    const { data, error } = await supabase
+      .from("user_music_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("entity_type", entity.data)
+      .in("spotify_id", batch)
+      .abortSignal(requestSignal);
 
-  assertActive(userId, requestSignal);
+    assertActive(userId, requestSignal);
 
-  if (error) {
-    throw error;
-  }
+    if (error) throw error;
 
-  for (const value of data ?? []) {
-    const parsed = musicPreferenceSchema.safeParse(value);
+    for (const value of data ?? []) {
+      const parsed = musicPreferenceSchema.safeParse(value);
 
-    if (
-      !parsed.success ||
-      parsed.data.user_id !== userId ||
-      parsed.data.entity_type !== entity.data ||
-      !Object.hasOwn(result, parsed.data.spotify_id) ||
-      result[parsed.data.spotify_id] !== null
-    ) {
-      throw new Error("INVALID_MUSIC_PREFERENCE_RESPONSE");
+      if (
+        !parsed.success ||
+        parsed.data.user_id !== userId ||
+        parsed.data.entity_type !== entity.data ||
+        !batch.includes(parsed.data.spotify_id) ||
+        result[parsed.data.spotify_id] !== null
+      ) {
+        throw new Error("INVALID_MUSIC_PREFERENCE_RESPONSE");
+      }
+
+      result[parsed.data.spotify_id] = parsed.data;
     }
-
-    result[parsed.data.spotify_id] = parsed.data;
   }
 
   return result;
@@ -114,9 +125,7 @@ export async function setMusicPreference(
 
   assertActive(request.userId, signal);
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
   const saved = musicPreferenceSchema.safeParse(data);
 

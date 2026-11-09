@@ -27,6 +27,18 @@
     "initialTitle": "There’s always room for another favorite",
     "initialDescription": "Search for an artist and tap their star to add them to your favorites."
   },
+  "artistDetail": {
+    "view": "View {{name}} on Groovy",
+    "back": "Back",
+    "eyebrow": "Artist",
+    "loading": "Getting the artist’s space ready…",
+    "invalid": "This artist link is invalid.",
+    "error": "We couldn't load this artist. Try again in a moment.",
+    "favorite": "Add to favorites",
+    "favorited": "Among your favorites",
+    "spotify": "Open in Spotify",
+    "albums": "Explore albums"
+  },
   "actions": {
     "save": "Save for later",
     "saveListened": "Mark as listened",

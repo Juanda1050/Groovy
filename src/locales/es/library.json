@@ -28,12 +28,22 @@
     "emptyDescription": "Marca un álbum como favorito y aparecerá aquí, aunque todavía no lo hayas guardado como pendiente o escuchado."
   },
   "tracks": {
-    "loading": "Cargando información de las canciones…",
+    "favorites": "Favoritas",
+    "loading": "Cargando tus canciones…",
     "unavailable": "Canción no disponible",
     "openAlbum": "Ver álbum",
-    "metadataError": "No pudimos completar la información de algunas canciones.",
-    "emptyTitle": "No hay canciones en esta sección",
-    "emptyDescription": "Las canciones que marques aparecerán aquí."
+    "metadataError": "No pudimos actualizar los datos de algunas canciones. Tus preferencias siguen guardadas.",
+    "preferenceError": "No pudimos cargar tus preferencias. Reintenta para usar los controles de canciones.",
+    "emptyTitle": "Tu música irá tomando forma aquí",
+    "emptyDescription": "En esta sección aparecerán las canciones que marques con esta preferencia.",
+    "controls": "Preferencias de {{name}}",
+    "addFavorite": "Marcar {{name}} como favorita",
+    "removeFavorite": "Quitar {{name}} de favoritas",
+    "addLike": "Me gusta {{name}}",
+    "removeLike": "Quitar el me gusta de {{name}}",
+    "addDislike": "No me gusta {{name}}",
+    "removeDislike": "Quitar el no me gusta de {{name}}",
+    "favoriteIncludesLike": "{{name}} es favorita e incluye me gusta. Quita primero la estrella para retirar el me gusta."
   },
   "filters": {
     "label": "Filtros",

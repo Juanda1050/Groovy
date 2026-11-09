@@ -30,6 +30,11 @@ export const requestSchema = z.discriminatedUnion("action", [
   }),
 
   z.object({
+    action: z.literal("artist"),
+    artistId: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  }),
+
+  z.object({
     action: z.literal("save"),
     albumId: z.string().regex(/^[A-Za-z0-9]{22}$/),
     status: z.enum(["pending", "listened"]),
@@ -90,7 +95,6 @@ export const searchSchema = z.object({
 
 export function normalizeAlbum(value: unknown): CatalogAlbum {
   const album = rawAlbumSchema.parse(value);
-
   const image =
     album.images.find((item) => item.width === 300) ?? album.images.at(-1);
 

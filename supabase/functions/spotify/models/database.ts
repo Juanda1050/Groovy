@@ -340,6 +340,30 @@ export type Database = {
         }
         Relationships: []
       }
+      track_metadata_cache: {
+        Row: {
+          expires_at: string
+          fetched_at: string
+          market: string
+          payload: Json
+          spotify_track_id: string
+        }
+        Insert: {
+          expires_at: string
+          fetched_at?: string
+          market: string
+          payload: Json
+          spotify_track_id: string
+        }
+        Update: {
+          expires_at?: string
+          fetched_at?: string
+          market?: string
+          payload?: Json
+          spotify_track_id?: string
+        }
+        Relationships: []
+      }
       user_albums: {
         Row: {
           created_at: string
@@ -690,6 +714,10 @@ export type Database = {
           spotify_album_id: string
           status: string
         }[]
+      }
+      get_my_song_library: {
+        Args: { p_filter?: string; p_page?: number }
+        Returns: Json
       }
       get_profile_album_feed: {
         Args: {

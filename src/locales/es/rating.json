@@ -17,7 +17,7 @@
   "statusChanged": "El estado del álbum cambió. Vuelve a abrir el detalle para actualizarlo.",
   "confirmation": {
     "title": "¿Volver a pendiente?",
-    "description": "Se borrarán tu valoración, reseña, fecha de escucha y selecciones de canciones. El álbum seguirá en tu biblioteca.",
+    "description": "Se borrarán tu valoración, reseña y fecha de escucha. El álbum seguirá en tu biblioteca y conservarás tus preferencias independientes de canciones.",
     "confirm": "Volver a pendiente"
   },
   "status": {
@@ -42,7 +42,7 @@
   "removal": {
     "open": "Eliminar de mi biblioteca",
     "title": "¿Eliminar de tu biblioteca?",
-    "description": "Se eliminarán tu valoración, reseña y selecciones de canciones de este álbum. Esta acción no se puede deshacer.",
+    "description": "Se eliminarán el estado de escucha, la valoración y la reseña de este álbum. Conservarás tus favoritos y preferencias independientes de canciones. Esta acción no se puede deshacer.",
     "confirm": "Eliminar álbum",
     "removing": "Eliminando…",
     "saved": "Álbum eliminado de tu biblioteca",

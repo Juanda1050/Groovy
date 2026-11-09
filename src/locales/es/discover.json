@@ -27,6 +27,18 @@
     "initialTitle": "Siempre hay espacio para otro favorito",
     "initialDescription": "Busca un artista y toca su estrella para añadirlo a tus favoritos."
   },
+  "artistDetail": {
+    "view": "Ver a {{name}} en Groovy",
+    "back": "Volver",
+    "eyebrow": "Artista",
+    "loading": "Preparando el espacio del artista…",
+    "invalid": "El enlace de este artista no es válido.",
+    "error": "No pudimos cargar este artista. Reintenta dentro de un momento.",
+    "favorite": "Añadir a favoritos",
+    "favorited": "Entre tus favoritos",
+    "spotify": "Abrir en Spotify",
+    "albums": "Explorar álbumes"
+  },
   "actions": {
     "save": "Guardar como pendiente",
     "saveListened": "Marcar como escuchado",

@@ -1,10 +1,18 @@
-import type { catalogAlbumSchema,catalogErrorCodeSchema,catalogPageSchema,savedCatalogAlbumSchema } from "@/features/catalog/lib/catalogSchemas";
 import type { z } from "zod";
+
+import type {
+  artistDetailSchema,
+  catalogAlbumSchema,
+  catalogErrorCodeSchema,
+  catalogPageSchema,
+  savedCatalogAlbumSchema,
+} from "@/features/catalog/lib/catalogSchemas";
 
 export type CatalogAlbum = z.infer<typeof catalogAlbumSchema> & {
   libraryRating?: number | null;
 };
 
+export type ArtistDetail = z.infer<typeof artistDetailSchema>;
 export type CatalogPage = z.infer<typeof catalogPageSchema>;
 export type CatalogErrorCode = z.infer<typeof catalogErrorCodeSchema>;
 export type SavedCatalogAlbum = z.infer<typeof savedCatalogAlbumSchema>;
@@ -27,6 +35,10 @@ export type CatalogRequest =
       query: string;
       offset: number;
       limit?: SpotifySearchPageSize;
+    }
+  | {
+      action: "artist";
+      artistId: string;
     }
   | {
       action: "save";

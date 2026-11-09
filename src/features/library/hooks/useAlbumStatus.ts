@@ -1,32 +1,36 @@
 import {
-useIsMutating,
-useMutation,
-useQuery,
-useQueryClient,
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuthStore } from "@/features/auth/stores/authStore";
-import { albumLibraryKey,albumLibraryOptions,albumWriteKey,syncAlbumLibrary,syncAlbumRemoval } from "@/features/catalog/lib/albumQueries";
-import { getLibraryErrorCode,getLibraryRetrySeconds } from "@/features/library/lib/libraryErrors";
-import { deleteUserAlbum,saveUserAlbum } from "@/features/library/services/libraryService";
-
+import {
+  albumLibraryKey,
+  albumLibraryOptions,
+  albumWriteKey,
+  syncAlbumLibrary,
+  syncAlbumRemoval,
+} from "@/features/catalog/lib/albumQueries";
+import {
+  getLibraryErrorCode,
+  getLibraryRetrySeconds,
+} from "@/features/library/lib/libraryErrors";
+import {
+  deleteUserAlbum,
+  saveUserAlbum,
+} from "@/features/library/services/libraryService";
 import type { ListeningStatus } from "@/models/catalog";
 import type { AlbumWriteRequest } from "@/models/library";
 
 export function useAlbumLibrary(albumId: string) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
-
-  const queryClient = useQueryClient();
-
+  const client = useQueryClient();
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-
   const writeKey = albumWriteKey(userId, albumId);
-
-  const writes = useIsMutating({
-    mutationKey: writeKey,
-  });
-
+  const writes = useIsMutating({ mutationKey: writeKey });
   const query = useQuery(albumLibraryOptions(userId, albumId));
 
   useEffect(() => {
@@ -46,26 +50,21 @@ export function useAlbumLibrary(albumId: string) {
 
     onMutate: async (request) => {
       await Promise.all([
-        queryClient.cancelQueries({
+        client.cancelQueries({
           queryKey: albumLibraryKey(request.userId, request.albumId),
         }),
-
-        queryClient.cancelQueries({
+        client.cancelQueries({
           queryKey: ["catalogRatings", request.userId],
         }),
-
-        queryClient.cancelQueries({
+        client.cancelQueries({
           queryKey: ["albumSearch", request.userId],
         }),
       ]);
     },
 
     onSuccess: (saved, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
-
-      syncAlbumLibrary(queryClient, saved);
+      if (useAuthStore.getState().user?.id !== request.userId) return;
+      syncAlbumLibrary(client, saved);
     },
 
     onError: (error) => {
@@ -88,9 +87,7 @@ export function useAlbumLibrary(albumId: string) {
       request.userId !== userId ||
       request.albumId !== albumId ||
       useAuthStore.getState().user?.id !== userId ||
-      queryClient.isMutating({
-        mutationKey: writeKey,
-      }) > 0
+      client.isMutating({ mutationKey: writeKey }) > 0
     ) {
       return false;
     }
@@ -110,11 +107,8 @@ export function useAlbumLibrary(albumId: string) {
     writes,
     disabled,
     remainingSeconds,
-
     errorCode: getLibraryErrorCode(mutation.error),
-
     onWrite,
-
     onRetry: () => {
       void query.refetch();
     },
@@ -123,9 +117,7 @@ export function useAlbumLibrary(albumId: string) {
 
 export function useAlbumStatus(albumId: string) {
   const library = useAlbumLibrary(albumId);
-
   const { query, mutation, userId, errorCode } = library;
-
   const currentStatus = query.data?.status ?? null;
 
   const errorKey =
@@ -140,9 +132,7 @@ export function useAlbumStatus(albumId: string) {
           : "status.saveError";
 
   function onChange(status: ListeningStatus): void {
-    if (!userId || status === currentStatus) {
-      return;
-    }
+    if (!userId || status === currentStatus) return;
 
     void library.onWrite({
       action: "status",
@@ -159,18 +149,14 @@ export function useAlbumStatus(albumId: string) {
     reading: query.isFetching,
     readError: query.isError,
     saving: mutation.isPending,
-
     savingStatus:
       mutation.isPending && mutation.variables.action === "status"
         ? mutation.variables.status
         : null,
-
     saved: mutation.isSuccess,
     saveError: mutation.isError,
     errorKey,
-
     remainingSeconds: library.remainingSeconds,
-
     disabled: library.disabled,
     onChange,
     onRetry: library.onRetry,
@@ -180,11 +166,8 @@ export function useAlbumStatus(albumId: string) {
 export function useAlbumRemoval(albumId: string) {
   const library = useAlbumLibrary(albumId);
   const client = useQueryClient();
-
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-
   const { userId } = library;
-
   const writeKey = albumWriteKey(userId, albumId);
 
   useEffect(() => {
@@ -207,45 +190,28 @@ export function useAlbumRemoval(albumId: string) {
         client.cancelQueries({
           queryKey: albumLibraryKey(request.userId, request.albumId),
         }),
-
         client.cancelQueries({
           queryKey: ["albumSearch", request.userId],
         }),
-
         client.cancelQueries({
           queryKey: ["albumSearchInfinite", request.userId],
         }),
-
         client.cancelQueries({
           queryKey: ["catalogRatings", request.userId],
         }),
-
         client.cancelQueries({
           queryKey: ["library", request.userId],
-        }),
-
-        client.cancelQueries({
-          queryKey: ["likedAlbums", request.userId],
-        }),
-
-        client.cancelQueries({
-          queryKey: ["albumTrackPicks", request.userId, request.albumId],
         }),
       ]);
     },
 
     onSuccess: (_removed, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
-
+      if (useAuthStore.getState().user?.id !== request.userId) return;
       syncAlbumRemoval(client, request.userId, request.albumId);
     },
 
     onError: (error, request) => {
-      if (useAuthStore.getState().user?.id !== request.userId) {
-        return;
-      }
+      if (useAuthStore.getState().user?.id !== request.userId) return;
 
       if (getLibraryErrorCode(error) === "RATE_LIMITED") {
         setRemainingSeconds(getLibraryRetrySeconds(error));
@@ -254,7 +220,6 @@ export function useAlbumRemoval(albumId: string) {
   });
 
   const code = getLibraryErrorCode(mutation.error);
-
   const errorKey =
     code === "AUTH_REQUIRED" ||
     code === "SESSION_EXPIRED" ||
@@ -275,9 +240,7 @@ export function useAlbumRemoval(albumId: string) {
       !userId ||
       !album ||
       useAuthStore.getState().user?.id !== userId ||
-      client.isMutating({
-        mutationKey: writeKey,
-      }) > 0
+      client.isMutating({ mutationKey: writeKey }) > 0
     ) {
       return false;
     }
@@ -299,9 +262,7 @@ export function useAlbumRemoval(albumId: string) {
   return {
     disabled,
     saving: mutation.isPending,
-
     errorKey: mutation.isError ? errorKey : null,
-
     remainingSeconds,
     onRemove,
     onReset: mutation.reset,

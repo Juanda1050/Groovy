@@ -1,184 +1,135 @@
-import { ExternalLink,Heart,LoaderCircle,ThumbsDown } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
 
-import { useAlbumTrackPicks } from "@/features/library/hooks/useAlbumTrackPicks";
-import { Button } from "@/shared/components/ui/button";
-
+import { TrackPreferenceControls } from "@/features/library/components/TrackPreferenceControls";
+import { useMusicPreferences } from "@/features/preferences/hooks/useMusicPreferences";
 import type { AlbumTrackListProps } from "@/models/albumDetail";
+import { Button } from "@/shared/components/ui/button";
 
 export function AlbumTrackList({
   tracks,
   explicitLabel,
   openLabel,
-  albumId: providedAlbumId,
   favoritesOnly = false,
 }: AlbumTrackListProps) {
-  const params = useParams<"albumId">();
-  const albumId = providedAlbumId ?? params.albumId ?? "";
-  const { t } = useTranslation("trackPicks");
-  const picks = useAlbumTrackPicks(albumId);
+  const { t } = useTranslation("library");
+
+  const preferences = useMusicPreferences(
+    "track",
+    tracks.map((track) => track.id),
+  );
 
   const visibleTracks = favoritesOnly
-    ? tracks.filter((track) => picks.preferences.get(track.id) === "favorite")
+    ? tracks.filter(
+        (track) => preferences.preferences?.[track.id]?.is_favorite === true,
+      )
     : tracks;
 
   return (
-    <div className="min-w-0 space-y-3">
-      {picks.readError && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-destructive/25 bg-destructive/5 px-3 py-2"
-        >
-          <p className="text-xs text-destructive">{t("readError")}</p>
+    <div
+      aria-busy={preferences.loading || preferences.saving}
+      className="min-w-0 space-y-3"
+    >
+      {preferences.loading && (
+        <p role="status" className="sr-only">
+          {t("tracks.loading")}
+        </p>
+      )}
+
+      {preferences.readError && (
+        <div role="alert" className="flex flex-wrap items-center gap-2">
+          <p className="text-xs text-destructive">
+            {t("tracks.preferenceError")}
+          </p>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={picks.onRetry}
+            disabled={preferences.fetching}
+            onClick={preferences.onRetry}
           >
-            {t("retry")}
+            {t("actions.retry")}
           </Button>
         </div>
       )}
 
       <ul className="divide-y divide-border/40">
-        {visibleTracks.map((track) => {
-          const preference = picks.preferences.get(track.id);
-          const saving = picks.savingTrackId === track.id;
-
-          return (
-            <li
-              key={`${track.discNumber}:${track.id}`}
-              className="grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 py-1 sm:gap-3"
+        {visibleTracks.map((track) => (
+          <li
+            key={`${track.discNumber}:${track.id}`}
+            className="grid min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-x-2 gap-y-1 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:items-center sm:gap-x-3"
+          >
+            <span
+              aria-hidden="true"
+              className="pt-0.5 text-center text-xs tabular-nums text-muted-foreground sm:pt-0"
             >
+              {track.discNumber > 1
+                ? `${track.discNumber}.${track.trackNumber}`
+                : track.trackNumber}
+            </span>
+
+            <div className="min-w-0">
               <a
                 href={track.spotifyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={t("trackAction", {
-                  action: openLabel,
-                  track: track.name,
-                })}
-                className="grid min-h-16 min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl px-1 py-3 transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:gap-3 sm:px-3"
+                aria-label={`${openLabel}: ${track.name}`}
+                className="inline-flex max-w-full items-start gap-1.5 rounded-sm text-sm font-medium leading-5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span
-                  aria-hidden="true"
-                  className="text-center text-xs tabular-nums text-muted-foreground"
-                >
-                  {track.discNumber > 1
-                    ? `${track.discNumber}.${track.trackNumber}`
-                    : track.trackNumber}
+                <span className="line-clamp-2 sm:line-clamp-1">
+                  {track.name}
                 </span>
-
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{track.name}</p>
-                  <div className="mt-1 flex min-w-0 items-center gap-1.5">
-                    {track.explicit && (
-                      <span
-                        aria-label={explicitLabel}
-                        title={explicitLabel}
-                        className="flex size-3.5 shrink-0 items-center justify-center rounded-sm bg-muted text-[9px] font-bold text-muted-foreground"
-                      >
-                        <span aria-hidden="true">E</span>
-                      </span>
-                    )}
-                    <p className="truncate text-xs text-muted-foreground">
-                      {track.artists.join(", ")}
-                    </p>
-                    <span
-                      aria-hidden="true"
-                      className="shrink-0 text-[11px] tabular-nums text-muted-foreground sm:hidden"
-                    >
-                      · {track.durationLabel}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="hidden items-center gap-3 text-muted-foreground sm:flex">
-                  <span className="text-xs tabular-nums">
-                    {track.durationLabel}
-                  </span>
-                  <ExternalLink aria-hidden="true" className="size-3.5" />
-                </div>
+                <ExternalLink
+                  aria-hidden="true"
+                  className="mt-1 size-3 shrink-0 text-muted-foreground"
+                />
               </a>
 
-              {picks.listened && (
-                <div
-                  role="group"
-                  aria-label={track.name}
-                  aria-busy={saving}
-                  className="flex shrink-0 items-center"
-                >
-                  {(["favorite", "least_favorite"] as const).map((value) => {
-                    const selected = preference === value;
-                    const favorite = value === "favorite";
-                    const Icon = favorite ? Heart : ThumbsDown;
-                    const label = t(
-                      favorite
-                        ? selected
-                          ? "removeFavorite"
-                          : "favorite"
-                        : selected
-                          ? "removeLeastFavorite"
-                          : "leastFavorite",
-                    );
+              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                {track.explicit && (
+                  <span
+                    aria-label={explicitLabel}
+                    title={explicitLabel}
+                    className="flex size-3.5 shrink-0 items-center justify-center rounded-sm bg-muted text-[9px] font-bold text-muted-foreground"
+                  >
+                    <span aria-hidden="true">E</span>
+                  </span>
+                )}
+                <p className="truncate text-xs leading-5 text-muted-foreground">
+                  {track.artists.join(", ")}
+                </p>
+              </div>
+            </div>
 
-                    return (
-                      <Button
-                        key={value}
-                        type="button"
-                        variant="ghost"
-                        disabled={picks.disabled}
-                        aria-label={t("trackAction", {
-                          action: label,
-                          track: track.name,
-                        })}
-                        title={label}
-                        aria-pressed={selected}
-                        onClick={() => picks.onSelect(track.id, value)}
-                        className={`
-                          size-11 shrink-0 rounded-xl p-0
-                          text-muted-foreground disabled:opacity-60
-                          ${
-                            favorite
-                              ? "hover:bg-like/10 hover:text-like aria-pressed:bg-like/10 aria-pressed:text-like"
-                              : "hover:bg-dislike/10 hover:text-dislike aria-pressed:bg-dislike/10 aria-pressed:text-dislike"
-                          }
-                        `}
-                      >
-                        {saving && selected ? (
-                          <LoaderCircle
-                            aria-hidden="true"
-                            className="size-4 animate-spin motion-reduce:animate-none"
-                          />
-                        ) : (
-                          <Icon
-                            aria-hidden="true"
-                            className={`size-4 ${selected ? "fill-current" : ""}`}
-                          />
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
-            </li>
-          );
-        })}
+            <span className="hidden min-w-10 text-right text-xs tabular-nums text-muted-foreground sm:block">
+              {track.durationLabel}
+            </span>
+
+            <div className="col-start-2 flex flex-wrap items-center justify-between gap-x-2 sm:col-start-auto sm:justify-end">
+              <TrackPreferenceControls
+                name={track.name}
+                preference={preferences.preferences?.[track.id]}
+                disabled={preferences.disabled}
+                onChange={(action, active) =>
+                  preferences.onChange(track.id, action, active)
+                }
+              />
+              <span className="text-xs tabular-nums text-muted-foreground sm:hidden">
+                {track.durationLabel}
+              </span>
+            </div>
+          </li>
+        ))}
       </ul>
 
-      {picks.saveError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-destructive/25 bg-destructive/5 px-3 py-2 text-xs leading-5 text-destructive"
-        >
-          <p>{t(`errors.${picks.errorKey}`)}</p>
-          {picks.remainingSeconds > 0 && (
-            <p>{t("retryAfter", { count: picks.remainingSeconds })}</p>
-          )}
-        </div>
-      )}
+      {favoritesOnly &&
+        !preferences.loading &&
+        !preferences.readError &&
+        visibleTracks.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {t("tracks.emptyTitle")}
+          </p>
+        )}
     </div>
   );
 }

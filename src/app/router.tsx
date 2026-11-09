@@ -48,6 +48,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            path: "artists/:artistId",
+            lazy: async () => ({
+              Component: (await import("@/features/catalog/pages/ArtistPage"))
+                .default,
+            }),
+          },
+          {
             path: "albums/:albumId",
             lazy: async () => ({
               Component: (
