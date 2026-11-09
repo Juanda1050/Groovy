@@ -1,10 +1,37 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface PageSkeletonProps {
-  variant?: "page" | "artists" | "albums" | "albumDetail";
+  variant?: "page" | "artists" | "albums" | "albumDetail" | "recommendation";
 }
 
 export function PageSkeleton({ variant = "page" }: PageSkeletonProps) {
+  if (variant === "recommendation") {
+    return (
+      <div
+        aria-hidden="true"
+        className="grid items-center gap-7 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] sm:gap-8 lg:max-w-4xl lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-12"
+      >
+        <Skeleton className="mx-auto aspect-square w-full max-w-72 rounded-2xl sm:max-w-none" />
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-28 rounded-md" />
+            <Skeleton className="h-8 w-4/5 rounded-md" />
+            <Skeleton className="h-4 w-1/2 rounded-md" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-full rounded-md" />
+            <Skeleton className="h-3.5 w-3/4 rounded-md" />
+          </div>
+          <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
+            <Skeleton className="h-11 rounded-lg" />
+            <Skeleton className="h-11 rounded-lg" />
+          </div>
+          <Skeleton className="h-11 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
   if (variant === "artists") {
     return (
       <div

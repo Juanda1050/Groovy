@@ -1,14 +1,23 @@
 import { useAuthStore } from "@/features/auth/stores/authStore";
-import { getAlbumFeed,getFeedMetadata } from "@/features/community/services/feedService";
-import type { AlbumFeedCursor,AlbumFeedItem,AlbumFeedPage,FeedAlbum,FeedProfile } from "@/models/library";
+import {
+  getAlbumFeed,
+  getFeedMetadata,
+} from "@/features/community/services/feedService";
+import type {
+  AlbumFeedCursor,
+  AlbumFeedItem,
+  AlbumFeedPage,
+  FeedAlbum,
+  FeedProfile,
+} from "@/models/library";
 import { supabase } from "@/shared/lib/supabaseClient";
 import {
-useInfiniteQuery,
-useQueryClient,
-type InfiniteData,
-type QueryClient
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
 } from "@tanstack/react-query";
-import { useEffect,useRef,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 async function loadFeedPage(
   client: QueryClient,
@@ -184,7 +193,6 @@ export function useCommunityFeed(
   }, [client, userId, enabled, scope]);
 
   useEffect(() => {
-    // La página mantiene la conexión compartida.
     if (!userId || profileId || !enabled) return;
 
     let active = true;

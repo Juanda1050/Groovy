@@ -5,7 +5,8 @@
   "sections": {
     "label": "What would you like to discover?",
     "albums": "Albums",
-    "artists": "Artists"
+    "artists": "Artists",
+    "forYou": "For you"
   },
   "searchLabel": "Search albums by title or artist",
   "searchPlaceholder": "Search albums or artists",
@@ -41,6 +42,51 @@
     "albumsError": "We couldn't load this artist's albums. Try again in a moment.",
     "noAlbums": "We couldn't find available albums from this artist right now."
   },
+  "recommendations": {
+    "title": "What are we listening to today?",
+    "description": "Your taste leads the way. One album at a time.",
+    "initial": "Some albums find you at just the right time. Let's find the next one.",
+    "start": "Find my next album",
+    "loading": "Finding an album for you…",
+    "picked": "Your next listen",
+    "another": "Another album",
+    "notInterested": "Not interested",
+    "alreadyKnow": "I know this one",
+    "markingKnown": "Saving…",
+    "knownSaved": "We'll remember this for future suggestions.",
+    "knownUndone": "The known album mark has been removed.",
+    "undo": "Undo",
+    "spotify": "Open in Spotify",
+    "signIn": "Sign in to find your next listen.",
+    "openAlbum": "View {{name}} on Groovy",
+    "announcement": "Your next listen: {{name}}.",
+    "chooseArtists": "Explore artists",
+    "library": "Go to my library",
+    "waiting": "Wait a moment",
+    "back": "Back to For you",
+    "reasons": {
+      "artist": "{{name}} is one of your favorite artists. This album is another way into their music.",
+      "artistFallback": "An album from one of your favorite artists, waiting for its moment.",
+      "album": "An artist from {{name}}, one of your favorite albums, also appears on this record.",
+      "albumFallback": "It shares an artist with one of your favorite albums.",
+      "ratedAlbum": "You gave {{name}} {{stars}} stars. This album shares at least one artist.",
+      "ratedAlbumFallback": "It shares an artist with an album you gave {{stars}} stars.",
+      "favoriteTrack": "{{name}} is one of your favorite songs. This album shares at least one performer.",
+      "favoriteTrackFallback": "It shares a performer with one of your favorite songs.",
+      "likedTrack": "You like {{name}}. This album shares at least one performer.",
+      "likedTrackFallback": "It shares a performer with a song you like.",
+      "random": "A random choice from the available albums in this batch."
+    },
+    "empty": {
+      "saved": "It's on your list for later. Shall we find the next one?",
+      "known": "This one's already part of your musical world. Let's find another.",
+      "selection_changed": "Your collection or preferences have changed. Let's find another option.",
+      "onboarding_required": "Complete your initial music selection to find your next listen.",
+      "needs_preferences": "Your favorites, songs you like, and album ratings give us new leads.",
+      "needs_metadata": "We couldn't prepare your music references. Try again to keep looking.",
+      "no_candidates_in_batch": "This batch didn't bring you a new album. Let's follow other leads."
+    }
+  },
   "actions": {
     "save": "Save for later",
     "saveListened": "Mark as listened",
@@ -65,6 +111,7 @@
     "SPOTIFY_QUOTA": "Spotify's available quota has been temporarily exhausted. Please try later.",
     "SPOTIFY_UNAVAILABLE": "We couldn't connect to Spotify. Please try later.",
     "ALBUM_NOT_FOUND": "This album is no longer available.",
+    "KNOWN_ALBUM_CONFLICT": "This decision changed in another session. Retry to refresh the screen without overwriting it.",
     "SERVER_ERROR": "We couldn't complete the request. Please try later."
   }
 }

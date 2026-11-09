@@ -70,6 +70,13 @@ export function useAlbumReturn() {
   );
 
   const returnParams = new URLSearchParams();
+  const catalog = savedParams.get("catalog");
+  const fromRecommendations = fromDiscover && catalog === "forYou";
+
+  if (catalog === "artists" || catalog === "forYou") {
+    returnParams.set("catalog", catalog);
+  }
+
   const query = (savedParams.get("q") ?? "").slice(0, 120);
   const savedOffset = Number(savedParams.get("offset") ?? 0);
 
@@ -83,6 +90,14 @@ export function useAlbumReturn() {
       savedOffset % 10 === 0
     ) {
       returnParams.set("offset", String(savedOffset));
+    }
+  }
+
+  if (catalog === "forYou") {
+    const recommendationId = z.uuid().safeParse(savedParams.get("rec"));
+
+    if (recommendationId.success) {
+      returnParams.set("rec", recommendationId.data);
     }
   }
 
@@ -100,9 +115,11 @@ export function useAlbumReturn() {
     returnState: undefined,
     returnLabelKey: fromCommunity
       ? "community"
-      : fromDiscover
-        ? "backToSearch"
-        : "library",
-    returnLabelNamespace: "album",
+      : fromRecommendations
+        ? "recommendations.back"
+        : fromDiscover
+          ? "backToSearch"
+          : "library",
+    returnLabelNamespace: fromRecommendations ? "discover" : "album",
   };
 }

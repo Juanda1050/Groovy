@@ -40,7 +40,7 @@ const claimSchema = z.object({
   retryAfter: z.number().int().nonnegative(),
 });
 
-const pending = new Map<string, Promise<ArtistCatalogPage>>();
+const pending = new Map<string, Promise<unknown>>();
 
 async function hashKey(identity: string): Promise<string> {
   const digest = await crypto.subtle.digest(
@@ -56,7 +56,7 @@ async function hashKey(identity: string): Promise<string> {
 function keepAlive(task: Promise<unknown>): void {
   const observed = task.catch((error: unknown) => {
     console.error(
-      "ARTIST_CACHE_BACKGROUND_FAILED",
+      "CATALOG_CACHE_BACKGROUND_FAILED",
       error instanceof ApiError ? error.code : "SERVER_ERROR",
     );
   });
@@ -68,16 +68,17 @@ function keepAlive(task: Promise<unknown>): void {
   }
 }
 
-async function buildAndStore(
+async function buildAndStore<T>(
   key: string,
   leaseToken: string,
   ttlSeconds: number,
-  load: () => Promise<ArtistCatalogPage>,
+  schema: z.ZodType<T>,
+  load: () => Promise<T>,
   admin: SupabaseClient<Database>,
-): Promise<ArtistCatalogPage> {
+): Promise<T> {
   try {
-    const page = pageSchema.parse(await load());
-    const payload = z.json().parse(page);
+    const value = schema.parse(await load());
+    const payload = z.json().parse(value);
 
     const { data, error } = await admin.rpc("complete_artist_page_cache", {
       p_cache_key: key,
@@ -90,7 +91,7 @@ async function buildAndStore(
       throw new ApiError(503, "SERVER_ERROR");
     }
 
-    return page;
+    return value;
   } catch (error: unknown) {
     const failure =
       error instanceof ApiError ? error : new ApiError(503, "SERVER_ERROR");
@@ -111,22 +112,23 @@ async function buildAndStore(
       );
 
       if (releaseError) {
-        console.error("ARTIST_CACHE_RELEASE_FAILED", releaseError.code);
+        console.error("CATALOG_CACHE_RELEASE_FAILED", releaseError.code);
       }
     } catch {
-      console.error("ARTIST_CACHE_RELEASE_FAILED");
+      console.error("CATALOG_CACHE_RELEASE_FAILED");
     }
 
     throw failure;
   }
 }
 
-async function resolvePage(
+async function resolveValue<T>(
   key: string,
   ttlSeconds: number,
-  load: () => Promise<ArtistCatalogPage>,
+  schema: z.ZodType<T>,
+  load: () => Promise<T>,
   admin: SupabaseClient<Database>,
-): Promise<ArtistCatalogPage> {
+): Promise<T> {
   const delays = [200, 400, 800, 1600, 2500];
 
   for (let attempt = 0; attempt <= delays.length; attempt += 1) {
@@ -147,9 +149,9 @@ async function resolvePage(
     const claim = parsed.data;
 
     if (claim.state === "fresh" || claim.state === "refresh") {
-      const page = pageSchema.safeParse(claim.value);
+      const value = schema.safeParse(claim.value);
 
-      if (!page.success) {
+      if (!value.success) {
         throw new ApiError(503, "SERVER_ERROR");
       }
 
@@ -159,11 +161,11 @@ async function resolvePage(
         }
 
         keepAlive(
-          buildAndStore(key, claim.leaseToken, ttlSeconds, load, admin),
+          buildAndStore(key, claim.leaseToken, ttlSeconds, schema, load, admin),
         );
       }
 
-      return page.data;
+      return value.data;
     }
 
     if (claim.state === "blocked") {
@@ -179,6 +181,7 @@ async function resolvePage(
         key,
         claim.leaseToken,
         ttlSeconds,
+        schema,
         load,
         admin,
       );
@@ -202,22 +205,21 @@ async function resolvePage(
   throw new ApiError(503, "SERVER_ERROR");
 }
 
-export async function getSharedArtistPage(
+export async function getSharedCatalogValue<T>(
   identity: string,
   ttlSeconds: number,
-  load: () => Promise<ArtistCatalogPage>,
+  schema: z.ZodType<T>,
+  load: () => Promise<T>,
   admin: SupabaseClient<Database>,
-): Promise<ArtistCatalogPage> {
+): Promise<T> {
   const key = await hashKey(identity);
-
   const existing = pending.get(key);
 
   if (existing) {
-    return existing;
+    return schema.parse(await existing);
   }
 
-  const task = resolvePage(key, ttlSeconds, load, admin);
-
+  const task = resolveValue(key, ttlSeconds, schema, load, admin);
   const tracked = pending.size < 32;
 
   if (tracked) {
@@ -231,4 +233,13 @@ export async function getSharedArtistPage(
       pending.delete(key);
     }
   }
+}
+
+export function getSharedArtistPage(
+  identity: string,
+  ttlSeconds: number,
+  load: () => Promise<ArtistCatalogPage>,
+  admin: SupabaseClient<Database>,
+): Promise<ArtistCatalogPage> {
+  return getSharedCatalogValue(identity, ttlSeconds, pageSchema, load, admin);
 }

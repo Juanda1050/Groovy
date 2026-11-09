@@ -13,9 +13,8 @@ import {
   savedCatalogAlbumSchema,
 } from "@/features/catalog/lib/catalogSchemas";
 import { useSpotifyNetworkStore } from "@/features/catalog/stores/spotifyNetworkStore";
-import { supabase } from "@/shared/lib/supabaseClient";
-
 import type { AlbumDetail, AlbumTracksPage } from "@/models/albumDetail";
+import type { RecommendationRequest } from "@/models/albumRecommendation";
 import type {
   CatalogPage,
   CatalogRequest,
@@ -24,10 +23,13 @@ import type {
   SpotifySearchPageSize,
 } from "@/models/catalog";
 import type { ArtistCatalogRequest } from "@/models/musicOnboarding";
+import { supabase } from "@/shared/lib/supabaseClient";
 
-export async function invokeSpotify(
-  body: CatalogRequest | ArtistCatalogRequest,
+export async function invokeCatalogFunction(
+  functionName: "spotify" | "albumRecommendation",
+  body: CatalogRequest | ArtistCatalogRequest | RecommendationRequest,
   signal?: AbortSignal,
+  timeoutMs = 12_000,
 ): Promise<unknown> {
   signal?.throwIfAborted();
 
@@ -44,18 +46,20 @@ export async function invokeSpotify(
   const network = useSpotifyNetworkStore.getState();
   const remaining = network.blockedUntil - Date.now();
 
-  if (remaining > 0) {
+  if (functionName === "spotify" && remaining > 0) {
     throw new CatalogError(network.limitCode, Math.ceil(remaining / 1000));
   }
 
-  const timeout = AbortSignal.timeout(12_000);
-
+  const timeout = AbortSignal.timeout(timeoutMs);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
 
-  const { data, error } = await supabase.functions.invoke<unknown>("spotify", {
-    body,
-    signal: requestSignal,
-  });
+  const { data, error } = await supabase.functions.invoke<unknown>(
+    functionName,
+    {
+      body,
+      signal: requestSignal,
+    },
+  );
 
   assertCurrent();
 
@@ -63,6 +67,7 @@ export async function invokeSpotify(
     const response: unknown = error.context;
 
     if (response instanceof Response && response.status === 401) {
+      assertCurrent();
       await signOut();
       throw new CatalogError("UNAUTHORIZED");
     }
@@ -120,6 +125,13 @@ export async function invokeSpotify(
   }
 
   return data;
+}
+
+export function invokeSpotify(
+  body: CatalogRequest | ArtistCatalogRequest,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  return invokeCatalogFunction("spotify", body, signal);
 }
 
 export async function searchAlbums(
